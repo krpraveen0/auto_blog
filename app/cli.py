@@ -108,7 +108,7 @@ def main(argv: Optional[List[str]] = None) -> None:
     )
     parser.add_argument(
         "--save-md",
-        default="article.md",
+        default=str(Path("output") / "article.md"),
         help="Path to save the generated Markdown.",
     )
     parser.add_argument(
@@ -161,6 +161,7 @@ def main(argv: Optional[List[str]] = None) -> None:
 
     # Save locally
     outfile = Path(args.save_md)
+    outfile.parent.mkdir(parents=True, exist_ok=True)
     outfile.write_text(article_md, encoding="utf-8")
     print(f"[OK] Saved generated article to {outfile}")
 
