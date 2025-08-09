@@ -79,3 +79,8 @@ coverage.xml
 
 # Miscellaneous
 *.log
+# Generated Markdown articles
+article.md
+my_article.md
+*.md
+!README.md
