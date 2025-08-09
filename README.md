@@ -117,6 +117,14 @@ jobs:
 
 Store credentials as repository secrets under *Settings → Secrets and variables → Actions*.
 
+Trigger the workflow manually from the GitHub mobile app by opening the repository, tapping **Actions**, choosing **Auto Article Generator**, and selecting **Run workflow** to supply inputs.
+
+From the command line, the same can be done with the GitHub CLI:
+
+```bash
+gh workflow run auto_article.yml -f topic='My new article' -f publish=true
+```
+
 ## Cloudflare Workflows
 
 Deploy the generator as a container job using [Cloudflare Workflows](https://developers.cloudflare.com/workflows/):
