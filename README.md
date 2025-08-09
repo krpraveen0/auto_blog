@@ -36,45 +36,50 @@ MEDIUM_TOKEN=xxxxxxxxxxxxxxxx
 Alternatively, you can pass keys using `--pplx-key` and `--medium-token` when
 running the CLI.
 
-### Generate an article (local only)
+### Plan an article
+
+Use the `plan` subcommand to insert a topic into the database. Optionally
+associate it with a series and a scheduled publication date.
 
 ```bash
-python -m medium_auto_article.cli \
+python -m app.cli plan \
+  --db-url sqlite:///blog.db \
   --topic "Real‑time bus tracking with Python and WebSockets" \
-  --audience beginner \
-  --tone practical \
-  --model sonar \
-  --minutes 12 \
-  --outline-depth 3 \
-  --save-md my_article.md
+  --series "Transport" \
+  --schedule-date 2024-06-01
 ```
 
-This command produces `my_article.md`, containing a fully formed Medium article
-ready for publication.
-
-### Generate and publish to Medium
+### List planned articles
 
 ```bash
-python -m medium_auto_article.cli \
-  --topic "Building a UPI‑like payment flow demo with Java + Spring" \
+python -m app.cli list --db-url sqlite:///blog.db
+```
+
+### Generate (and optionally publish) a planned article
+
+```bash
+python -m app.cli generate 1 \
+  --db-url sqlite:///blog.db \
+  --minutes 12 \
+  --outline-depth 3 \
   --publish \
   --status draft \
   --tags payments upi spring java india
 ```
 
-When `--publish` is specified, the tool will save the article to `article.md`
-and then publish it on Medium. The response from the Medium API will be
-printed to the console.
+By default the generated Markdown is stored in the database. Pass `--save-md`
+with a path if you also want a local copy.
 
 ## Repository structure
 
 ```text
-medium_auto_article/
-├── medium_auto_article/
+auto_blog/
+├── app/
 │   ├── __init__.py         # top‑level exports for easy import
 │   ├── perplexity_generator.py  # wrapper around Perplexity API
 │   ├── medium_publisher.py      # wrapper around Medium API
-│   └── cli.py                # command line interface
+│   ├── db.py                    # simple SQLAlchemy helpers
+│   └── cli.py                   # command line interface
 ├── README.md                # this file
 └── requirements.txt         # pip dependencies
 ```
@@ -89,4 +94,4 @@ medium_auto_article/
 * **Code inclusion** – pass `--no-code` to minimise code examples and focus on
   step‑by‑step guidance.
 
-See `python -m medium_auto_article.cli --help` for all available options.
+See `python -m app.cli --help` for all available options.
