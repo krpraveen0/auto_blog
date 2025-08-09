@@ -26,12 +26,16 @@ Clone this repository and install its dependencies:
 pip install -r requirements.txt
 ```
 
-Create a `.env` file in the project root with your API keys:
+Create a `.env` file in the project root with your API keys and database connection string:
 
 ```dotenv
 PERPLEXITY_API_KEY=pk-xxxxxxxxxxxxxxxx
 MEDIUM_TOKEN=xxxxxxxxxxxxxxxx
+DATABASE_URL=postgresql://user:password@neonhost/neondb
 ```
+
+`DATABASE_URL` should be the full connection string from your [Neon](https://neon.tech) Postgres dashboard.
+Never commit this file to version control; it is already ignored via `.gitignore`.
 
 Alternatively, you can pass keys using `--pplx-key` and `--medium-token` when
 running the CLI.

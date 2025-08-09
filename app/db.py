@@ -21,6 +21,13 @@ from sqlalchemy import (
 )
 from sqlalchemy.engine import Engine
 
+try:
+    from dotenv import load_dotenv  # type: ignore
+except ImportError:
+    def load_dotenv(*args: Any, **kwargs: Any) -> None:
+        """Fallback no-op when python-dotenv is not installed."""
+        return None  # type: ignore
+
 DATABASE_URL_ENV = "DATABASE_URL"
 
 metadata = MetaData()
@@ -47,6 +54,7 @@ articles = Table(
 
 def get_engine(db_url: Optional[str] = None, *, echo: bool = False) -> Engine:
     """Return a SQLAlchemy engine using DATABASE_URL env var or provided string."""
+    load_dotenv()
     url = db_url or os.getenv(DATABASE_URL_ENV)
     if not url:
         raise ValueError("A database URL must be provided via argument or DATABASE_URL")
