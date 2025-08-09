@@ -77,6 +77,29 @@ def cmd_plan(args: argparse.Namespace) -> None:
     print(f"[OK] Planned article {article_id} for topic '{args.topic}'")
 
 
+def cmd_plan_series(args: argparse.Namespace) -> None:
+    engine = get_engine(args.db_url)
+    init_db(engine)
+
+    generator = PerplexityGenerator(api_key=args.pplx_key)
+    plan = generator.generate_series_plan(
+        topic=args.topic, posts=args.posts, model=args.model
+    )
+    scheduled = (
+        datetime.fromisoformat(args.schedule_date)
+        if args.schedule_date
+        else None
+    )
+    for item in plan:
+        article_id = plan_article(
+            engine,
+            topic=item["title"],
+            series_name=args.topic,
+            scheduled_at=scheduled,
+        )
+        print(f"[OK] Planned article {article_id} for topic '{item['title']}'")
+
+
 def cmd_list(args: argparse.Namespace) -> None:
     engine = get_engine(args.db_url)
     init_db(engine)
@@ -158,6 +181,29 @@ def build_parser() -> argparse.ArgumentParser:
         "--schedule-date", help="ISO timestamp for scheduled publication"
     )
     plan_p.set_defaults(func=cmd_plan)
+
+    series_p = sub.add_parser(
+        "plan-series", help="Generate and plan a series of articles"
+    )
+    series_p.add_argument("--topic", required=True, help="Series theme")
+    series_p.add_argument(
+        "--posts", type=int, default=5, help="Number of entries to plan"
+    )
+    series_p.add_argument(
+        "--schedule-date", help="ISO timestamp for scheduled publication"
+    )
+    series_p.add_argument(
+        "--model",
+        default="sonar",
+        choices=["sonar", "sonar-reasoning", "sonar-pro", "sonar-deep-research"],
+        help="Perplexity model to use.",
+    )
+    series_p.add_argument(
+        "--pplx-key",
+        default=None,
+        help="Override Perplexity API key (otherwise load from .env).",
+    )
+    series_p.set_defaults(func=cmd_plan_series)
 
     list_p = sub.add_parser("list", help="List planned articles")
     list_p.set_defaults(func=cmd_list)
