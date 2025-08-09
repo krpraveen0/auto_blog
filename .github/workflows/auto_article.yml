@@ -81,7 +81,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r medium_auto_article/requirements.txt
+          pip install -r requirements.txt
 
       - name: Generate (and optionally publish) article
         shell: bash
@@ -115,7 +115,7 @@ jobs:
           fi
 
           # Run the Python CLI to generate the article (and publish if requested).
-          python -m medium_auto_article.cli \
+          python -m app.cli \
             --topic "$TOPIC" \
             --audience "$AUDIENCE" \
             --tone "$TONE" \
