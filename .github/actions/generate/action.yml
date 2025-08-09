@@ -1,5 +1,6 @@
 name: Generate Article
 description: 'Set up Python and generate Medium article'
+
 inputs:
   topic:
     description: 'Topic of the article'
@@ -45,6 +46,7 @@ inputs:
     description: 'Canonical URL (optional)'
     required: false
     default: ''
+
 runs:
   using: 'composite'
   steps:
@@ -74,6 +76,7 @@ runs:
     - name: Generate (and optionally publish) article
       shell: bash
       run: |
+        set -e # Exit on error
         TOPIC="${{ inputs.topic }}"
         AUDIENCE="${{ inputs.audience }}"
         TONE="${{ inputs.tone }}"
@@ -110,4 +113,3 @@ runs:
           $PUBLISH_FLAG \
           --canonical-url "$CANONICAL_URL" \
           $TAGS_ARG
-
