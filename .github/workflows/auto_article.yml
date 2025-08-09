@@ -100,19 +100,18 @@ jobs:
       MEDIUM_TOKEN: ${{ secrets.MEDIUM_TOKEN }}
     steps:
       - uses: ./.github/actions/generate
-        if: github.event_name != 'workflow_dispatch'
         with:
-          topic: "${{ vars.AUTO_TOPIC || 'Serverless computing in India: pros and cons' }}"
-          publish: ${{ vars.AUTO_PUBLISH || 'false' }}
-          tags: ${{ vars.AUTO_TAGS || '' }}
-          audience: ${{ vars.AUTO_AUDIENCE || 'beginner' }}
-          tone: ${{ vars.AUTO_TONE || 'practical' }}
-          model: ${{ vars.AUTO_MODEL || 'sonar' }}
-          minutes: ${{ vars.AUTO_MINUTES || '10' }}
-          outline_depth: ${{ vars.AUTO_OUTLINE_DEPTH || '3' }}
-          include_code: ${{ vars.AUTO_INCLUDE_CODE || 'true' }}
-          status: ${{ vars.AUTO_STATUS || 'draft' }}
-          canonical_url: ${{ vars.AUTO_CANONICAL_URL || '' }}
+          topic: "${{ env.AUTO_TOPIC || 'Serverless computing in India: pros and cons' }}"
+          publish: ${{ env.AUTO_PUBLISH || 'false' }}
+          tags: ${{ env.AUTO_TAGS || '' }}
+          audience: ${{ env.AUTO_AUDIENCE || 'beginner' }}
+          tone: ${{ env.AUTO_TONE || 'practical' }}
+          model: ${{ env.AUTO_MODEL || 'sonar' }}
+          minutes: ${{ env.AUTO_MINUTES || '10' }}
+          outline_depth: ${{ env.AUTO_OUTLINE_DEPTH || '3' }}
+          include_code: ${{ env.AUTO_INCLUDE_CODE || 'true' }}
+          status: ${{ env.AUTO_STATUS || 'draft' }}
+          canonical_url: ${{ env.AUTO_CANONICAL_URL || '' }}
 
   manual:
     if: github.event_name == 'workflow_dispatch'
@@ -122,7 +121,6 @@ jobs:
       MEDIUM_TOKEN: ${{ secrets.MEDIUM_TOKEN }}
     steps:
       - uses: ./.github/actions/generate
-        if: github.event_name == 'workflow_dispatch'
         with:
           topic: ${{ github.event.inputs.topic }}
           publish: ${{ github.event.inputs.publish }}
@@ -135,4 +133,3 @@ jobs:
           include_code: ${{ github.event.inputs.include_code }}
           status: ${{ github.event.inputs.status }}
           canonical_url: ${{ github.event.inputs.canonical_url }}
-
