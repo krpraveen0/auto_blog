@@ -54,13 +54,24 @@ Follow these steps to generate an article on your machine:
      --schedule-date 2024-06-01
    ```
 
-5. **List planned articles**
+5. **Plan a series of articles**
+
+   ```bash
+   python -m app.cli plan-series \\
+     --db-url sqlite:///blog.db \\
+     --topic "Generative AI with Python" \\
+     --posts 3
+   ```
+
+   Each generated topic is stored as a planned article linked to its series ID. Ensure each topic concludes its mini project before moving on to the next. You can later generate individual entries with `python -m app.cli generate <id>`.
+
+6. **List planned articles**
 
    ```bash
    python -m app.cli list --db-url sqlite:///blog.db
    ```
 
-6. **Generate (and optionally publish) a planned article**
+7. **Generate (and optionally publish) a planned article**
 
    ```bash
    python -m app.cli generate 1 \
