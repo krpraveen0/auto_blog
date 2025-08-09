@@ -1,31 +1,40 @@
 """
-Command line interface for generating and optionally publishing Medium articles.
+Command line interface for planning, listing and generating Medium articles.
 
-This CLI exposes a single entry point that accepts a topic, audience level,
-tone, model and other options. It uses the :class:`~medium_auto_article.perplexity_generator.PerplexityGenerator`
-to create a full Markdown article via Perplexity's API and saves it to a file.
-Optionally, you can request that the article be published immediately via
-Medium using :class:`~medium_auto_article.medium_publisher.MediumPublisher`.
+The CLI provides three subcommands:
 
-Usage example::
+``plan``
+    Insert an article topic (and optional series information) into the database
+    as a planned article.
+``list``
+    Display planned articles stored in the database.
+``generate``
+    Fetch a planned article by id, generate full Markdown content using the
+    :class:`~medium_auto_article.perplexity_generator.PerplexityGenerator` and
+    optionally publish it via
+    :class:`~medium_auto_article.medium_publisher.MediumPublisher`.
 
-    python -m medium_auto_article.cli \
-        --topic "Building a UPI‑like payment flow demo with Java + Spring" \
-        --audience beginner --tone practical --model sonar \
-        --minutes 12 --publish --status draft --tags payments upi spring java india
-
-To see all options, run with ``--help``.
+Run ``python -m app.cli --help`` for full usage information.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 
 from .perplexity_generator import PerplexityGenerator
 from .medium_publisher import MediumPublisher
+from .db import (
+    get_engine,
+    init_db,
+    plan_article,
+    list_planned_articles,
+    fetch_article,
+    update_article,
+)
 
 
 def parse_frontmatter(md: str) -> dict:
@@ -51,105 +60,44 @@ def parse_frontmatter(md: str) -> dict:
         return {}
 
 
-def main(argv: Optional[List[str]] = None) -> None:
-    """
-    Entry point for the command line interface.
+def cmd_plan(args: argparse.Namespace) -> None:
+    engine = get_engine(args.db_url)
+    init_db(engine)
+    scheduled = (
+        datetime.fromisoformat(args.schedule_date)
+        if args.schedule_date
+        else None
+    )
+    article_id = plan_article(
+        engine,
+        topic=args.topic,
+        series_name=args.series,
+        scheduled_at=scheduled,
+    )
+    print(f"[OK] Planned article {article_id} for topic '{args.topic}'")
 
-    Parses command line arguments, invokes the article generator, saves the
-    generated Markdown, and optionally publishes it via Medium. All outputs
-    are printed to stdout, including Medium responses when publishing.
-    """
-    parser = argparse.ArgumentParser(
-        description=(
-            "Generate a Perplexity‑powered Medium article with Indian mini projects "
-            "and Praveen branding, optionally publishing it via Medium."
-        )
-    )
-    parser.add_argument("--topic", required=True, help="Topic to write about.")
-    parser.add_argument(
-        "--audience",
-        default="beginner",
-        choices=["beginner", "intermediate", "advanced"],
-        help="Audience level for the article.",
-    )
-    parser.add_argument(
-        "--tone",
-        default="practical",
-        choices=["friendly", "professional", "practical", "conversational"],
-        help="Tone of the article.",
-    )
-    parser.add_argument(
-        "--model",
-        default="sonar",
-        choices=["sonar", "sonar-reasoning", "sonar-pro", "sonar-deep-research"],
-        help="Perplexity model to use.",
-    )
-    parser.add_argument(
-        "--minutes",
-        type=int,
-        default=10,
-        help="Target reading time in minutes.",
-    )
-    parser.add_argument(
-        "--outline-depth",
-        type=int,
-        default=3,
-        help="Outline depth (number of heading levels).",
-    )
-    parser.add_argument(
-        "--no-code",
-        action="store_true",
-        help="Reduce code blocks if set (focus on instructions instead).",
-    )
-    parser.add_argument(
-        "--cta",
-        default="Follow Praveen for more real‑world build guides.",
-        help="Call to action appended to the article.",
-    )
-    parser.add_argument(
-        "--save-md",
-        default=str(Path("output") / "article.md"),
-        help="Path to save the generated Markdown.",
-    )
-    parser.add_argument(
-        "--publish",
-        action="store_true",
-        help="Publish the article to Medium after generation.",
-    )
-    parser.add_argument(
-        "--tags",
-        nargs="*",
-        default=[],
-        help="Medium tags (max 5 used).",
-    )
-    parser.add_argument(
-        "--status",
-        default="draft",
-        choices=["draft", "public", "unlisted"],
-        help="Publish status on Medium.",
-    )
-    parser.add_argument(
-        "--canonical-url",
-        default=None,
-        help="Canonical URL if cross‑posting.",
-    )
-    parser.add_argument(
-        "--pplx-key",
-        default=None,
-        help="Override Perplexity API key (otherwise load from .env).",
-    )
-    parser.add_argument(
-        "--medium-token",
-        default=None,
-        help="Override Medium integration token (otherwise load from .env).",
-    )
 
-    args = parser.parse_args(argv)
+def cmd_list(args: argparse.Namespace) -> None:
+    engine = get_engine(args.db_url)
+    init_db(engine)
+    rows = list_planned_articles(engine)
+    for row in rows:
+        sched = row.get("scheduled_at")
+        sched_str = sched.isoformat() if sched else "-"
+        print(f"{row['id']}: {row['topic']} (scheduled {sched_str})")
 
-    # 1) Generate article
+
+def cmd_generate(args: argparse.Namespace) -> None:
+    engine = get_engine(args.db_url)
+    init_db(engine)
+    plan = fetch_article(engine, args.id)
+    if not plan:
+        raise SystemExit(f"No article with id {args.id}")
+    topic = plan["topic"]
+
     generator = PerplexityGenerator(api_key=args.pplx_key)
     article_md = generator.generate_article(
-        topic=args.topic,
+        topic=topic,
         audience_level=args.audience,
         tone=args.tone,
         model=args.model,
@@ -159,18 +107,24 @@ def main(argv: Optional[List[str]] = None) -> None:
         call_to_action=args.cta,
     )
 
-    # Save locally
-    outfile = Path(args.save_md)
-    outfile.parent.mkdir(parents=True, exist_ok=True)
-    outfile.write_text(article_md, encoding="utf-8")
-    print(f"[OK] Saved generated article to {outfile}")
+    if args.save_md:
+        outfile = Path(args.save_md)
+        outfile.parent.mkdir(parents=True, exist_ok=True)
+        outfile.write_text(article_md, encoding="utf-8")
+        print(f"[OK] Saved generated article to {outfile}")
 
-    # 2) Optionally publish to Medium
+    update_article(
+        engine,
+        args.id,
+        markdown=article_md,
+        status=args.status,
+    )
+    print(f"[OK] Stored article {args.id} in database")
+
     if args.publish:
         meta = parse_frontmatter(article_md)
-        title = meta.get("title") or f"{args.topic} — with Indian Mini Projects by Praveen"
+        title = meta.get("title") or f"{topic} — with Indian Mini Projects by Praveen"
         suggested_tags_raw = meta.get("suggested_tags")
-        # crude split if comma-separated
         meta_tags = [t.strip() for t in suggested_tags_raw.split(",")] if suggested_tags_raw else []
         tags = (meta_tags or args.tags)[:5]
 
@@ -185,6 +139,116 @@ def main(argv: Optional[List[str]] = None) -> None:
         )
         print("[OK] Medium response:")
         print(json.dumps(resp, indent=2))
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Plan, list and generate Perplexity‑powered Medium articles with Indian "
+            "mini projects and Praveen branding."
+        )
+    )
+    parser.add_argument("--db-url", default=None, help="Database URL")
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    plan_p = sub.add_parser("plan", help="Insert a planned article into the DB")
+    plan_p.add_argument("--topic", required=True, help="Topic to write about")
+    plan_p.add_argument("--series", help="Series name for grouping articles")
+    plan_p.add_argument(
+        "--schedule-date", help="ISO timestamp for scheduled publication"
+    )
+    plan_p.set_defaults(func=cmd_plan)
+
+    list_p = sub.add_parser("list", help="List planned articles")
+    list_p.set_defaults(func=cmd_list)
+
+    gen_p = sub.add_parser("generate", help="Generate an article from a plan id")
+    gen_p.add_argument("id", type=int, help="Planned article id")
+    gen_p.add_argument(
+        "--audience",
+        default="beginner",
+        choices=["beginner", "intermediate", "advanced"],
+        help="Audience level for the article.",
+    )
+    gen_p.add_argument(
+        "--tone",
+        default="practical",
+        choices=["friendly", "professional", "practical", "conversational"],
+        help="Tone of the article.",
+    )
+    gen_p.add_argument(
+        "--model",
+        default="sonar",
+        choices=["sonar", "sonar-reasoning", "sonar-pro", "sonar-deep-research"],
+        help="Perplexity model to use.",
+    )
+    gen_p.add_argument(
+        "--minutes",
+        type=int,
+        default=10,
+        help="Target reading time in minutes.",
+    )
+    gen_p.add_argument(
+        "--outline-depth",
+        type=int,
+        default=3,
+        help="Outline depth (number of heading levels).",
+    )
+    gen_p.add_argument(
+        "--no-code",
+        action="store_true",
+        help="Reduce code blocks if set (focus on instructions instead).",
+    )
+    gen_p.add_argument(
+        "--cta",
+        default="Follow Praveen for more real‑world build guides.",
+        help="Call to action appended to the article.",
+    )
+    gen_p.add_argument(
+        "--save-md",
+        help="Path to save the generated Markdown (optional)",
+    )
+    gen_p.add_argument(
+        "--publish",
+        action="store_true",
+        help="Publish the article to Medium after generation.",
+    )
+    gen_p.add_argument(
+        "--tags",
+        nargs="*",
+        default=[],
+        help="Medium tags (max 5 used).",
+    )
+    gen_p.add_argument(
+        "--status",
+        default="draft",
+        choices=["draft", "public", "unlisted"],
+        help="Publish status on Medium.",
+    )
+    gen_p.add_argument(
+        "--canonical-url",
+        default=None,
+        help="Canonical URL if cross‑posting.",
+    )
+    gen_p.add_argument(
+        "--pplx-key",
+        default=None,
+        help="Override Perplexity API key (otherwise load from .env).",
+    )
+    gen_p.add_argument(
+        "--medium-token",
+        default=None,
+        help="Override Medium integration token (otherwise load from .env).",
+    )
+    gen_p.set_defaults(func=cmd_generate)
+
+    return parser
+
+
+def main(argv: Optional[List[str]] = None) -> None:
+    parser = build_parser()
+    args = parser.parse_args(argv)
+    args.func(args)
 
 
 if __name__ == "__main__":  # pragma: no cover

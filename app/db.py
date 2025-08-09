@@ -16,6 +16,7 @@ from sqlalchemy import (
     DateTime,
     select,
     insert,
+    update,
     func,
 )
 from sqlalchemy.engine import Engine
@@ -55,6 +56,68 @@ def get_engine(db_url: Optional[str] = None, *, echo: bool = False) -> Engine:
 def init_db(engine: Engine) -> None:
     """Create tables if they do not exist."""
     metadata.create_all(engine)
+
+
+def get_or_create_series(engine: Engine, topic: str) -> int:
+    """Return the id for a series with the given topic, creating it if needed."""
+    with engine.begin() as conn:
+        result = conn.execute(select(series.c.id).where(series.c.topic == topic))
+        row = result.first()
+        if row:
+            return row[0]
+        result = conn.execute(
+            insert(series).values(topic=topic).returning(series.c.id)
+        )
+        return result.scalar_one()
+
+
+def plan_article(
+    engine: Engine,
+    *,
+    topic: str,
+    series_name: Optional[str] = None,
+    scheduled_at: Optional[datetime] = None,
+) -> int:
+    """Insert a planned article and return its id."""
+    series_id = None
+    if series_name:
+        series_id = get_or_create_series(engine, series_name)
+    return save_article(
+        engine,
+        topic=topic,
+        status="planned",
+        markdown="",
+        series_id=series_id,
+        scheduled_at=scheduled_at,
+    )
+
+
+def update_article(
+    engine: Engine,
+    article_id: int,
+    *,
+    topic: Optional[str] = None,
+    status: Optional[str] = None,
+    markdown: Optional[str] = None,
+    series_id: Optional[int] = None,
+    scheduled_at: Optional[datetime] = None,
+) -> None:
+    """Update fields on an existing article."""
+    values = {
+        k: v
+        for k, v in {
+            "topic": topic,
+            "status": status,
+            "markdown": markdown,
+            "series_id": series_id,
+            "scheduled_at": scheduled_at,
+        }.items()
+        if v is not None
+    }
+    if not values:
+        return
+    with engine.begin() as conn:
+        conn.execute(update(articles).where(articles.c.id == article_id).values(**values))
 
 
 def save_article(
@@ -104,8 +167,11 @@ def list_planned_articles(engine: Engine) -> List[Dict[str, Any]]:
 __all__ = [
     "get_engine",
     "init_db",
+    "get_or_create_series",
+    "plan_article",
     "save_article",
     "fetch_article",
+    "update_article",
     "list_planned_articles",
     "metadata",
     "series",
