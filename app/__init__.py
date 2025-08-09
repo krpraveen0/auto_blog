@@ -14,13 +14,19 @@ This package exposes two main classes:
     :mod:`.medium_publisher` for details.
 """
 
-from .perplexity_generator import PerplexityGenerator, PerplexityError, PerpModel
+from .perplexity_generator import (
+    PerplexityGenerator,
+    PerplexityError,
+    PerpModel,
+    generate_series_plan,
+)
 from .medium_publisher import MediumPublisher, MediumError, PublishStatus
 
 __all__ = [
     "PerplexityGenerator",
     "PerplexityError",
     "PerpModel",
+    "generate_series_plan",
     "MediumPublisher",
     "MediumError",
     "PublishStatus",
