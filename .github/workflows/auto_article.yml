@@ -16,46 +16,75 @@ on:
       topic:
         description: 'Topic of the article'
         required: false
+        type: string
         default: 'Serverless computing in India: pros and cons'
       publish:
-        description: 'Publish to Medium (true|false)'
+        description: 'Publish to Medium?'
         required: false
-        default: 'false'
+        type: boolean
+        default: false
       tags:
         description: 'Comma‑separated tags (max 5)'
         required: false
+        type: string
         default: ''
       audience:
-        description: 'Audience level (beginner|intermediate|advanced)'
+        description: 'Audience level'
         required: false
-        default: 'beginner'
+        type: choice
+        default: beginner
+        options:
+          - beginner
+          - intermediate
+          - advanced
       tone:
-        description: 'Tone (friendly|professional|practical|conversational)'
+        description: 'Tone'
         required: false
-        default: 'practical'
+        type: choice
+        default: practical
+        options:
+          - friendly
+          - professional
+          - practical
+          - conversational
       model:
-        description: 'Perplexity model (sonar|sonar-reasoning|sonar-pro|sonar-deep-research)'
+        description: 'Perplexity model'
         required: false
-        default: 'sonar'
+        type: choice
+        default: sonar
+        options:
+          - sonar
+          - sonar-reasoning
+          - sonar-pro
+          - sonar-deep-research
       minutes:
         description: 'Estimated reading time'
         required: false
-        default: '10'
+        type: number
+        default: 10
       outline_depth:
         description: 'Outline depth (integer)'
         required: false
-        default: '3'
+        type: number
+        default: 3
       include_code:
-        description: 'Include code snippets? (true|false)'
+        description: 'Include code snippets?'
         required: false
-        default: 'true'
+        type: boolean
+        default: true
       status:
-        description: 'Medium publish status (draft|public|unlisted)'
+        description: 'Medium publish status'
         required: false
-        default: 'draft'
+        type: choice
+        default: draft
+        options:
+          - draft
+          - public
+          - unlisted
       canonical_url:
         description: 'Canonical URL (optional)'
         required: false
+        type: string
         default: ''
 
 concurrency:
