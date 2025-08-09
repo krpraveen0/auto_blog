@@ -3,3 +3,4 @@ python-dotenv
 sqlalchemy
 psycopg[binary]
 yoyo-migrations
+yamllint
