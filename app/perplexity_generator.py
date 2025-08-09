@@ -15,6 +15,7 @@ variable will be read from a ``.env`` file in the working directory.
 from __future__ import annotations
 
 import os
+import json
 from typing import Literal, Optional, Dict, Any
 
 import requests
@@ -203,3 +204,77 @@ If {include_code} is False, minimise code and focus on step‑by‑step actions.
             raise PerplexityError(
                 f"Unexpected response shape from Perplexity: {data}"
             ) from exc
+
+    def generate_series_plan(
+        self,
+        topic: str,
+        posts: int = 5,
+        model: PerpModel = "sonar",
+    ) -> list[dict]:
+        """Generate a plan for a standalone mini‑project article series."""
+        system_message = (
+            "You are an expert educational content planner. "
+            "Return structured ideas for independent tutorial posts."
+        )
+        user_prompt = f"""
+Topic: {topic}
+
+Produce {posts} self-contained blog post ideas about the above topic.
+Each idea must describe a complete mini-project that does not depend on
+the other posts. Respond ONLY with valid JSON representing an array of
+objects, each having the fields 'title' and 'summary'.
+        """.strip()
+
+        payload = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": user_prompt},
+            ],
+            "temperature": 0.7,
+            "top_p": 0.9,
+        }
+
+        data = self._post("/chat/completions", payload)
+        try:
+            content = data["choices"][0]["message"]["content"]
+        except (KeyError, IndexError) as exc:
+            raise PerplexityError(
+                f"Unexpected response shape from Perplexity: {data}"
+            ) from exc
+
+        try:
+            plan = json.loads(content)
+        except ValueError as exc:
+            raise PerplexityError(
+                f"Perplexity did not return valid JSON: {content}"
+            ) from exc
+
+        if not isinstance(plan, list):
+            raise PerplexityError("Expected a JSON array of objects.")
+
+        results: list[dict] = []
+        for item in plan:
+            if (
+                not isinstance(item, dict)
+                or "title" not in item
+                or "summary" not in item
+            ):
+                raise PerplexityError(f"Malformed entry in plan: {item}")
+            results.append(
+                {"title": str(item["title"]), "summary": str(item["summary"])}
+            )
+
+        return results
+
+
+def generate_series_plan(
+    topic: str,
+    posts: int = 5,
+    model: PerpModel = "sonar",
+    api_key: Optional[str] = None,
+    base_url: str = "https://api.perplexity.ai",
+) -> list[dict]:
+    """Convenience wrapper around :class:`PerplexityGenerator`."""
+    generator = PerplexityGenerator(api_key=api_key, base_url=base_url)
+    return generator.generate_series_plan(topic, posts, model=model)
