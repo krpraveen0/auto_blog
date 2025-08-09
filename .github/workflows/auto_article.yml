@@ -102,7 +102,7 @@ jobs:
       - uses: ./.github/actions/generate
         if: github.event_name != 'workflow_dispatch'
         with:
-          topic: ${{ vars.AUTO_TOPIC || 'Serverless computing in India: pros and cons' }}
+          topic: "${{ vars.AUTO_TOPIC || 'Serverless computing in India: pros and cons' }}"
           publish: ${{ vars.AUTO_PUBLISH || 'false' }}
           tags: ${{ vars.AUTO_TAGS || '' }}
           audience: ${{ vars.AUTO_AUDIENCE || 'beginner' }}
