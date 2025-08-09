@@ -40,6 +40,20 @@ Never commit this file to version control; it is already ignored via `.gitignore
 Alternatively, you can pass keys using `--pplx-key` and `--medium-token` when
 running the CLI.
 
+### Run database migrations
+
+Create the required tables in your Neon Postgres database using the bundled SQL
+migration. The command below applies all migrations found in `db/migrations`
+using the [yoyo-migrations](https://ollycope.com/software/yoyo/latest/)
+tool installed from `requirements.txt`:
+
+```bash
+yoyo apply --database "$DATABASE_URL" db/migrations
+```
+
+`DATABASE_URL` should be the same connection string from your Neon dashboard.
+With the tables in place you can start planning articles.
+
 ### Plan an article
 
 Use the `plan` subcommand to insert a topic into the database. Optionally
@@ -84,6 +98,8 @@ auto_blog/
 │   ├── medium_publisher.py      # wrapper around Medium API
 │   ├── db.py                    # simple SQLAlchemy helpers
 │   └── cli.py                   # command line interface
+├── db/
+│   └── migrations/          # SQL schema migrations
 ├── README.md                # this file
 └── requirements.txt         # pip dependencies
 ```
