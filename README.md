@@ -1,101 +1,73 @@
-# Medium Auto‑Article Generator
+# Auto Blog
 
-This repository provides a modular Python library and command line tool for
-generating complete Medium articles from a single topic. Articles are generated
-using the [Perplexity](https://www.perplexity.ai) chat completions API and
-include:
+Command-line tools to plan, generate and publish Medium articles driven by the Perplexity API.
 
-* **Contextual Indian examples** – such as UPI, IRCTC, cricket statistics and
-  other everyday references to make the content relatable for Indian readers.
-* **Mini projects** – each with a clear goal, prerequisites, step‑by‑step
-  instructions, runnable code (where relevant) and example input/output.
-* **Personal branding** – helpful tips and anecdotes attributed to Praveen are
-  interwoven throughout the article.
+## Features
+- Plan single articles or entire series and store them in a SQL database
+- List scheduled articles
+- Generate Markdown articles with Indian mini-projects and optional code snippets
+- Publish drafts or public posts directly to Medium
 
-The tool supports publishing articles directly to your Medium account via
-Medium's official API. Both Perplexity and Medium credentials are read from
-environment variables or can be supplied on the command line.
+## Project layout
+```
+app/
+  cli.py                 # CLI entry points
+  db.py                  # SQLAlchemy models and helpers
+  medium_publisher.py    # Medium API wrapper
+  perplexity_generator.py# Perplexity API wrapper
+db/
+  migrations/            # yoyo SQL migrations
+requirements.txt         # Python dependencies
+```
 
-## Run locally
+## Installation
+1. Install Python 3.11+
+2. Clone the repository and install dependencies  
+   `pip install -r requirements.txt`
 
-Follow these steps to generate an article on your machine:
+## Configuration
+Create a `.env` file (or set environment variables):
 
-1. **Install dependencies**
+| Variable             | Purpose                                             |
+|----------------------|-----------------------------------------------------|
+| `PERPLEXITY_API_KEY` | Key for the Perplexity `/chat/completions` API      |
+| `MEDIUM_TOKEN`       | Medium integration token used for publishing        |
+| `DATABASE_URL`       | SQLAlchemy-compatible database URL (e.g. `sqlite:///blog.db` or PostgreSQL URL) |
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+## Database migrations
+Apply the migrations before using the CLI:
 
-2. **Provide credentials** – create a `.env` file in the project root:
+```bash
+yoyo apply --database "$DATABASE_URL" db/migrations
+```
 
-   ```dotenv
-   PERPLEXITY_API_KEY=pk-xxxxxxxxxxxxxxxx
-   MEDIUM_TOKEN=xxxxxxxxxxxxxxxx
-   DATABASE_URL=postgresql://user:password@neonhost/neondb
-   ```
+## CLI usage
+```bash
+python -m app.cli plan         --db-url sqlite:///blog.db --topic "FastAPI with UPI"
+python -m app.cli plan-series  --db-url sqlite:///blog.db --topic "Data Viz in Python" --posts 3
+python -m app.cli list         --db-url sqlite:///blog.db
+python -m app.cli generate 1   --db-url sqlite:///blog.db --publish --tags python medium
+```
 
-   `DATABASE_URL` should be the full connection string from your [Neon](https://neon.tech) Postgres dashboard. Never commit this file to version control; it is already ignored via `.gitignore`. Alternatively, you can pass keys using `--pplx-key` and `--medium-token` when running the CLI.
+Key options for `generate`:
 
-3. **Run database migrations**
-
-   ```bash
-   yoyo apply --database "$DATABASE_URL" db/migrations
-   ```
-
-   With the tables in place you can start planning articles.
-
-4. **Plan an article** (optionally associate it with a series and a scheduled publication date):
-
-   ```bash
-   python -m app.cli plan \
-     --db-url sqlite:///blog.db \
-     --topic "Real‑time bus tracking with Python and WebSockets" \
-     --series "Transport" \
-     --schedule-date 2024-06-01
-   ```
-
-5. **Plan a series of articles**
-
-   ```bash
-   python -m app.cli plan-series \\
-     --db-url sqlite:///blog.db \\
-     --topic "Generative AI with Python" \\
-     --posts 3
-   ```
-
-   Each generated topic is stored as a planned article linked to its series ID. Ensure each topic concludes its mini project before moving on to the next. You can later generate individual entries with `python -m app.cli generate <id>`.
-
-6. **List planned articles**
-
-   ```bash
-   python -m app.cli list --db-url sqlite:///blog.db
-   ```
-
-7. **Generate (and optionally publish) a planned article**
-
-   ```bash
-   python -m app.cli generate 1 \
-     --db-url sqlite:///blog.db \
-     --minutes 12 \
-     --outline-depth 3 \
-     --publish \
-     --status draft \
-     --tags payments upi spring java india
-   ```
-
-   By default the generated Markdown is stored in the database. Pass `--save-md` with a path if you also want a local copy.
+- `--audience {beginner|intermediate|advanced}`
+- `--tone {friendly|professional|practical|conversational}`
+- `--minutes N` and `--outline-depth N`
+- `--no-code` to minimize code examples
+- `--publish` to upload to Medium; `--status {draft|public|unlisted}`, `--tags`, `--canonical-url`
+- `--save-md path` to persist generated Markdown locally
+- `--pplx-key` and `--medium-token` override `.env` values
 
 ## GitHub Actions
-
-Automate article generation with a scheduled or manually triggered workflow:
+Automate article generation with a workflow (save as `.github/workflows/generate.yml`):
 
 ```yaml
-# .github/workflows/generate.yml
 name: Generate article
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 9 * * *"  # run daily at 09:00 UTC
+    - cron: "0 9 * * *"
 jobs:
   generate:
     runs-on: ubuntu-latest
@@ -103,75 +75,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
       - run: pip install -r requirements.txt
-      - name: Run generator
-        env:
+      - env:
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
-          MEDIUM_TOKEN: ${{ secrets.MEDIUM_TOKEN }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          MEDIUM_TOKEN:        ${{ secrets.MEDIUM_TOKEN }}
+          DATABASE_URL:        ${{ secrets.DATABASE_URL }}
         run: |
           yoyo apply --database "$DATABASE_URL" db/migrations
           python -m app.cli generate 1 --db-url "$DATABASE_URL" --publish
 ```
 
-Store credentials as repository secrets under *Settings → Secrets and variables → Actions*.
-
-Trigger the workflow manually from the GitHub mobile app by opening the repository, tapping **Actions**, choosing **Auto Article Generator**, and selecting **Run workflow** to supply inputs.
-
-From the command line, the same can be done with the GitHub CLI:
-
-```bash
-gh workflow run auto_article.yml -f topic='My new article' -f publish=true
-```
-
-## Cloudflare Workflows
-
-Deploy the generator as a container job using [Cloudflare Workflows](https://developers.cloudflare.com/workflows/):
-
-```yaml
-# workflows.yml
-name: generate-article
-triggers:
-  - type: schedule
-    cron: "0 9 * * *"  # run daily at 09:00 UTC
-jobs:
-  run-cli:
-    container:
-      image: ghcr.io/your-org/auto_blog:latest
-      cmd: ["python", "-m", "app.cli", "generate", "1", "--db-url", "${DATABASE_URL}", "--publish"]
-      env:
-        PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
-        MEDIUM_TOKEN: ${MEDIUM_TOKEN}
-        DATABASE_URL: ${DATABASE_URL}
-```
-
-Use `wrangler workflows deploy` to deploy and `wrangler workflows secrets put` to supply the required environment variables.
-
-## Repository structure
-
-```text
-auto_blog/
-├── app/
-│   ├── __init__.py         # top‑level exports for easy import
-│   ├── perplexity_generator.py  # wrapper around Perplexity API
-│   ├── medium_publisher.py      # wrapper around Medium API
-│   ├── db.py                    # simple SQLAlchemy helpers
-│   └── cli.py                   # command line interface
-├── db/
-│   └── migrations/          # SQL schema migrations
-├── README.md                # this file
-└── requirements.txt         # pip dependencies
-```
-
-## Customisation
-
-* **Audience and tone** – adjust using `--audience` and `--tone`.
-* **Model selection** – choose from `sonar`, `sonar-reasoning`, `sonar-pro`,
-  and `sonar-deep-research` with `--model`.
-* **Outline depth and reading time** – control the structure and length of
-  articles using `--outline-depth` and `--minutes`.
-* **Code inclusion** – pass `--no-code` to minimise code examples and focus on
-  step‑by‑step guidance.
-
-See `python -m app.cli --help` for all available options.
+Store the API keys and database URL as repository secrets.
