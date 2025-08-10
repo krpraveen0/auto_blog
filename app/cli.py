@@ -136,13 +136,14 @@ def cmd_generate(args: argparse.Namespace) -> None:
         outfile.write_text(article_md, encoding="utf-8")
         print(f"[OK] Saved generated article to {outfile}")
 
+    db_status = "published" if args.publish else "generated"
     update_article(
         engine,
         args.id,
         markdown=article_md,
-        status=args.status,
+        status=db_status,
     )
-    print(f"[OK] Stored article {args.id} in database")
+    print(f"[OK] Stored article {args.id} in database with status '{db_status}'")
 
     if args.publish:
         meta = parse_frontmatter(article_md)
