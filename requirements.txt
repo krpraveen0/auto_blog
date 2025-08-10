@@ -1,6 +1,6 @@
 requests
 python-dotenv
 sqlalchemy
-psycopg[binary]
+psycopg2-binary
 yoyo-migrations
 yamllint
