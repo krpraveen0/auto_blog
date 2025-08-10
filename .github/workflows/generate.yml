@@ -1,5 +1,6 @@
+---
 name: Generate article
-on:
+'on':
   workflow_dispatch:
   schedule:
     - cron: "0 9 * * *"
@@ -16,7 +17,7 @@ jobs:
         env:
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
           MEDIUM_TOKEN: ${{ secrets.MEDIUM_TOKEN }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
-          yoyo apply --database "$DATABASE_URL" db/migrations
-          python -m app.cli generate 1 --db-url "$DATABASE_URL" --publish
+          python -m app.cli generate 1 --db-key "$SUPABASE_KEY" --publish

@@ -1,4 +1,4 @@
-requests
 python-dotenv
-supabase
+requests
+supabase>=2.0
 yamllint

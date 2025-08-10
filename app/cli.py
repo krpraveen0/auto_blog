@@ -61,7 +61,7 @@ def parse_frontmatter(md: str) -> dict:
 
 
 def cmd_plan(args: argparse.Namespace) -> None:
-    client = get_client(args.db_url, args.db_key)
+    client = get_client(args.db_key)
     init_db(client)
     scheduled = (
         datetime.fromisoformat(args.schedule_date)
@@ -78,7 +78,7 @@ def cmd_plan(args: argparse.Namespace) -> None:
 
 
 def cmd_plan_series(args: argparse.Namespace) -> None:
-    client = get_client(args.db_url, args.db_key)
+    client = get_client(args.db_key)
     init_db(client)
 
     generator = PerplexityGenerator(api_key=args.pplx_key)
@@ -101,7 +101,7 @@ def cmd_plan_series(args: argparse.Namespace) -> None:
 
 
 def cmd_list(args: argparse.Namespace) -> None:
-    client = get_client(args.db_url, args.db_key)
+    client = get_client(args.db_key)
     init_db(client)
     rows = list_planned_articles(client)
     for row in rows:
@@ -111,7 +111,7 @@ def cmd_list(args: argparse.Namespace) -> None:
 
 
 def cmd_generate(args: argparse.Namespace) -> None:
-    client = get_client(args.db_url, args.db_key)
+    client = get_client(args.db_key)
     init_db(client)
     plan = fetch_article(client, args.id)
     if not plan:
@@ -166,7 +166,7 @@ def cmd_generate(args: argparse.Namespace) -> None:
 
 
 def cmd_publish(args: argparse.Namespace) -> None:
-    client = get_client(args.db_url, args.db_key)
+    client = get_client(args.db_key)
     init_db(client)
     row = fetch_article(client, args.id)
     if not row:
@@ -198,7 +198,6 @@ def cmd_publish(args: argparse.Namespace) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     common = argparse.ArgumentParser(add_help=False)
-    common.add_argument("--db-url", default=None, help="Supabase URL")
     common.add_argument("--db-key", default=None, help="Supabase API key")
 
     parser = argparse.ArgumentParser(
