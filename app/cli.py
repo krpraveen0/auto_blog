@@ -28,7 +28,7 @@ from typing import List, Optional
 from .perplexity_generator import PerplexityGenerator
 from .medium_publisher import MediumPublisher
 from .db import (
-    get_engine,
+    get_client,
     init_db,
     plan_article,
     list_planned_articles,
@@ -61,15 +61,15 @@ def parse_frontmatter(md: str) -> dict:
 
 
 def cmd_plan(args: argparse.Namespace) -> None:
-    engine = get_engine(args.db_url)
-    init_db(engine)
+    client = get_client(args.db_url, args.db_key)
+    init_db(client)
     scheduled = (
         datetime.fromisoformat(args.schedule_date)
         if args.schedule_date
         else None
     )
     article_id = plan_article(
-        engine,
+        client,
         topic=args.topic,
         series_name=args.series,
         scheduled_at=scheduled,
@@ -78,8 +78,8 @@ def cmd_plan(args: argparse.Namespace) -> None:
 
 
 def cmd_plan_series(args: argparse.Namespace) -> None:
-    engine = get_engine(args.db_url)
-    init_db(engine)
+    client = get_client(args.db_url, args.db_key)
+    init_db(client)
 
     generator = PerplexityGenerator(api_key=args.pplx_key)
     plan = generator.generate_series_plan(
@@ -92,7 +92,7 @@ def cmd_plan_series(args: argparse.Namespace) -> None:
     )
     for item in plan:
         article_id = plan_article(
-            engine,
+            client,
             topic=item["title"],
             series_name=args.topic,
             scheduled_at=scheduled,
@@ -101,9 +101,9 @@ def cmd_plan_series(args: argparse.Namespace) -> None:
 
 
 def cmd_list(args: argparse.Namespace) -> None:
-    engine = get_engine(args.db_url)
-    init_db(engine)
-    rows = list_planned_articles(engine)
+    client = get_client(args.db_url, args.db_key)
+    init_db(client)
+    rows = list_planned_articles(client)
     for row in rows:
         sched = row.get("scheduled_at")
         sched_str = sched.isoformat() if sched else "-"
@@ -111,9 +111,9 @@ def cmd_list(args: argparse.Namespace) -> None:
 
 
 def cmd_generate(args: argparse.Namespace) -> None:
-    engine = get_engine(args.db_url)
-    init_db(engine)
-    plan = fetch_article(engine, args.id)
+    client = get_client(args.db_url, args.db_key)
+    init_db(client)
+    plan = fetch_article(client, args.id)
     if not plan:
         raise SystemExit(f"No article with id {args.id}")
     topic = plan["topic"]
@@ -138,7 +138,7 @@ def cmd_generate(args: argparse.Namespace) -> None:
 
     db_status = "published" if args.publish else "generated"
     update_article(
-        engine,
+        client,
         args.id,
         markdown=article_md,
         status=db_status,
@@ -166,9 +166,9 @@ def cmd_generate(args: argparse.Namespace) -> None:
 
 
 def cmd_publish(args: argparse.Namespace) -> None:
-    engine = get_engine(args.db_url)
-    init_db(engine)
-    row = fetch_article(engine, args.id)
+    client = get_client(args.db_url, args.db_key)
+    init_db(client)
+    row = fetch_article(client, args.id)
     if not row:
         raise SystemExit(f"No article with id {args.id}")
     article_md = row.get("markdown")
@@ -191,14 +191,15 @@ def cmd_publish(args: argparse.Namespace) -> None:
         canonical_url=args.canonical_url,
         notify_followers=(args.status == "public"),
     )
-    update_article(engine, args.id, status="published")
+    update_article(client, args.id, status="published")
     print("[OK] Medium response:")
     print(json.dumps(resp, indent=2))
 
 
 def build_parser() -> argparse.ArgumentParser:
     common = argparse.ArgumentParser(add_help=False)
-    common.add_argument("--db-url", default=None, help="Database URL")
+    common.add_argument("--db-url", default=None, help="Supabase URL")
+    common.add_argument("--db-key", default=None, help="Supabase API key")
 
     parser = argparse.ArgumentParser(
         description=(

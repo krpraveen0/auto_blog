@@ -32,22 +32,15 @@ Create a `.env` file (or set environment variables):
 |----------------------|-----------------------------------------------------|
 | `PERPLEXITY_API_KEY` | Key for the Perplexity `/chat/completions` API      |
 | `MEDIUM_TOKEN`       | Medium integration token used for publishing        |
-| `DATABASE_URL`       | SQLAlchemy-compatible database URL (e.g. `sqlite:///blog.db` or PostgreSQL URL) |
-
-## Database migrations
-Apply the migrations before using the CLI:
-
-```bash
-yoyo apply --database "$DATABASE_URL" db/migrations
-```
-
+| `SUPABASE_URL`       | Supabase project URL                                |
+| `SUPABASE_KEY`       | Supabase API key                                    |
 ## CLI usage
 ```bash
-python -m app.cli plan         --db-url sqlite:///blog.db --topic "FastAPI with UPI"
-python -m app.cli plan-series  --db-url sqlite:///blog.db --topic "Data Viz in Python" --posts 3
-python -m app.cli list         --db-url sqlite:///blog.db
-python -m app.cli generate 1   --db-url sqlite:///blog.db --publish --tags python medium
-python -m app.cli publish 1    --db-url sqlite:///blog.db --status public --tags python medium
+python -m app.cli plan         --db-url "$SUPABASE_URL" --db-key "$SUPABASE_KEY" --topic "FastAPI with UPI"
+python -m app.cli plan-series  --db-url "$SUPABASE_URL" --db-key "$SUPABASE_KEY" --topic "Data Viz in Python" --posts 3
+python -m app.cli list         --db-url "$SUPABASE_URL" --db-key "$SUPABASE_KEY"
+python -m app.cli generate 1   --db-url "$SUPABASE_URL" --db-key "$SUPABASE_KEY" --publish --tags python medium
+python -m app.cli publish 1    --db-url "$SUPABASE_URL" --db-key "$SUPABASE_KEY" --status public --tags python medium
 ```
 
 Key options for `generate`:
@@ -88,10 +81,10 @@ jobs:
       - env:
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
           MEDIUM_TOKEN:        ${{ secrets.MEDIUM_TOKEN }}
-          DATABASE_URL:        ${{ secrets.DATABASE_URL }}
+          SUPABASE_URL:        ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY:        ${{ secrets.SUPABASE_KEY }}
         run: |
-          yoyo apply --database "$DATABASE_URL" db/migrations
-          python -m app.cli generate 1 --db-url "$DATABASE_URL" --publish
+          python -m app.cli generate 1 --db-url "$SUPABASE_URL" --db-key "$SUPABASE_KEY" --publish
 ```
 
-Store the API keys and database URL as repository secrets.
+Store the API keys and Supabase credentials as repository secrets.

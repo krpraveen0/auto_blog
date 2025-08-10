@@ -1,6 +1,4 @@
 requests
 python-dotenv
-sqlalchemy
-psycopg2-binary
-yoyo-migrations
+supabase
 yamllint

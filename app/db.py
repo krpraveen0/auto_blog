@@ -4,83 +4,48 @@ import os
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 
-from sqlalchemy import (
-    create_engine,
-    MetaData,
-    Table,
-    Column,
-    Integer,
-    String,
-    Text,
-    ForeignKey,
-    DateTime,
-    select,
-    insert,
-    update,
-    func,
-)
-from sqlalchemy.engine import Engine
-
 try:
     from dotenv import load_dotenv  # type: ignore
 except ImportError:
     def load_dotenv(*args: Any, **kwargs: Any) -> None:
-        """Fallback no-op when python-dotenv is not installed."""
         return None  # type: ignore
 
-DATABASE_URL_ENV = "DATABASE_URL"
+from supabase import create_client, Client
 
-metadata = MetaData()
+SUPABASE_URL_ENV = "SUPABASE_URL"
+SUPABASE_KEY_ENV = "SUPABASE_KEY"
 
-series = Table(
-    "series",
-    metadata,
-    Column("id", Integer, primary_key=True),
-    Column("topic", String, nullable=False),
-    Column("created_at", DateTime, server_default=func.now(), nullable=False),
-)
 
-articles = Table(
-    "articles",
-    metadata,
-    Column("id", Integer, primary_key=True),
-    Column("topic", String, nullable=False),
-    Column("status", String, nullable=False),
-    Column("markdown", Text),
-    Column("series_id", Integer, ForeignKey("series.id")),
-    Column("created_at", DateTime, server_default=func.now(), nullable=False),
-    Column("scheduled_at", DateTime),
-)
-
-def get_engine(db_url: Optional[str] = None, *, echo: bool = False) -> Engine:
-    """Return a SQLAlchemy engine using DATABASE_URL env var or provided string."""
+def get_client(db_url: Optional[str] = None, db_key: Optional[str] = None) -> Client:
+    """Return a Supabase client using env vars or provided strings."""
     load_dotenv()
-    url = db_url or os.getenv(DATABASE_URL_ENV)
-    if not url:
-        raise ValueError("A database URL must be provided via argument or DATABASE_URL")
-    return create_engine(url, echo=echo, future=True)
-
-
-def init_db(engine: Engine) -> None:
-    """Create tables if they do not exist."""
-    metadata.create_all(engine)
-
-
-def get_or_create_series(engine: Engine, topic: str) -> int:
-    """Return the id for a series with the given topic, creating it if needed."""
-    with engine.begin() as conn:
-        result = conn.execute(select(series.c.id).where(series.c.topic == topic))
-        row = result.first()
-        if row:
-            return row[0]
-        result = conn.execute(
-            insert(series).values(topic=topic).returning(series.c.id)
+    url = db_url or os.getenv(SUPABASE_URL_ENV)
+    key = db_key or os.getenv(SUPABASE_KEY_ENV)
+    if not url or not key:
+        raise ValueError(
+            "Supabase URL and key must be provided via arguments or environment"
         )
-        return result.scalar_one()
+    return create_client(url, key)
+
+
+def init_db(client: Client) -> None:
+    """Supabase manages schema separately; nothing to initialize."""
+    return None
+
+
+def get_or_create_series(client: Client, topic: str) -> int:
+    """Return the id for a series with the given topic, creating it if needed."""
+    existing = client.table("series").select("id").eq("topic", topic).execute()
+    if existing.data:
+        return existing.data[0]["id"]
+    inserted = (
+        client.table("series").insert({"topic": topic}).select("id").execute()
+    )
+    return inserted.data[0]["id"]
 
 
 def plan_article(
-    engine: Engine,
+    client: Client,
     *,
     topic: str,
     series_name: Optional[str] = None,
@@ -89,9 +54,9 @@ def plan_article(
     """Insert a planned article and return its id."""
     series_id = None
     if series_name:
-        series_id = get_or_create_series(engine, series_name)
+        series_id = get_or_create_series(client, series_name)
     return save_article(
-        engine,
+        client,
         topic=topic,
         status="planned",
         markdown="",
@@ -101,7 +66,7 @@ def plan_article(
 
 
 def update_article(
-    engine: Engine,
+    client: Client,
     article_id: int,
     *,
     topic: Optional[str] = None,
@@ -124,12 +89,11 @@ def update_article(
     }
     if not values:
         return
-    with engine.begin() as conn:
-        conn.execute(update(articles).where(articles.c.id == article_id).values(**values))
+    client.table("articles").update(values).eq("id", article_id).execute()
 
 
 def save_article(
-    engine: Engine,
+    client: Client,
     *,
     topic: str,
     status: str,
@@ -138,42 +102,39 @@ def save_article(
     scheduled_at: Optional[datetime] = None,
 ) -> int:
     """Insert an article and return its new id."""
-    with engine.begin() as conn:
-        result = conn.execute(
-            insert(articles)
-            .values(
-                topic=topic,
-                status=status,
-                markdown=markdown,
-                series_id=series_id,
-                scheduled_at=scheduled_at,
-            )
-            .returning(articles.c.id)
-        )
-        return result.scalar_one()
+    payload = {
+        "topic": topic,
+        "status": status,
+        "markdown": markdown,
+        "series_id": series_id,
+        "scheduled_at": scheduled_at,
+    }
+    payload = {k: v for k, v in payload.items() if v is not None}
+    inserted = client.table("articles").insert(payload).select("id").execute()
+    return inserted.data[0]["id"]
 
 
-def fetch_article(engine: Engine, article_id: int) -> Optional[Dict[str, Any]]:
+def fetch_article(client: Client, article_id: int) -> Optional[Dict[str, Any]]:
     """Fetch a single article by id."""
-    with engine.connect() as conn:
-        result = conn.execute(select(articles).where(articles.c.id == article_id))
-        row = result.mappings().first()
-        return dict(row) if row else None
+    result = client.table("articles").select("*").eq("id", article_id).execute()
+    data = result.data
+    return data[0] if data else None
 
 
-def list_planned_articles(engine: Engine) -> List[Dict[str, Any]]:
+def list_planned_articles(client: Client) -> List[Dict[str, Any]]:
     """Return articles with status 'planned', ordered by scheduled_at."""
-    with engine.connect() as conn:
-        result = conn.execute(
-            select(articles)
-            .where(articles.c.status == "planned")
-            .order_by(articles.c.scheduled_at.asc())
-        )
-        return [dict(row) for row in result.mappings().all()]
+    result = (
+        client.table("articles")
+        .select("*")
+        .eq("status", "planned")
+        .order("scheduled_at", desc=False)
+        .execute()
+    )
+    return result.data or []
 
 
 __all__ = [
-    "get_engine",
+    "get_client",
     "init_db",
     "get_or_create_series",
     "plan_article",
@@ -181,7 +142,4 @@ __all__ = [
     "fetch_article",
     "update_article",
     "list_planned_articles",
-    "metadata",
-    "series",
-    "articles",
 ]
