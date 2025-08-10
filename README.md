@@ -34,6 +34,14 @@ Create a `.env` file (or set environment variables):
 | `MEDIUM_TOKEN`       | Medium integration token used for publishing        |
 | `SUPABASE_URL`       | Supabase project URL                                |
 | `SUPABASE_KEY`       | Supabase API key                                    |
+
+### Database setup
+
+Run the SQL files in `db/migrations` on your Supabase project before using the
+CLI. They create the required `series` and `articles` tables. If these tables
+are missing, the commands will exit with a clear error message prompting you to
+apply the migrations.
+
 ## CLI usage
 ```bash
 python -m app.cli plan         --db-key "$SUPABASE_KEY" --topic "FastAPI with UPI"

@@ -11,6 +11,7 @@ except ImportError:
         return None  # type: ignore
 
 from supabase import create_client, Client
+from postgrest.exceptions import APIError
 
 SUPABASE_URL_ENV = "SUPABASE_URL"
 SUPABASE_KEY_ENV = "SUPABASE_KEY"
@@ -29,7 +30,25 @@ def get_client(db_key: Optional[str] = None) -> Client:
 
 
 def init_db(client: Client) -> None:
-    """Supabase manages schema separately; nothing to initialize."""
+    """Ensure required tables exist before executing queries.
+
+    Supabase projects manage schema separately from the application code. When a
+    table is missing, the REST API raises an :class:`postgrest.exceptions.APIError`
+    with code ``42P01`` (undefined_table).  Rather than bubbling up a cryptic
+    stack trace, detect this situation and raise a more helpful error message so
+    callers know that database migrations need to run.
+    """
+
+    try:
+        # A lightweight existence check; we only care that the query succeeds.
+        client.table("articles").select("id").limit(1).execute()
+    except APIError as exc:
+        if getattr(exc, "code", None) == "42P01":
+            raise RuntimeError(
+                "Supabase schema is not initialised; run migrations to create the 'articles' table"
+            ) from exc
+        raise
+
     return None
 
 
