@@ -1,3 +1,4 @@
+---
 name: Generate Article
 description: 'Set up Python and generate Medium article'
 
@@ -22,10 +23,12 @@ inputs:
     description: 'Tone (friendly|professional|practical|conversational)'
     required: false
     default: 'practical'
-  model:
-    description: 'Perplexity model (sonar|sonar-reasoning|sonar-pro|sonar-deep-research)'
-    required: false
-    default: 'sonar'
+    model:
+      description: >-
+        Perplexity model
+        (sonar|sonar-reasoning|sonar-pro|sonar-deep-research)
+      required: false
+      default: 'sonar'
   minutes:
     description: 'Estimated reading time'
     required: false
@@ -63,8 +66,10 @@ runs:
       uses: actions/cache@v3
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('requirements.txt') }}
-        restore-keys: |
+        key: >-
+          ${{ runner.os }}-pip-${{ steps.setup-python.outputs.python-version }}-
+          ${{ hashFiles('requirements.txt') }}
+        restore-keys: >-
           ${{ runner.os }}-pip-${{ steps.setup-python.outputs.python-version }}-
 
     - name: Install dependencies
@@ -102,8 +107,10 @@ runs:
           TAGS_ARG="--tags $(echo $TAGS | tr ',' ' ')"
         fi
 
-        python -m app.cli \
-          --topic "$TOPIC" \
+        yoyo apply --database "$DATABASE_URL" db/migrations
+        ARTICLE_ID=$(python -m app.cli --db-url "$DATABASE_URL" \
+          plan --topic "$TOPIC" | awk '{print $4}')
+        python -m app.cli --db-url "$DATABASE_URL" generate "$ARTICLE_ID" \
           --audience "$AUDIENCE" \
           --tone "$TONE" \
           --model "$MODEL" \

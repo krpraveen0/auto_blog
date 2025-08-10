@@ -1,81 +1,32 @@
-name: Generate Article
-
-on:
-  workflow_call:
+---
+name: Auto Article Generator
+'on':
+  workflow_dispatch:
     inputs:
       topic:
         description: 'Topic of the article'
         required: false
-        type: string
         default: 'Serverless computing in India: pros and cons'
       publish:
-        description: 'Publish to Medium?'
+        description: 'Publish to Medium (true or false)'
         required: false
-        type: boolean
-        default: false
+        default: 'false'
       tags:
-        description: 'Comma-separated tags (max 5)'
+        description: 'Comma-separated tags'
         required: false
-        type: string
         default: ''
-      audience:
-        description: 'Audience level'
-        required: false
-        type: string
-        default: beginner
-      tone:
-        description: 'Tone'
-        required: false
-        type: string
-        default: practical
-      model:
-        description: 'Perplexity model'
-        required: false
-        type: string
-        default: sonar
-      minutes:
-        description: 'Estimated reading time'
-        required: false
-        type: number
-        default: 10
-      outline_depth:
-        description: 'Outline depth (integer)'
-        required: false
-        type: number
-        default: 3
-      include_code:
-        description: 'Include code snippets?'
-        required: false
-        type: boolean
-        default: true
-      status:
-        description: 'Medium publish status'
-        required: false
-        type: string
-        default: draft
-      canonical_url:
-        description: 'Canonical URL (optional)'
-        required: false
-        type: string
-        default: ''
-
+  schedule:
+    - cron: '0 9 * * *'
 jobs:
   generate:
     runs-on: ubuntu-latest
-    env:
-      PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
-      MEDIUM_TOKEN: ${{ secrets.MEDIUM_TOKEN }}
     steps:
       - uses: ./.github/actions/generate
         with:
           topic: ${{ inputs.topic }}
           publish: ${{ inputs.publish }}
           tags: ${{ inputs.tags }}
-          audience: ${{ inputs.audience }}
-          tone: ${{ inputs.tone }}
-          model: ${{ inputs.model }}
-          minutes: ${{ inputs.minutes }}
-          outline_depth: ${{ inputs.outline_depth }}
-          include_code: ${{ inputs.include_code }}
-          status: ${{ inputs.status }}
-          canonical_url: ${{ inputs.canonical_url }}
+        env:
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          MEDIUM_TOKEN: ${{ secrets.MEDIUM_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
