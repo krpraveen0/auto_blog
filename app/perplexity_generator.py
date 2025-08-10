@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import os
 import json
+import re
 from typing import Literal, Optional, Dict, Any
 
 import requests
@@ -242,6 +243,11 @@ objects, each having the fields 'title' and 'summary'.
             raise PerplexityError(
                 f"Unexpected response shape from Perplexity: {data}"
             ) from exc
+
+        content = content.strip()
+        fenced = re.search(r"```(?:json)?\s*(.*?)\s*```", content, re.DOTALL)
+        if fenced:
+            content = fenced.group(1).strip()
 
         try:
             plan = json.loads(content)
