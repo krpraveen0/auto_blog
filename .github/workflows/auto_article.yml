@@ -13,7 +13,8 @@ jobs:
     uses: ./.github/workflows/generate.yml
     secrets: inherit
     with:
-      topic: ${{ vars.AUTO_TOPIC || 'Serverless computing in India: pros and cons' }}
+      topic: >-
+        ${{ vars.AUTO_TOPIC || 'Serverless computing in India: pros and cons' }}
       publish: ${{ vars.AUTO_PUBLISH || false }}
       tags: ${{ vars.AUTO_TAGS || '' }}
       audience: ${{ vars.AUTO_AUDIENCE || 'beginner' }}
