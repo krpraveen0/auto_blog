@@ -152,6 +152,24 @@ def list_planned_articles(client: Client) -> List[Dict[str, Any]]:
     return result.data or []
 
 
+def fetch_next_planned_article(client: Client) -> Optional[Dict[str, Any]]:
+    """Return the next planned article or ``None``.
+
+    This helper mirrors :func:`list_planned_articles` but only returns a single
+    row.  It keeps the selection logic in one place so callers that want the
+    "next" article don't have to re‑implement the Supabase query each time.
+    """
+    rows = (
+        client.table("articles")
+        .select("*")
+        .eq("status", "planned")
+        .order("scheduled_at", desc=False)
+        .limit(1)
+        .execute()
+    ).data
+    return rows[0] if rows else None
+
+
 __all__ = [
     "get_client",
     "init_db",
@@ -161,4 +179,5 @@ __all__ = [
     "fetch_article",
     "update_article",
     "list_planned_articles",
+    "fetch_next_planned_article",
 ]

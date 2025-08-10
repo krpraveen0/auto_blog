@@ -7,6 +7,7 @@ Command-line tools to plan, generate and publish Medium articles driven by the P
 - List scheduled articles
 - Generate Markdown articles with Indian mini-projects and optional code snippets
 - Publish drafts or public posts directly to Medium
+- Automatically plan a series and publish the next article in one step
 
 ## Project layout
 ```
@@ -49,6 +50,7 @@ python -m app.cli plan-series  --db-key "$SUPABASE_KEY" --topic "Data Viz in Pyt
 python -m app.cli list         --db-key "$SUPABASE_KEY"
 python -m app.cli generate 1   --db-key "$SUPABASE_KEY" --publish --tags python medium
 python -m app.cli publish 1    --db-key "$SUPABASE_KEY" --status public --tags python medium
+python -m app.cli auto         --db-key "$SUPABASE_KEY" --topic "Data Viz in Python" --publish
 ```
 
 Key options for `generate`:
@@ -92,7 +94,7 @@ jobs:
           SUPABASE_URL:        ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY:        ${{ secrets.SUPABASE_KEY }}
         run: |
-          python -m app.cli generate 1 --db-key "$SUPABASE_KEY" --publish
+          python -m app.cli auto --db-key "$SUPABASE_KEY" --topic "Data Viz in Python" --publish
 ```
 
 Store the API keys and Supabase credentials as repository secrets.
