@@ -71,11 +71,6 @@ on:
           - draft
           - public
           - unlisted
-      canonical_url:
-        description: 'Canonical URL (optional)'
-        required: false
-        type: string
-        default: ''
 
 concurrency:
   group: auto-article
@@ -96,4 +91,3 @@ jobs:
       outline_depth: ${{ github.event.inputs.outline_depth }}
       include_code: ${{ github.event.inputs.include_code }}
       status: ${{ github.event.inputs.status }}
-      canonical_url: ${{ github.event.inputs.canonical_url }}
