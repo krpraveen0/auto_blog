@@ -165,6 +165,37 @@ def cmd_generate(args: argparse.Namespace) -> None:
         print(json.dumps(resp, indent=2))
 
 
+def cmd_publish(args: argparse.Namespace) -> None:
+    engine = get_engine(args.db_url)
+    init_db(engine)
+    row = fetch_article(engine, args.id)
+    if not row:
+        raise SystemExit(f"No article with id {args.id}")
+    article_md = row.get("markdown")
+    if not article_md:
+        raise SystemExit(f"Article {args.id} has no markdown to publish")
+    topic = row["topic"]
+
+    meta = parse_frontmatter(article_md)
+    title = meta.get("title") or f"{topic} — with Indian Mini Projects by Praveen"
+    suggested_tags_raw = meta.get("suggested_tags")
+    meta_tags = [t.strip() for t in suggested_tags_raw.split(",")] if suggested_tags_raw else []
+    tags = (meta_tags or args.tags)[:5]
+
+    publisher = MediumPublisher(token=args.medium_token)
+    resp = publisher.publish_article(
+        title=title,
+        content_markdown=article_md,
+        tags=tags,
+        publish_status=args.status,
+        canonical_url=args.canonical_url,
+        notify_followers=(args.status == "public"),
+    )
+    update_article(engine, args.id, status="published")
+    print("[OK] Medium response:")
+    print(json.dumps(resp, indent=2))
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
@@ -208,6 +239,34 @@ def build_parser() -> argparse.ArgumentParser:
 
     list_p = sub.add_parser("list", help="List planned articles")
     list_p.set_defaults(func=cmd_list)
+
+    publish_p = sub.add_parser(
+        "publish", help="Publish a generated article to Medium"
+    )
+    publish_p.add_argument("id", type=int, help="Article id to publish")
+    publish_p.add_argument(
+        "--tags",
+        nargs="*",
+        default=[],
+        help="Medium tags (max 5 used).",
+    )
+    publish_p.add_argument(
+        "--status",
+        default="draft",
+        choices=["draft", "public", "unlisted"],
+        help="Publish status on Medium.",
+    )
+    publish_p.add_argument(
+        "--canonical-url",
+        default=None,
+        help="Canonical URL if cross‑posting.",
+    )
+    publish_p.add_argument(
+        "--medium-token",
+        default=None,
+        help="Override Medium integration token (otherwise load from .env).",
+    )
+    publish_p.set_defaults(func=cmd_publish)
 
     gen_p = sub.add_parser("generate", help="Generate an article from a plan id")
     gen_p.add_argument("id", type=int, help="Planned article id")
