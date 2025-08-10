@@ -1,0 +1,22 @@
+name: Generate article
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 9 * * *"
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - name: Run generator
+        env:
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          MEDIUM_TOKEN: ${{ secrets.MEDIUM_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          yoyo apply --database "$DATABASE_URL" db/migrations
+          python -m app.cli generate 1 --db-url "$DATABASE_URL" --publish
