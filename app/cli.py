@@ -197,16 +197,21 @@ def cmd_publish(args: argparse.Namespace) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument("--db-url", default=None, help="Database URL")
+
     parser = argparse.ArgumentParser(
         description=(
             "Plan, list and generate Perplexity‑powered Medium articles with Indian "
             "mini projects and Praveen branding."
-        )
+        ),
+        parents=[common],
     )
-    parser.add_argument("--db-url", default=None, help="Database URL")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    plan_p = sub.add_parser("plan", help="Insert a planned article into the DB")
+    plan_p = sub.add_parser(
+        "plan", parents=[common], help="Insert a planned article into the DB"
+    )
     plan_p.add_argument("--topic", required=True, help="Topic to write about")
     plan_p.add_argument("--series", help="Series name for grouping articles")
     plan_p.add_argument(
@@ -215,7 +220,9 @@ def build_parser() -> argparse.ArgumentParser:
     plan_p.set_defaults(func=cmd_plan)
 
     series_p = sub.add_parser(
-        "plan-series", help="Generate and plan a series of articles"
+        "plan-series",
+        parents=[common],
+        help="Generate and plan a series of articles"
     )
     series_p.add_argument("--topic", required=True, help="Series theme")
     series_p.add_argument(
@@ -237,11 +244,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     series_p.set_defaults(func=cmd_plan_series)
 
-    list_p = sub.add_parser("list", help="List planned articles")
+    list_p = sub.add_parser("list", parents=[common], help="List planned articles")
     list_p.set_defaults(func=cmd_list)
 
     publish_p = sub.add_parser(
-        "publish", help="Publish a generated article to Medium"
+        "publish", parents=[common], help="Publish a generated article to Medium"
     )
     publish_p.add_argument("id", type=int, help="Article id to publish")
     publish_p.add_argument(
@@ -268,7 +275,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     publish_p.set_defaults(func=cmd_publish)
 
-    gen_p = sub.add_parser("generate", help="Generate an article from a plan id")
+    gen_p = sub.add_parser(
+        "generate", parents=[common], help="Generate an article from a plan id"
+    )
     gen_p.add_argument("id", type=int, help="Planned article id")
     gen_p.add_argument(
         "--audience",
