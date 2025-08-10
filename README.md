@@ -36,11 +36,11 @@ Create a `.env` file (or set environment variables):
 | `SUPABASE_KEY`       | Supabase API key                                    |
 ## CLI usage
 ```bash
-python -m app.cli plan         --db-url "$SUPABASE_URL" --db-key "$SUPABASE_KEY" --topic "FastAPI with UPI"
-python -m app.cli plan-series  --db-url "$SUPABASE_URL" --db-key "$SUPABASE_KEY" --topic "Data Viz in Python" --posts 3
-python -m app.cli list         --db-url "$SUPABASE_URL" --db-key "$SUPABASE_KEY"
-python -m app.cli generate 1   --db-url "$SUPABASE_URL" --db-key "$SUPABASE_KEY" --publish --tags python medium
-python -m app.cli publish 1    --db-url "$SUPABASE_URL" --db-key "$SUPABASE_KEY" --status public --tags python medium
+python -m app.cli plan         --db-key "$SUPABASE_KEY" --topic "FastAPI with UPI"
+python -m app.cli plan-series  --db-key "$SUPABASE_KEY" --topic "Data Viz in Python" --posts 3
+python -m app.cli list         --db-key "$SUPABASE_KEY"
+python -m app.cli generate 1   --db-key "$SUPABASE_KEY" --publish --tags python medium
+python -m app.cli publish 1    --db-key "$SUPABASE_KEY" --status public --tags python medium
 ```
 
 Key options for `generate`:
@@ -84,7 +84,7 @@ jobs:
           SUPABASE_URL:        ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY:        ${{ secrets.SUPABASE_KEY }}
         run: |
-          python -m app.cli generate 1 --db-url "$SUPABASE_URL" --db-key "$SUPABASE_KEY" --publish
+          python -m app.cli generate 1 --db-key "$SUPABASE_KEY" --publish
 ```
 
 Store the API keys and Supabase credentials as repository secrets.

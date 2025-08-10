@@ -16,14 +16,14 @@ SUPABASE_URL_ENV = "SUPABASE_URL"
 SUPABASE_KEY_ENV = "SUPABASE_KEY"
 
 
-def get_client(db_url: Optional[str] = None, db_key: Optional[str] = None) -> Client:
+def get_client(db_key: Optional[str] = None) -> Client:
     """Return a Supabase client using env vars or provided strings."""
     load_dotenv()
-    url = db_url or os.getenv(SUPABASE_URL_ENV)
+    url = os.getenv(SUPABASE_URL_ENV)
     key = db_key or os.getenv(SUPABASE_KEY_ENV)
     if not url or not key:
         raise ValueError(
-            "Supabase URL and key must be provided via arguments or environment"
+            "Supabase URL and key must be provided via environment or arguments"
         )
     return create_client(url, key)
 
