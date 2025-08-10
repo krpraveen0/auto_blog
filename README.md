@@ -47,6 +47,7 @@ python -m app.cli plan         --db-url sqlite:///blog.db --topic "FastAPI with 
 python -m app.cli plan-series  --db-url sqlite:///blog.db --topic "Data Viz in Python" --posts 3
 python -m app.cli list         --db-url sqlite:///blog.db
 python -m app.cli generate 1   --db-url sqlite:///blog.db --publish --tags python medium
+python -m app.cli publish 1    --db-url sqlite:///blog.db --status public --tags python medium
 ```
 
 Key options for `generate`:
@@ -58,6 +59,13 @@ Key options for `generate`:
 - `--publish` to upload to Medium; `--status {draft|public|unlisted}`, `--tags`, `--canonical-url`
 - `--save-md path` to persist generated Markdown locally
 - `--pplx-key` and `--medium-token` override `.env` values
+
+Key options for `publish`:
+
+- `--status {draft|public|unlisted}`
+- `--tags` (max 5 used)
+- `--canonical-url`
+- `--medium-token` override `.env` value
 
 ## GitHub Actions
 Automate article generation with a workflow (save as `.github/workflows/generate.yml`):
