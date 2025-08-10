@@ -34,6 +34,7 @@ from .db import (
     list_planned_articles,
     fetch_article,
     update_article,
+    fetch_next_planned_article,
 )
 
 
@@ -196,6 +197,120 @@ def cmd_publish(args: argparse.Namespace) -> None:
     print(json.dumps(resp, indent=2))
 
 
+def cmd_auto(args: argparse.Namespace) -> None:
+    client = get_client(args.db_key)
+    init_db(client)
+
+    plan = fetch_next_planned_article(client)
+    if not plan:
+        if not args.topic:
+            raise SystemExit(
+                "No planned articles available and no --topic provided to plan a new series"
+            )
+        generator = PerplexityGenerator(api_key=args.pplx_key)
+        series_plan = generator.generate_series_plan(
+            topic=args.topic, posts=args.posts, model=args.model
+        )
+        scheduled = (
+            datetime.fromisoformat(args.schedule_date)
+            if args.schedule_date
+            else None
+        )
+        for item in series_plan:
+            plan_article(
+                client,
+                topic=item["title"],
+                series_name=args.topic,
+                scheduled_at=scheduled,
+            )
+        plan = fetch_next_planned_article(client)
+        if not plan:
+            raise SystemExit("Failed to plan a new article")
+
+    args.id = plan["id"]
+    cmd_generate(args)
+
+
+def add_generate_args(p: argparse.ArgumentParser) -> None:
+    """Add common generation/publishing arguments to a parser."""
+    p.add_argument(
+        "--audience",
+        default="beginner",
+        choices=["beginner", "intermediate", "advanced"],
+        help="Audience level for the article.",
+    )
+    p.add_argument(
+        "--tone",
+        default="practical",
+        choices=["friendly", "professional", "practical", "conversational"],
+        help="Tone of the article.",
+    )
+    p.add_argument(
+        "--model",
+        default="sonar",
+        choices=["sonar", "sonar-reasoning", "sonar-pro", "sonar-deep-research"],
+        help="Perplexity model to use.",
+    )
+    p.add_argument(
+        "--minutes",
+        type=int,
+        default=10,
+        help="Target reading time in minutes.",
+    )
+    p.add_argument(
+        "--outline-depth",
+        type=int,
+        default=3,
+        help="Outline depth (number of heading levels).",
+    )
+    p.add_argument(
+        "--no-code",
+        action="store_true",
+        help="Reduce code blocks if set (focus on instructions instead).",
+    )
+    p.add_argument(
+        "--cta",
+        default="Follow Praveen for more real‑world build guides.",
+        help="Call to action appended to the article.",
+    )
+    p.add_argument(
+        "--save-md",
+        help="Path to save the generated Markdown (optional)",
+    )
+    p.add_argument(
+        "--publish",
+        action="store_true",
+        help="Publish the article to Medium after generation.",
+    )
+    p.add_argument(
+        "--tags",
+        nargs="*",
+        default=[],
+        help="Medium tags (max 5 used).",
+    )
+    p.add_argument(
+        "--status",
+        default="draft",
+        choices=["draft", "public", "unlisted"],
+        help="Publish status on Medium.",
+    )
+    p.add_argument(
+        "--canonical-url",
+        default=None,
+        help="Canonical URL if cross‑posting.",
+    )
+    p.add_argument(
+        "--pplx-key",
+        default=None,
+        help="Override Perplexity API key (otherwise load from .env).",
+    )
+    p.add_argument(
+        "--medium-token",
+        default=None,
+        help="Override Medium integration token (otherwise load from .env).",
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     common = argparse.ArgumentParser(add_help=False)
     common.add_argument("--db-key", default=None, help="Supabase API key")
@@ -279,83 +394,30 @@ def build_parser() -> argparse.ArgumentParser:
         "generate", parents=[common], help="Generate an article from a plan id"
     )
     gen_p.add_argument("id", type=int, help="Planned article id")
-    gen_p.add_argument(
-        "--audience",
-        default="beginner",
-        choices=["beginner", "intermediate", "advanced"],
-        help="Audience level for the article.",
-    )
-    gen_p.add_argument(
-        "--tone",
-        default="practical",
-        choices=["friendly", "professional", "practical", "conversational"],
-        help="Tone of the article.",
-    )
-    gen_p.add_argument(
-        "--model",
-        default="sonar",
-        choices=["sonar", "sonar-reasoning", "sonar-pro", "sonar-deep-research"],
-        help="Perplexity model to use.",
-    )
-    gen_p.add_argument(
-        "--minutes",
-        type=int,
-        default=10,
-        help="Target reading time in minutes.",
-    )
-    gen_p.add_argument(
-        "--outline-depth",
-        type=int,
-        default=3,
-        help="Outline depth (number of heading levels).",
-    )
-    gen_p.add_argument(
-        "--no-code",
-        action="store_true",
-        help="Reduce code blocks if set (focus on instructions instead).",
-    )
-    gen_p.add_argument(
-        "--cta",
-        default="Follow Praveen for more real‑world build guides.",
-        help="Call to action appended to the article.",
-    )
-    gen_p.add_argument(
-        "--save-md",
-        help="Path to save the generated Markdown (optional)",
-    )
-    gen_p.add_argument(
-        "--publish",
-        action="store_true",
-        help="Publish the article to Medium after generation.",
-    )
-    gen_p.add_argument(
-        "--tags",
-        nargs="*",
-        default=[],
-        help="Medium tags (max 5 used).",
-    )
-    gen_p.add_argument(
-        "--status",
-        default="draft",
-        choices=["draft", "public", "unlisted"],
-        help="Publish status on Medium.",
-    )
-    gen_p.add_argument(
-        "--canonical-url",
-        default=None,
-        help="Canonical URL if cross‑posting.",
-    )
-    gen_p.add_argument(
-        "--pplx-key",
-        default=None,
-        help="Override Perplexity API key (otherwise load from .env).",
-    )
-    gen_p.add_argument(
-        "--medium-token",
-        default=None,
-        help="Override Medium integration token (otherwise load from .env).",
-    )
+    add_generate_args(gen_p)
     gen_p.set_defaults(func=cmd_generate)
+
+    auto_p = sub.add_parser(
+        "auto",
+        parents=[common],
+        help="Plan a series if needed and generate the next article",
+    )
+    auto_p.add_argument(
+        "--topic",
+        help="Series topic used when planning a new set of articles",
+    )
+    auto_p.add_argument(
+        "--posts",
+        type=int,
+        default=5,
+        help="Number of posts to plan when creating a series",
+    )
+    auto_p.add_argument(
+        "--schedule-date",
+        help="ISO timestamp for scheduled publication",
+    )
+    add_generate_args(auto_p)
+    auto_p.set_defaults(func=cmd_auto)
 
     return parser
 
