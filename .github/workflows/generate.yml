@@ -20,4 +20,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: |
-          python -m app.cli generate 1 --db-key "$SUPABASE_KEY" --publish
+          python -m app.cli auto \
+            --db-key "$SUPABASE_KEY" \
+            --topic "Data Viz in Python" \
+            --publish
