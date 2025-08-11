@@ -84,3 +84,4 @@ article.md
 my_article.md
 *.md
 !README.md
+!articles/*.md

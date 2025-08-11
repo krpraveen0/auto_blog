@@ -103,6 +103,65 @@ class PerplexityGenerator:
             raise PerplexityError(f"Perplexity API error {response.status_code}: {data}")
         return data
 
+    def suggest_trending_topics(
+        self,
+        count: int = 5,
+        model: PerpModel = "sonar",
+    ) -> list[str]:
+        """Return a list of currently trending blog topics.
+
+        The function queries Perplexity for fresh, technical subjects that are
+        popular around the current date. The response is expected to be a JSON
+        array of short title strings. A :class:`PerplexityError` is raised if the
+        response cannot be parsed.
+        """
+        from datetime import date
+
+        today = date.today().isoformat()
+        system_message = (
+            "You are a research assistant for software bloggers. Return only "
+            "concise topic titles.")
+        user_prompt = f"""
+Date: {today}
+
+List {count} trending software or data topics that would make engaging blog posts.
+Respond ONLY with a JSON array of strings.
+        """.strip()
+
+        payload = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": user_prompt},
+            ],
+            "temperature": 0.7,
+            "top_p": 0.9,
+        }
+
+        data = self._post("/chat/completions", payload)
+        try:
+            content = data["choices"][0]["message"]["content"].strip()
+        except (KeyError, IndexError) as exc:
+            raise PerplexityError(
+                f"Unexpected response shape from Perplexity: {data}"
+            ) from exc
+
+        fenced = re.search(r"```(?:json)?\s*(.*?)\s*```", content, re.DOTALL)
+        if fenced:
+            content = fenced.group(1).strip()
+
+        try:
+            topics = json.loads(content)
+        except ValueError as exc:
+            raise PerplexityError(
+                f"Perplexity did not return valid JSON: {content}"
+            ) from exc
+
+        if not isinstance(topics, list):
+            raise PerplexityError("Expected a JSON array of strings.")
+
+        return [str(t) for t in topics]
+
     def generate_article(
         self,
         topic: str,
@@ -284,3 +343,14 @@ def generate_series_plan(
     """Convenience wrapper around :class:`PerplexityGenerator`."""
     generator = PerplexityGenerator(api_key=api_key, base_url=base_url)
     return generator.generate_series_plan(topic, posts, model=model)
+
+
+def suggest_trending_topics(
+    count: int = 5,
+    model: PerpModel = "sonar",
+    api_key: Optional[str] = None,
+    base_url: str = "https://api.perplexity.ai",
+) -> list[str]:
+    """Convenience wrapper that returns trending blog topics."""
+    generator = PerplexityGenerator(api_key=api_key, base_url=base_url)
+    return generator.suggest_trending_topics(count=count, model=model)
