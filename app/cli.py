@@ -25,7 +25,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 
-from .perplexity_generator import PerplexityGenerator
+from .perplexity_generator import PerplexityGenerator, PerplexityError
 from .medium_publisher import MediumPublisher
 from .db import (
     get_client,
@@ -203,13 +203,18 @@ def cmd_auto(args: argparse.Namespace) -> None:
 
     plan = fetch_next_planned_article(client)
     if not plan:
-        if not args.topic:
-            raise SystemExit(
-                "No planned articles available and no --topic provided to plan a new series"
-            )
         generator = PerplexityGenerator(api_key=args.pplx_key)
+        topic = args.topic
+        if not topic:
+            try:
+                topic = generator.suggest_trending_topics(count=1, model=args.model)[0]
+                print(f"[INFO] Selected trending topic '{topic}'")
+            except PerplexityError as exc:
+                raise SystemExit(
+                    "No planned articles available and failed to fetch a trending topic"
+                ) from exc
         series_plan = generator.generate_series_plan(
-            topic=args.topic, posts=args.posts, model=args.model
+            topic=topic, posts=args.posts, model=args.model
         )
         scheduled = (
             datetime.fromisoformat(args.schedule_date)
@@ -220,7 +225,7 @@ def cmd_auto(args: argparse.Namespace) -> None:
             plan_article(
                 client,
                 topic=item["title"],
-                series_name=args.topic,
+                series_name=topic,
                 scheduled_at=scheduled,
             )
         plan = fetch_next_planned_article(client)
