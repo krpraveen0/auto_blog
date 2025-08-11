@@ -373,6 +373,54 @@ array of objects, each having the fields 'title' and 'summary'.
 
         return results
 
+    def generate_job_postings(
+        self,
+        role: str,
+        count: int = 5,
+        model: PerpModel = "sonar",
+    ) -> str:
+        """Generate markdown-formatted job postings for a role.
+
+        Each posting is separated by a blank line and contains a heading with
+        bullet points for location, experience and skills. This ensures clear
+        spacing and a consistent, attractive layout.
+        """
+        system_message = (
+            "You are an assistant that drafts clean, well-structured job posts"
+        )
+        user_prompt = f"""
+Write {count} realistic job postings for the role "{role}".
+
+Format each posting in Markdown using:
+
+### {{Job Title}} at {{Company}}
+
+- **Location:** City or Remote
+- **Experience:** Years or level
+- **Key Skills:** comma separated list
+- **Description:** one short paragraph
+
+Separate each posting with a blank line and keep all formatting in Markdown.
+""".strip()
+
+        payload = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": user_prompt},
+            ],
+            "temperature": 0.7,
+            "top_p": 0.9,
+        }
+
+        data = self._post("/chat/completions", payload)
+        try:
+            return data["choices"][0]["message"]["content"]
+        except (KeyError, IndexError) as exc:
+            raise PerplexityError(
+                f"Unexpected response shape from Perplexity: {data}"
+            ) from exc
+
 
 def generate_series_plan(
     topic: str,
