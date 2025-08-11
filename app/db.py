@@ -171,10 +171,12 @@ def fetch_next_planned_article(client: Client) -> Optional[Dict[str, Any]]:
     row.  It keeps the selection logic in one place so callers that want the
     "next" article don't have to re‑implement the Supabase query each time.
     """
+    now = datetime.utcnow().isoformat()
     rows = (
         client.table("articles")
         .select("*")
         .eq("status", "planned")
+        .lte("scheduled_at", now)
         .order("scheduled_at", desc=False)
         .limit(1)
         .execute()
