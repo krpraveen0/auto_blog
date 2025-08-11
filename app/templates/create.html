@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>Customize Article</h2>
+  <form method="post">
+    <input type="hidden" name="topic" value="{{ topic }}" />
+    <div class="mb-3">
+      <label class="form-label" for="audience">Audience Level</label>
+      <select class="form-select" id="audience" name="audience_level">
+        {% for level in audience_levels %}
+        <option value="{{ level }}">{{ level.capitalize() }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="tone">Tone</label>
+      <select class="form-select" id="tone" name="tone">
+        {% for t in tones %}
+        <option value="{{ t }}">{{ t.capitalize() }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="goal">Goal / Objective</label>
+      <select class="form-select" id="goal" name="goal">
+        {% for g in goals %}
+        <option value="{{ g }}">{{ g }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary">Generate Article</button>
+  </form>
+{% endblock %}
