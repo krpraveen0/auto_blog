@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional
 
@@ -89,12 +89,14 @@ def cmd_plan_series(args: argparse.Namespace) -> None:
     plan = generator.generate_series_plan(
         topic=args.topic, posts=args.posts, model=args.model
     )
-    scheduled = (
+    start = (
         datetime.fromisoformat(args.schedule_date)
         if args.schedule_date
-        else None
+        else datetime.utcnow()
     )
-    for item in plan:
+    gap = timedelta(hours=args.gap_hours)
+    for idx, item in enumerate(plan):
+        scheduled = start + idx * gap
         article_id = plan_article(
             client,
             topic=item["title"],
@@ -210,6 +212,10 @@ def cmd_auto(args: argparse.Namespace) -> None:
 
     plan = fetch_next_planned_article(client)
     if not plan:
+        pending = list_planned_articles(client)
+        if pending:
+            print("[INFO] Next article is scheduled for later. Skipping generation.")
+            return
         generator = PerplexityGenerator(api_key=args.pplx_key)
         topic = args.topic
         if not topic:
@@ -388,6 +394,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     series_p.add_argument(
         "--schedule-date", help="ISO timestamp for scheduled publication"
+    )
+    series_p.add_argument(
+        "--gap-hours",
+        type=int,
+        default=24,
+        help="Hours between scheduled articles",
     )
     series_p.add_argument(
         "--model",
