@@ -32,20 +32,60 @@ def index() -> str:
     return render_template("index.html", topics=topics)
 
 
-@app.route("/create")
+AUDIENCE_LEVELS = ["beginner", "intermediate", "advanced"]
+TONES = [
+    "casual",
+    "tutorial",
+    "storytelling",
+    "formal",
+    "friendly",
+    "professional",
+    "practical",
+    "conversational",
+]
+GOALS = [
+    "Learn the basics",
+    "Build a project",
+    "Deep dive",
+    "Best practices",
+]
+
+
+@app.route("/create", methods=["GET", "POST"])
 def create_article() -> str:
     """Generate an article for a given topic and show it for publishing."""
+    if request.method == "POST":
+        topic = request.form.get("topic")
+        if not topic:
+            flash("Missing topic", "warning")
+            return redirect(url_for("index"))
+        audience = request.form.get("audience_level", "beginner")
+        tone = request.form.get("tone", "tutorial")
+        goal = request.form.get("goal", "")
+        try:
+            content = get_generator().generate_article(
+                topic,
+                audience_level=audience,
+                tone=tone,
+                goal=goal,
+            )
+        except PerplexityError as exc:
+            flash(str(exc), "danger")
+            return redirect(url_for("index"))
+        articles[topic] = content
+        return render_template("article.html", topic=topic, content=content)
+    # GET request: show form with options
     topic = request.args.get("topic")
     if not topic:
         flash("Missing topic", "warning")
         return redirect(url_for("index"))
-    try:
-        content = get_generator().generate_article(topic)
-    except PerplexityError as exc:
-        flash(str(exc), "danger")
-        return redirect(url_for("index"))
-    articles[topic] = content
-    return render_template("article.html", topic=topic, content=content)
+    return render_template(
+        "create.html",
+        topic=topic,
+        audience_levels=AUDIENCE_LEVELS,
+        tones=TONES,
+        goals=GOALS,
+    )
 
 
 @app.route("/publish", methods=["POST"])
