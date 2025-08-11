@@ -171,15 +171,19 @@ Respond ONLY with a JSON array of strings.
         include_code: bool = True,
         outline_depth: int = 3,
         target_minutes: int = 10,
-        call_to_action: str = "Follow Praveen for more real‑world build guides.",
+        call_to_action: str = "Follow Praveen for more fullstack AI & cloud build guides.",
+        expertise: str = "fullstack AI cloud developer",
     ) -> str:
         """
         Generate an article in Markdown format around a given topic.
 
-        The resulting text includes frontmatter, a TL;DR, multiple sections with
-        mini projects using Indian data sets, personal tips attributed to
-        'Praveen', and a concluding call to action. The generator encapsulates
-        prompt engineering for typical Perplexity models.
+        The function produces flexible outlines that always provide frontmatter,
+        a TL;DR, a short social-media teaser and a closing call to action.
+        Beyond those basics, section structure and examples are driven by the
+        supplied topic and current trends so repeated runs do not feel canned.
+        The generator still showcases Praveen's expertise as a {expertise} but
+        leaves room for bespoke mini projects or case studies based on user
+        prompts or trend analysis.
 
         Parameters
         ----------
@@ -200,6 +204,9 @@ Respond ONLY with a JSON array of strings.
             Approximate reading time for the article.
         call_to_action:
             A closing call to action for readers.
+        expertise:
+            A short phrase describing Praveen's background. This will be woven
+            into the article to emphasise authority.
 
         Returns
         -------
@@ -207,40 +214,37 @@ Respond ONLY with a JSON array of strings.
             A full Markdown article ready for publication.
         """
         system_message = (
-            "You are a senior technical writer and educator. Produce publish‑ready "
-            "Markdown articles with runnable code and practical projects."
+            "You are a senior technical writer, educator and growth hacker. "
+            "Produce publish‑ready Markdown articles with runnable code, "
+            "practical projects and viral, shareable hooks."
         )
         user_prompt = f"""
 Topic: {topic}
 
-Write a Medium‑ready article that strictly follows these rules:
+Research the latest developments around the topic and craft a fresh,
+shareable angle. Adapt the structure to the content; do not reuse canned
+sections.
 
 Audience: {audience_level}
 Tone: {tone}
 Reading time target: ~{target_minutes} minutes
 Outline depth (levels): {outline_depth}
 
-MANDATORY CONTENT:
+MUST INCLUDE:
 1) Frontmatter (YAML fenced) with: title, seo_description (<=150 chars),
-   suggested_tags (<=5), canonical_url (empty), author: Praveen
-2) A catchy H1 title
-3) A brief TL;DR bullet list
-4) Context with Indian examples (payments via UPI, IRCTC bookings, cricket
-   stats, Aadhaar eKYC flows, Indian retail prices, Rupay cards, Indian cities, etc.)
-5) Mini Projects (2–3):
-   - Clearly named, each with GOAL, PREREQS, STEP‑BY‑STEP, CODE (Python/Java/JS as relevant),
-     SAMPLE INPUT/OUTPUT, and a "What could go wrong?" section.
-   - Use realistic Indian data or scenarios (e.g., Mumbai weather data, NPCI/UPI mock flows,
-     local CSVs).
-   - Personalize with 'Praveen' (e.g., "Praveen's Tip", "Praveen's Checklist").
-6) At least one "Deep Dive" explanation section.
-7) A troubleshooting/FAQ section.
-8) A concluding CTA that includes: {call_to_action}
+   suggested_tags (<=5), canonical_url (empty), author: Praveen ({expertise})
+2) Catchy H1 title with a strong viral hook informed by current trends
+3) Brief TL;DR bullet list
+4) "Social Share" teaser <=280 characters for Twitter/LinkedIn
+5) At least two practical sections (mini projects, case studies or
+   experiments). Use realistic data or scenarios relevant to the topic.
+6) Occasional personalised callouts like "Praveen's Tip" when helpful
+7) Concluding CTA that includes: {call_to_action}
 
 STYLE:
 - Use Markdown, headings, lists, tables when helpful.
 - Prefer code that can run as‑is; keep secrets/config in env vars.
-- Keep any external links minimal and optional.
+- Keep external links minimal and optional.
 - Avoid fluff. Be specific and instructive.
 
 If code is irrelevant to the topic, replace with commands or configs.
@@ -271,7 +275,7 @@ If {include_code} is False, minimise code and focus on step‑by‑step actions.
         posts: int = 5,
         model: PerpModel = "sonar",
     ) -> list[dict]:
-        """Generate a plan for a standalone mini‑project article series."""
+        """Generate a trend-aware plan for a standalone mini-project series."""
         system_message = (
             "You are an expert educational content planner. "
             "Return structured ideas for independent tutorial posts."
@@ -279,10 +283,11 @@ If {include_code} is False, minimise code and focus on step‑by‑step actions.
         user_prompt = f"""
 Topic: {topic}
 
-Produce {posts} self-contained blog post ideas about the above topic.
-Each idea must describe a complete mini-project that does not depend on
-the other posts. Respond ONLY with valid JSON representing an array of
-objects, each having the fields 'title' and 'summary'.
+Produce {posts} self-contained blog post ideas based on current trends
+or user interests around the topic. Ensure each idea explores a distinct
+angle. Each idea must describe a complete mini-project that does not
+depend on the other posts. Respond ONLY with valid JSON representing an
+array of objects, each having the fields 'title' and 'summary'.
         """.strip()
 
         payload = {
