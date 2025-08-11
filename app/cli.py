@@ -53,6 +53,9 @@ def parse_frontmatter(md: str) -> dict:
         raw = md[3:fence_end].strip()
         meta = {}
         for line in raw.splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
             if ":" in line:
                 k, v = line.split(":", 1)
                 meta[k.strip()] = v.strip().strip('"').strip("'")
