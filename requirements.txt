@@ -2,3 +2,4 @@ python-dotenv
 requests
 supabase>=2.0
 yamllint
+Flask

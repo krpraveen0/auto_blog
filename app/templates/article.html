@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h2>{{ topic }}</h2>
+  <form method="post" action="{{ url_for('publish_article') }}">
+    <input type="hidden" name="topic" value="{{ topic }}" />
+    <div class="mb-3">
+      <textarea class="form-control" name="content" rows="15">{{ content }}</textarea>
+    </div>
+    <button type="submit" class="btn btn-success">Publish Article</button>
+  </form>
+{% endblock %}
