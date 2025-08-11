@@ -104,7 +104,7 @@ def update_article(
 ) -> None:
     """Update fields on an existing article."""
     values = {
-        k: v
+        k: (v.isoformat() if isinstance(v, datetime) else v)
         for k, v in {
             "topic": topic,
             "status": status,
@@ -134,7 +134,7 @@ def save_article(
         "status": status,
         "markdown": markdown,
         "series_id": series_id,
-        "scheduled_at": scheduled_at,
+        "scheduled_at": scheduled_at.isoformat() if scheduled_at else None,
     }
     payload = {k: v for k, v in payload.items() if v is not None}
     insert_builder = client.table("articles").insert(payload)
