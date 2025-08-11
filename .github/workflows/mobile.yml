@@ -1,0 +1,35 @@
+name: Mobile article manager
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish to Medium'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - name: Generate trending article
+        env:
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          MEDIUM_TOKEN: ${{ secrets.MEDIUM_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          PUBLISH_FLAG=""
+          if [ "${{ github.event.inputs.publish }}" = "true" ]; then
+            PUBLISH_FLAG="--publish"
+          fi
+          python -m app.cli auto \
+            --db-key "$SUPABASE_KEY" \
+            $PUBLISH_FLAG
+

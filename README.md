@@ -102,3 +102,5 @@ jobs:
 ```
 
 Store the API keys and Supabase credentials as repository secrets.
+
+For a simplified, mobile-friendly experience, trigger `.github/workflows/mobile.yml`. It lets Perplexity pick a trending topic and shows a single toggle to publish the generated article to Medium.
