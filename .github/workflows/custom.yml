@@ -1,0 +1,46 @@
+name: Custom article generator
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: 'Topic for single article or series'
+        required: true
+      posts:
+        description: 'Number of articles to generate (1 for single)'
+        required: false
+        default: '1'
+      publish:
+        description: 'Publish to Medium'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - name: Generate article(s)
+        env:
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          MEDIUM_TOKEN: ${{ secrets.MEDIUM_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          PUBLISH_FLAG=""
+          if [ "${{ github.event.inputs.publish }}" = "true" ]; then
+            PUBLISH_FLAG="--publish"
+          fi
+          for i in $(seq 1 ${{ github.event.inputs.posts }}); do
+            python -m app.cli auto \
+              --db-key "$SUPABASE_KEY" \
+              --topic "${{ github.event.inputs.topic }}" \
+              --posts "${{ github.event.inputs.posts }}" \
+              $PUBLISH_FLAG
+          done
+
