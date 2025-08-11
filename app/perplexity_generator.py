@@ -166,13 +166,26 @@ Respond ONLY with a JSON array of strings.
         self,
         topic: str,
         audience_level: Literal["beginner", "intermediate", "advanced"] = "beginner",
-        tone: Literal["friendly", "professional", "practical", "conversational"] = "practical",
+        tone: Literal[
+            "casual",
+            "tutorial",
+            "storytelling",
+            "formal",
+            "friendly",
+            "professional",
+            "practical",
+            "conversational",
+        ] = "tutorial",
         model: PerpModel = "sonar",
         include_code: bool = True,
         outline_depth: int = 3,
         target_minutes: int = 10,
         call_to_action: str = "Follow Praveen for more fullstack AI & cloud build guides.",
         expertise: str = "fullstack AI cloud developer",
+        content_format: Literal["single article", "series"] = "single article",
+        goal: str = "",
+        stack_focus: str = "",
+        timebox: str = "~15-minute read",
     ) -> str:
         """
         Generate an article in Markdown format around a given topic.
@@ -207,6 +220,15 @@ Respond ONLY with a JSON array of strings.
         expertise:
             A short phrase describing Praveen's background. This will be woven
             into the article to emphasise authority.
+        content_format:
+            Either ``"single article"`` or ``"series"`` to control the output
+            style.
+        goal:
+            Learning outcome or objective for the reader.
+        stack_focus:
+            Comma separated technologies or domains to emphasise.
+        timebox:
+            Optional duration such as ``"30-day bootcamp"`` or ``"~15-minute read"``.
 
         Returns
         -------
@@ -219,36 +241,50 @@ Respond ONLY with a JSON array of strings.
             "practical projects and viral, shareable hooks."
         )
         user_prompt = f"""
-Topic: {topic}
+Role & Goal
+Act as a passionate senior developer, tech mentor, and content curator focused on DSA, ML, AI, Python, Go (Golang), Java, React, AWS, and System Design. Create either a single deep‑dive article or a multi‑part bootcamp series for Medium and similar platforms. Make it hands‑on, industry‑relevant, beginner‑friendly (explain like I’m 5), and fully attributed.
 
-Research the latest developments around the topic and craft a fresh,
-shareable angle. Adapt the structure to the content; do not reuse canned
-sections.
+Dynamic Controls
+topic: {topic}
+format: {content_format}
+audience_level: {audience_level}
+goal: {goal}
+tone: {tone}
+stack_focus: {stack_focus}
+timebox: {timebox}
 
-Audience: {audience_level}
-Tone: {tone}
-Reading time target: ~{target_minutes} minutes
-Outline depth (levels): {outline_depth}
+Trending Topic Pull (Step 0)
+Find currently trending and in‑demand topics aligned with {stack_focus} from reputable sources. Briefly justify why this topic is hot now (hiring signals, ecosystem releases, library updates, cloud announcements).
 
-MUST INCLUDE:
-1) Frontmatter (YAML fenced) with: title, seo_description (<=150 chars),
-   suggested_tags (<=5), canonical_url (empty), author: Praveen ({expertise})
-2) Catchy H1 title with a strong viral hook informed by current trends
-3) Brief TL;DR bullet list
-4) "Social Share" teaser <=280 characters for Twitter/LinkedIn
-5) At least two practical sections (mini projects, case studies or
-   experiments). Use realistic data or scenarios relevant to the topic.
-6) Occasional personalised callouts like "Praveen's Tip" when helpful
-7) Concluding CTA that includes: {call_to_action}
+Output Mode (Step 1)
+If {content_format} == "single article": produce one comprehensive tutorial.
+If {content_format} == "series": produce a series outline (titles, learning objectives, prerequisites, capstone) and deliver Part 1 in full. Include a short preview for Parts 2–N.
 
-STYLE:
-- Use Markdown, headings, lists, tables when helpful.
-- Prefer code that can run as‑is; keep secrets/config in env vars.
-- Keep external links minimal and optional.
-- Avoid fluff. Be specific and instructive.
+Must‑Have Structure (Step 2)
+Title & Hook (why it matters now)
+Prerequisites (tools, skills, repo templates)
+Concepts in Simple Language (ELI5 + precise terms)
+Architecture/System Design (Mermaid diagrams by default)
+Hands‑On Build (copy‑runnable, well‑commented code; minimal setup; include validation checks and expected outputs)
+Testing & Validation (CLI commands, unit tests, curl/Postman examples, sample inputs/outputs)
+Performance, Cost, and Reliability (gotchas, trade‑offs, scaling tips)
+Common Pitfalls & Fixes
+Industry Use Cases & Hiring Signals
+Next Steps / Extensions
+References & Credits
+Used Resources to Curate
 
-If code is irrelevant to the topic, replace with commands or configs.
-If {include_code} is False, minimise code and focus on step‑by‑step actions.
+Mermaid Requirements (Step 3)
+Provide Mermaid code blocks and a fallback rendered link using https://mermaid.ink. Use multiple small diagrams where helpful.
+
+Hands‑On & Real‑World (Step 4)
+Include 2–3 production‑style examples mapping to {stack_focus}. Show working code in appropriate languages and include infra/deploy notes where relevant. Add metrics/observability hints.
+
+Quality Bar (Step 5)
+Use clear numbered steps, short paragraphs, and simple words. Validate every command or code block. Credit third‑party sources. End with a "Used Resources to Curate" section listing all sources.
+
+Final Delivery Format
+Write the article or series in {tone} tone for {audience_level} learners, timebox: {timebox}. Use section headers, checklists, tables where helpful. Include Mermaid code blocks and mermaid.ink links. Conclude with a call to action: {call_to_action}. End with "References & Credits" and "Used Resources to Curate" lists.
         """.strip()
 
         payload = {

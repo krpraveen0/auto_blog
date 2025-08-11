@@ -132,6 +132,10 @@ def cmd_generate(args: argparse.Namespace) -> None:
         outline_depth=args.outline_depth,
         target_minutes=args.minutes,
         call_to_action=args.cta,
+        content_format=args.format,
+        goal=args.goal,
+        stack_focus=args.stack_focus,
+        timebox=args.timebox,
     )
 
     if args.save_md:
@@ -249,8 +253,17 @@ def add_generate_args(p: argparse.ArgumentParser) -> None:
     )
     p.add_argument(
         "--tone",
-        default="practical",
-        choices=["friendly", "professional", "practical", "conversational"],
+        default="tutorial",
+        choices=[
+            "casual",
+            "tutorial",
+            "storytelling",
+            "formal",
+            "friendly",
+            "professional",
+            "practical",
+            "conversational",
+        ],
         help="Tone of the article.",
     )
     p.add_argument(
@@ -280,6 +293,28 @@ def add_generate_args(p: argparse.ArgumentParser) -> None:
         "--cta",
         default="Follow Praveen for more real‑world build guides.",
         help="Call to action appended to the article.",
+    )
+    p.add_argument(
+        "--format",
+        default="single article",
+        choices=["single article", "series"],
+        help="Generate a single article or a multi-part series.",
+    )
+    p.add_argument(
+        "--goal",
+        default="",
+        help="Learning outcome or objective for the reader.",
+    )
+    p.add_argument(
+        "--stack-focus",
+        dest="stack_focus",
+        default="",
+        help="Comma separated technologies or domains to emphasise.",
+    )
+    p.add_argument(
+        "--timebox",
+        default="~15-minute read",
+        help="Optional duration such as '30-day bootcamp'.",
     )
     p.add_argument(
         "--save-md",
