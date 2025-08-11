@@ -57,9 +57,17 @@ def get_or_create_series(client: Client, topic: str) -> int:
     existing = client.table("series").select("id").eq("topic", topic).execute()
     if existing.data:
         return existing.data[0]["id"]
-    inserted = (
-        client.table("series").insert({"topic": topic}).select("id").execute()
-    )
+    # Supabase's Python client changed behaviour between versions: older
+    # releases allowed ``.select("id")`` after an ``insert`` to limit the
+    # returned columns, while newer versions return the inserted row directly
+    # and expose no ``select`` method on the builder.  Attempt to use the more
+    # efficient ``select`` when available but fall back to a plain insert for
+    # compatibility with newer clients.
+    insert_builder = client.table("series").insert({"topic": topic})
+    try:  # Supabase <1.0
+        inserted = insert_builder.select("id").execute()
+    except AttributeError:  # Supabase >=1.0
+        inserted = insert_builder.execute()
     return inserted.data[0]["id"]
 
 
@@ -129,7 +137,11 @@ def save_article(
         "scheduled_at": scheduled_at,
     }
     payload = {k: v for k, v in payload.items() if v is not None}
-    inserted = client.table("articles").insert(payload).select("id").execute()
+    insert_builder = client.table("articles").insert(payload)
+    try:
+        inserted = insert_builder.select("id").execute()
+    except AttributeError:
+        inserted = insert_builder.execute()
     return inserted.data[0]["id"]
 
 
