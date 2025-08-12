@@ -28,6 +28,7 @@ import re
 
 from .perplexity_generator import PerplexityGenerator, PerplexityError
 from .medium_publisher import MediumPublisher
+from .diagram_utils import render_diagrams_to_images
 from .db import (
     get_client,
     init_db,
@@ -170,6 +171,8 @@ def cmd_generate(args: argparse.Namespace) -> None:
         timebox=args.timebox,
     )
 
+    article_md, diagram_paths = render_diagrams_to_images(article_md)
+
     if args.save_md:
         outfile = Path(args.save_md)
         outfile.parent.mkdir(parents=True, exist_ok=True)
@@ -193,6 +196,12 @@ def cmd_generate(args: argparse.Namespace) -> None:
         tags = (meta_tags or args.tags)[:5]
 
         publisher = MediumPublisher(token=args.medium_token)
+        for path in diagram_paths:
+            try:
+                url = publisher.upload_image(path)
+                article_md = article_md.replace(path, url)
+            except Exception as exc:  # pragma: no cover - network failures
+                print(f"[WARN] Failed to upload image {path}: {exc}")
         resp = publisher.publish_article(
             title=title,
             content_markdown=article_md,
@@ -201,6 +210,7 @@ def cmd_generate(args: argparse.Namespace) -> None:
             canonical_url=args.canonical_url,
             notify_followers=(args.status == "public"),
         )
+        update_article(client, args.id, markdown=article_md, status=db_status)
         print("[OK] Medium response:")
         print(json.dumps(resp, indent=2))
 
@@ -216,6 +226,8 @@ def cmd_publish(args: argparse.Namespace) -> None:
         raise SystemExit(f"Article {args.id} has no markdown to publish")
     topic = row["topic"]
 
+    article_md, diagram_paths = render_diagrams_to_images(article_md)
+
     meta = parse_frontmatter(article_md)
     title = meta.get("title") or f"{topic} — with Indian Mini Projects by Praveen"
     suggested_tags_raw = meta.get("suggested_tags")
@@ -223,6 +235,12 @@ def cmd_publish(args: argparse.Namespace) -> None:
     tags = (meta_tags or args.tags)[:5]
 
     publisher = MediumPublisher(token=args.medium_token)
+    for path in diagram_paths:
+        try:
+            url = publisher.upload_image(path)
+            article_md = article_md.replace(path, url)
+        except Exception as exc:  # pragma: no cover - network failures
+            print(f"[WARN] Failed to upload image {path}: {exc}")
     resp = publisher.publish_article(
         title=title,
         content_markdown=article_md,
@@ -231,7 +249,7 @@ def cmd_publish(args: argparse.Namespace) -> None:
         canonical_url=args.canonical_url,
         notify_followers=(args.status == "public"),
     )
-    update_article(client, args.id, status="published")
+    update_article(client, args.id, markdown=article_md, status="published")
     print("[OK] Medium response:")
     print(json.dumps(resp, indent=2))
 
