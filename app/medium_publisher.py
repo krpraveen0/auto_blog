@@ -105,6 +105,40 @@ class MediumPublisher:
         except KeyError as exc:
             raise MediumError(f"Unexpected response for /me: {data}") from exc
 
+    def upload_image(self, image_path: str, content_type: str = "image/png") -> str:
+        """Upload an image to Medium and return its hosted URL.
+
+        Parameters
+        ----------
+        image_path:
+            Path to the image file to upload.
+        content_type:
+            MIME type of the image. Defaults to ``image/png``.
+
+        Returns
+        -------
+        str
+            The URL of the hosted image returned by Medium.
+        """
+        url = f"{self.base_url}/images"
+        headers = self.session.headers.copy()
+        # ``requests`` sets the correct multipart headers when ``files`` is used
+        headers.pop("Content-Type", None)
+        with open(image_path, "rb") as fh:
+            files = {"image": (os.path.basename(image_path), fh, content_type)}
+            response = self.session.post(url, files=files, headers=headers, timeout=30)
+        try:
+            data = response.json()
+        except ValueError:
+            response.raise_for_status()
+            raise MediumError("Non-JSON response received from Medium.")
+        if not response.ok:
+            raise MediumError(f"Medium API error {response.status_code}: {data}")
+        try:
+            return data["data"]["url"]
+        except KeyError as exc:
+            raise MediumError(f"Unexpected response for /images: {data}") from exc
+
     def publish_article(
         self,
         title: str,
