@@ -24,6 +24,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional
+import re
 
 from .perplexity_generator import PerplexityGenerator, PerplexityError
 from .medium_publisher import MediumPublisher
@@ -62,6 +63,34 @@ def parse_frontmatter(md: str) -> dict:
         return meta
     except ValueError:
         return {}
+
+
+# Map common technology keywords to canonical stack focus labels.
+LANG_KEYWORDS = {
+    "golang": "Go (Golang)",
+    "go": "Go (Golang)",
+    "python": "Python",
+    "java": "Java",
+    "javascript": "JavaScript",
+    "typescript": "TypeScript",
+    "react": "React",
+    "aws": "AWS",
+}
+
+
+def infer_stack_focus_from_topic(topic: str) -> str:
+    """Infer a comma-separated stack focus from a topic title.
+
+    Scans the topic for known technology keywords and returns a
+    comma-separated list suitable for the ``stack_focus`` parameter used by
+    :func:`PerplexityGenerator.generate_article`.
+    """
+    topic_lower = topic.lower()
+    matches: list[str] = []
+    for key, label in LANG_KEYWORDS.items():
+        if re.search(rf"\b{re.escape(key)}\b", topic_lower) and label not in matches:
+            matches.append(label)
+    return ", ".join(matches)
 
 
 def cmd_plan(args: argparse.Namespace) -> None:
@@ -125,6 +154,7 @@ def cmd_generate(args: argparse.Namespace) -> None:
     topic = plan["topic"]
 
     generator = PerplexityGenerator(api_key=args.pplx_key)
+    stack_focus = args.stack_focus or infer_stack_focus_from_topic(topic)
     article_md = generator.generate_article(
         topic=topic,
         audience_level=args.audience,
@@ -136,7 +166,7 @@ def cmd_generate(args: argparse.Namespace) -> None:
         call_to_action=args.cta,
         content_format=args.format,
         goal=args.goal,
-        stack_focus=args.stack_focus,
+        stack_focus=stack_focus,
         timebox=args.timebox,
     )
 
