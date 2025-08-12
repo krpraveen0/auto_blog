@@ -264,7 +264,7 @@ Must‑Have Structure (Step 2)
 Title & Hook (why it matters now)
 Prerequisites (tools, skills, repo templates)
 Concepts in Simple Language (ELI5 + precise terms)
-Architecture/System Design (Mermaid diagrams by default)
+Architecture/System Design (Python diagrams library by default)
 Hands‑On Build (copy‑runnable, well‑commented code; minimal setup; include validation checks and expected outputs)
 Testing & Validation (CLI commands, unit tests, curl/Postman examples, sample inputs/outputs)
 Performance, Cost, and Reliability (gotchas, trade‑offs, scaling tips)
@@ -274,8 +274,8 @@ Next Steps / Extensions
 References & Credits
 Used Resources to Curate
 
-Mermaid Requirements (Step 3)
-Provide Mermaid code blocks and a fallback rendered link using https://mermaid.ink. Use multiple small diagrams where helpful.
+Diagram Requirements (Step 3)
+Provide Python `diagrams` library code blocks and describe how to render them. Use multiple small diagrams where helpful.
 
 Hands‑On & Real‑World (Step 4)
 Include 2–3 production‑style examples mapping to {stack_focus}. Show working code in appropriate languages and include infra/deploy notes where relevant. Add metrics/observability hints.
@@ -284,7 +284,7 @@ Quality Bar (Step 5)
 Use clear numbered steps, short paragraphs, and simple words. Validate every command or code block. Credit third‑party sources. End with a "Used Resources to Curate" section listing all sources.
 
 Final Delivery Format
-Write the article or series in {tone} tone for {audience_level} learners, timebox: {timebox}. Use section headers, checklists, tables where helpful. Include Mermaid code blocks and mermaid.ink links. Conclude with a call to action: {call_to_action}. End with "References & Credits" and "Used Resources to Curate" lists.
+Write the article or series in {tone} tone for {audience_level} learners, timebox: {timebox}. Use section headers, checklists, tables where helpful. Include Python `diagrams` code blocks and notes for rendering them. Conclude with a call to action: {call_to_action}. End with "References & Credits" and "Used Resources to Curate" lists.
         """.strip()
 
         payload = {
