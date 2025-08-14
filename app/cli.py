@@ -169,6 +169,7 @@ def cmd_generate(args: argparse.Namespace) -> None:
         goal=args.goal,
         stack_focus=stack_focus,
         timebox=args.timebox,
+        diagram_language=args.diagram_language,
     )
 
     article_md, diagram_paths = render_diagrams_to_images(article_md)
@@ -369,6 +370,11 @@ def add_generate_args(p: argparse.ArgumentParser) -> None:
         "--timebox",
         default="~15-minute read",
         help="Optional duration such as '30-day bootcamp'.",
+    )
+    p.add_argument(
+        "--diagram-language",
+        default="python",
+        help="Language for diagram code blocks (e.g. 'python', 'mermaid').",
     )
     p.add_argument(
         "--save-md",
