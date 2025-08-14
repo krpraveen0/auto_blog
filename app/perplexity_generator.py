@@ -186,6 +186,7 @@ Respond ONLY with a JSON array of strings.
         goal: str = "",
         stack_focus: str = "",
         timebox: str = "~15-minute read",
+        diagram_language: str = "python",
     ) -> str:
         """
         Generate an article in Markdown format around a given topic.
@@ -229,6 +230,8 @@ Respond ONLY with a JSON array of strings.
             Comma separated technologies or domains to emphasise.
         timebox:
             Optional duration such as ``"30-day bootcamp"`` or ``"~15-minute read"``.
+        diagram_language:
+            Language to use for diagram code blocks (e.g. ``"python"`` or ``"mermaid"``).
 
         Returns
         -------
@@ -242,7 +245,7 @@ Respond ONLY with a JSON array of strings.
         )
         user_prompt = f"""
 Role & Goal
-Act as a passionate senior developer, tech mentor, and content curator focused on DSA, ML, AI, Python, Go (Golang), Java, React, AWS, and System Design. Create either a single deep‑dive article or a multi‑part bootcamp series for Medium and similar platforms. Make it hands‑on, industry‑relevant, beginner‑friendly (explain like I’m 5), and fully attributed.
+Act as a passionate senior developer, tech mentor, and content curator across DSA, ML, AI, Go (Golang), Java, React, AWS, and System Design. Use Python only when generating `diagrams` library code; otherwise choose languages that best suit each topic. Create either a single deep‑dive article or a multi‑part bootcamp series for Medium and similar platforms. Make it hands‑on, industry‑relevant, beginner‑friendly (explain like I’m 5), and fully attributed.
 
 Dynamic Controls
 topic: {topic}
@@ -264,7 +267,7 @@ Must‑Have Structure (Step 2)
 Title & Hook (why it matters now)
 Prerequisites (tools, skills, repo templates)
 Concepts in Simple Language (ELI5 + precise terms)
-Architecture/System Design (Python diagrams library by default)
+Architecture/System Design ({diagram_language} diagrams library by default)
 Hands‑On Build (copy‑runnable, well‑commented code; minimal setup; include validation checks and expected outputs)
 Testing & Validation (CLI commands, unit tests, curl/Postman examples, sample inputs/outputs)
 Performance, Cost, and Reliability (gotchas, trade‑offs, scaling tips)
@@ -275,16 +278,16 @@ References & Credits
 Used Resources to Curate
 
 Diagram Requirements (Step 3)
-Provide Python `diagrams` library code blocks and describe how to render them. Use multiple small diagrams where helpful.
+Provide {diagram_language} `diagrams` library code blocks and describe how to render them. Use multiple small diagrams where helpful.
 
 Hands‑On & Real‑World (Step 4)
 Include 2–3 production‑style examples mapping to {stack_focus}. Show working code in appropriate languages and include infra/deploy notes where relevant. Add metrics/observability hints.
 
 Quality Bar (Step 5)
-Use clear numbered steps, short paragraphs, and simple words. Validate every command or code block. Credit third‑party sources. End with a "Used Resources to Curate" section listing all sources.
+Use clear numbered steps, short paragraphs, and simple words. Validate every command or code block. Credit third‑party sources. Avoid defaulting to Python for examples unless the topic demands it. End with a "Used Resources to Curate" section listing all sources.
 
 Final Delivery Format
-Write the article or series in {tone} tone for {audience_level} learners, timebox: {timebox}. Use section headers, checklists, tables where helpful. Include Python `diagrams` code blocks and notes for rendering them. Conclude with a call to action: {call_to_action}. End with "References & Credits" and "Used Resources to Curate" lists.
+Write the article or series in {tone} tone for {audience_level} learners, timebox: {timebox}. Use section headers, checklists, tables where helpful. Include {diagram_language} `diagrams` code blocks and notes for rendering them. Conclude with a call to action: {call_to_action}. End with "References & Credits" and "Used Resources to Curate" lists.
         """.strip()
 
         payload = {
