@@ -99,6 +99,7 @@ def update_article(
     topic: Optional[str] = None,
     status: Optional[str] = None,
     markdown: Optional[str] = None,
+    markdown_raw: Optional[str] = None,
     series_id: Optional[int] = None,
     scheduled_at: Optional[datetime] = None,
 ) -> None:
@@ -109,6 +110,7 @@ def update_article(
             "topic": topic,
             "status": status,
             "markdown": markdown,
+            "markdown_raw": markdown_raw,
             "series_id": series_id,
             "scheduled_at": scheduled_at,
         }.items()
@@ -125,6 +127,7 @@ def save_article(
     topic: str,
     status: str,
     markdown: str,
+    markdown_raw: Optional[str] = None,
     series_id: Optional[int] = None,
     scheduled_at: Optional[datetime] = None,
 ) -> int:
@@ -133,6 +136,7 @@ def save_article(
         "topic": topic,
         "status": status,
         "markdown": markdown,
+        "markdown_raw": markdown_raw,
         "series_id": series_id,
         "scheduled_at": scheduled_at.isoformat() if scheduled_at else None,
     }

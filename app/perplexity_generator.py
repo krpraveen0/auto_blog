@@ -308,6 +308,33 @@ Write the article or series in {tone} tone for {audience_level} learners, timebo
                 f"Unexpected response shape from Perplexity: {data}"
             ) from exc
 
+    def refine_article(
+        self, markdown: str, model: PerpModel = "sonar"
+    ) -> str:
+        """Refine a Markdown draft by proofreading and tightening prose."""
+        system_message = (
+            "You are a meticulous technical editor. Improve clarity, grammar and "
+            "flow while preserving code blocks, links and overall meaning. "
+            "Return polished Markdown only."
+        )
+        user_prompt = f"Refine the following article:\n\n```markdown\n{markdown}\n```"
+        payload = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system_message},
+                {"role": "user", "content": user_prompt},
+            ],
+            "temperature": 0.2,
+            "top_p": 0.9,
+        }
+        data = self._post("/chat/completions", payload)
+        try:
+            return data["choices"][0]["message"]["content"]
+        except (KeyError, IndexError) as exc:
+            raise PerplexityError(
+                f"Unexpected response shape from Perplexity: {data}"
+            ) from exc
+
     def generate_series_plan(
         self,
         topic: str,
