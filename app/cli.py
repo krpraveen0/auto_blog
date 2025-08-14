@@ -156,7 +156,7 @@ def cmd_generate(args: argparse.Namespace) -> None:
 
     generator = PerplexityGenerator(api_key=args.pplx_key)
     stack_focus = args.stack_focus or infer_stack_focus_from_topic(topic)
-    article_md = generator.generate_article(
+    article_md_raw = generator.generate_article(
         topic=topic,
         audience_level=args.audience,
         tone=args.tone,
@@ -170,6 +170,11 @@ def cmd_generate(args: argparse.Namespace) -> None:
         stack_focus=stack_focus,
         timebox=args.timebox,
         diagram_language=args.diagram_language,
+    )
+    article_md = (
+        generator.refine_article(article_md_raw, model=args.model)
+        if args.refine
+        else article_md_raw
     )
 
     article_md, diagram_paths = render_diagrams_to_images(article_md)
@@ -185,6 +190,7 @@ def cmd_generate(args: argparse.Namespace) -> None:
         client,
         args.id,
         markdown=article_md,
+        markdown_raw=article_md_raw,
         status=db_status,
     )
     print(f"[OK] Stored article {args.id} in database with status '{db_status}'")
@@ -375,6 +381,11 @@ def add_generate_args(p: argparse.ArgumentParser) -> None:
         "--diagram-language",
         default="python",
         help="Language for diagram code blocks (e.g. 'python', 'mermaid').",
+    )
+    p.add_argument(
+        "--refine",
+        action="store_true",
+        help="Proofread and tighten the article after initial generation.",
     )
     p.add_argument(
         "--save-md",
