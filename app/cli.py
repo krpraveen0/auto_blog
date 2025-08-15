@@ -24,6 +24,7 @@ import json
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional
+import logging
 import re
 import yaml
 
@@ -39,6 +40,8 @@ from .db import (
     update_article,
     fetch_next_planned_article,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def parse_frontmatter(md: str) -> dict:
@@ -150,6 +153,15 @@ def cmd_list(args: argparse.Namespace) -> None:
         print(f"{row['id']}: {row['topic']} (scheduled {sched_str})")
 
 
+def _warn_missing_diagram_sections(md: str, sections: List[str], language: str) -> None:
+    """Log warnings for sections missing diagram code blocks."""
+    for section in sections:
+        pattern = rf"^#+\s*{re.escape(section)}\s*$\n(?P<body>.*?)(?=^#+\s|\Z)"
+        match = re.search(pattern, md, flags=re.MULTILINE | re.DOTALL | re.IGNORECASE)
+        if not match or f"```{language}" not in match.group("body"):
+            logger.warning("Section '%s' is missing %s diagram", section, language)
+
+
 def cmd_generate(args: argparse.Namespace) -> None:
     client = get_client(args.db_key)
     init_db(client)
@@ -182,6 +194,9 @@ def cmd_generate(args: argparse.Namespace) -> None:
         if args.refine
         else article_md_raw
     )
+
+    if args.diagram_sections:
+        _warn_missing_diagram_sections(article_md, args.diagram_sections, args.diagram_language)
 
     article_md, _ = render_diagrams_to_images(article_md, article_id=args.id)
 
