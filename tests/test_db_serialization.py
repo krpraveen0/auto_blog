@@ -73,6 +73,39 @@ def test_save_article_serializes_markdown_raw():
     assert table_payload["markdown_raw"] == "# raw"
 
 
+def test_save_article_serializes_summary():
+    table_payload = {}
+
+    class DummyInsert:
+        def __init__(self, payload):
+            table_payload.update(payload)
+
+        def execute(self):
+            return SimpleNamespace(data=[{"id": 1}])
+
+    class DummyTable:
+        def insert(self, payload):
+            return DummyInsert(payload)
+
+    class DummyClient:
+        def __init__(self):
+            self._table = DummyTable()
+
+        def table(self, name):
+            assert name == "articles"
+            return self._table
+
+    client = DummyClient()
+    save_article(
+        client,
+        topic="topic",
+        status="planned",
+        markdown="",
+        summary="short",
+    )
+    assert table_payload["summary"] == "short"
+
+
 def test_update_article_serializes_markdown_raw():
     table_payload = {}
 
@@ -136,3 +169,36 @@ def test_fetch_article_returns_markdown_raw():
     client = DummyClient()
     article = fetch_article(client, 1)
     assert article["markdown_raw"] == "# raw"
+
+
+def test_fetch_article_returns_summary():
+    class DummySelect:
+        def __init__(self, data):
+            self._data = data
+
+        def eq(self, field, value):
+            assert field == "id"
+            assert value == 1
+            return self
+
+        def execute(self):
+            return SimpleNamespace(data=self._data)
+
+    class DummyTable:
+        def select(self, columns):
+            assert columns == "*"
+            return DummySelect([
+                {"id": 1, "markdown": "html", "summary": "short"}
+            ])
+
+    class DummyClient:
+        def __init__(self):
+            self._table = DummyTable()
+
+        def table(self, name):
+            assert name == "articles"
+            return self._table
+
+    client = DummyClient()
+    article = fetch_article(client, 1)
+    assert article["summary"] == "short"

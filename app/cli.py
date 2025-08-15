@@ -131,10 +131,13 @@ def cmd_plan_series(args: argparse.Namespace) -> None:
         article_id = plan_article(
             client,
             topic=item["title"],
+            summary=item["summary"],
             series_name=args.topic,
             scheduled_at=scheduled,
         )
-        print(f"[OK] Planned article {article_id} for topic '{item['title']}'")
+        print(
+            f"[OK] Planned article {article_id} for topic '{item['title']}'"
+        )
 
 
 def cmd_list(args: argparse.Namespace) -> None:
@@ -154,6 +157,7 @@ def cmd_generate(args: argparse.Namespace) -> None:
     if not plan:
         raise SystemExit(f"No article with id {args.id}")
     topic = plan["topic"]
+    summary = plan.get("summary", "")
 
     generator = PerplexityGenerator(api_key=args.pplx_key)
     stack_focus = args.stack_focus or infer_stack_focus_from_topic(topic)
@@ -167,7 +171,7 @@ def cmd_generate(args: argparse.Namespace) -> None:
         target_minutes=args.minutes,
         call_to_action=args.cta,
         content_format=args.format,
-        goal=args.goal,
+        goal=args.goal or summary,
         stack_focus=stack_focus,
         timebox=args.timebox,
         diagram_language=args.diagram_language,
@@ -294,6 +298,7 @@ def cmd_auto(args: argparse.Namespace) -> None:
             plan_article(
                 client,
                 topic=item["title"],
+                summary=item["summary"],
                 series_name=topic,
                 scheduled_at=scheduled,
             )
