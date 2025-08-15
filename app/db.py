@@ -162,6 +162,12 @@ def fetch_article(client: Client, article_id: int) -> Optional[Dict[str, Any]]:
     return data[0] if data else None
 
 
+def list_articles(client: Client) -> List[Dict[str, Any]]:
+    """Return all articles ordered by id."""
+    result = client.table("articles").select("*").order("id", desc=False).execute()
+    return result.data or []
+
+
 def list_planned_articles(client: Client) -> List[Dict[str, Any]]:
     """Return articles with status 'planned', ordered by scheduled_at."""
     result = (
@@ -201,6 +207,7 @@ __all__ = [
     "plan_article",
     "save_article",
     "fetch_article",
+    "list_articles",
     "update_article",
     "list_planned_articles",
     "fetch_next_planned_article",

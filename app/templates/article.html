@@ -2,11 +2,14 @@
 
 {% block content %}
   <h2>{{ topic }}</h2>
-  <form method="post" action="{{ url_for('publish_article') }}">
+  <form method="post" action="{{ form_action }}">
     <input type="hidden" name="topic" value="{{ topic }}" />
+    {% if article_id %}
+    <input type="hidden" name="article_id" value="{{ article_id }}" />
+    {% endif %}
     <div class="mb-3">
       <textarea class="form-control" name="content" rows="15">{{ content }}</textarea>
     </div>
-    <button type="submit" class="btn btn-success">Publish Article</button>
+    <button type="submit" class="btn btn-success">{{ button_label }}</button>
   </form>
 {% endblock %}
