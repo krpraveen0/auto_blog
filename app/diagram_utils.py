@@ -10,7 +10,7 @@ from db.helpers import save_article_image
 
 # Regular expression to capture Python fenced code blocks
 CODE_BLOCK_RE = re.compile(r"```python\n(.*?)```", re.DOTALL)
-DIAGRAM_NAME_RE = re.compile(r"Diagram\(['\"]([^'\"]+)['\"]")
+DIAGRAM_TYPE_RE = re.compile(r"Diagram\(['\"]([^'\"]+)['\"]")
 
 
 def _execute_diagram(code: str) -> Tuple[bytes, str]:
@@ -63,11 +63,11 @@ def render_diagrams_to_images(md: str, article_id: int) -> Tuple[str, List[str]]
         if "from diagrams" in code or "Diagram(" in code:
             try:
                 image_bytes, _ = _execute_diagram(code)
-                name_match = DIAGRAM_NAME_RE.search(code)
-                diagram_name = name_match.group(1) if name_match else f"Diagram {idx}"
-                url = save_article_image(article_id, diagram_name, image_bytes)
+                name_match = DIAGRAM_TYPE_RE.search(code)
+                diagram_type = name_match.group(1) if name_match else f"Diagram {idx}"
+                url = save_article_image(article_id, diagram_type, image_bytes)
                 image_urls.append(url)
-                out_md_parts.append(f"![{diagram_name}]({url})")
+                out_md_parts.append(f"![{diagram_type}]({url})")
             except Exception:
                 out_md_parts.append(match.group(0))
         else:
