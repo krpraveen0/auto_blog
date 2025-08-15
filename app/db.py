@@ -75,6 +75,7 @@ def plan_article(
     client: Client,
     *,
     topic: str,
+    summary: Optional[str] = None,
     series_name: Optional[str] = None,
     scheduled_at: Optional[datetime] = None,
 ) -> int:
@@ -87,6 +88,7 @@ def plan_article(
         topic=topic,
         status="planned",
         markdown="",
+        summary=summary,
         series_id=series_id,
         scheduled_at=scheduled_at,
     )
@@ -100,6 +102,7 @@ def update_article(
     status: Optional[str] = None,
     markdown: Optional[str] = None,
     markdown_raw: Optional[str] = None,
+    summary: Optional[str] = None,
     series_id: Optional[int] = None,
     scheduled_at: Optional[datetime] = None,
 ) -> None:
@@ -111,6 +114,7 @@ def update_article(
             "status": status,
             "markdown": markdown,
             "markdown_raw": markdown_raw,
+            "summary": summary,
             "series_id": series_id,
             "scheduled_at": scheduled_at,
         }.items()
@@ -128,6 +132,7 @@ def save_article(
     status: str,
     markdown: str,
     markdown_raw: Optional[str] = None,
+    summary: Optional[str] = None,
     series_id: Optional[int] = None,
     scheduled_at: Optional[datetime] = None,
 ) -> int:
@@ -137,6 +142,7 @@ def save_article(
         "status": status,
         "markdown": markdown,
         "markdown_raw": markdown_raw,
+        "summary": summary,
         "series_id": series_id,
         "scheduled_at": scheduled_at.isoformat() if scheduled_at else None,
     }
