@@ -2,15 +2,30 @@
 
 from __future__ import annotations
 
+import os
+
 from flask import Flask, render_template, request, redirect, url_for, flash
 
 from .perplexity_generator import PerplexityGenerator, PerplexityError
 from .medium_publisher import MediumPublisher, MediumError
+from .db import (
+    get_client,
+    save_article,
+    fetch_article,
+    list_articles,
+    update_article,
+)
 
 app = Flask(__name__)
-app.secret_key = "auto-blog-secret"
+app.secret_key = os.getenv("AUTO_BLOG_SECRET", "auto-blog-secret")
 
-articles: dict[str, str] = {}
+
+def get_db_client():
+    """Return a cached Supabase client."""
+    global _db_client
+    if "_db_client" not in globals():
+        _db_client = get_client()
+    return _db_client
 
 
 def get_generator() -> PerplexityGenerator:
@@ -72,8 +87,17 @@ def create_article() -> str:
         except PerplexityError as exc:
             flash(str(exc), "danger")
             return redirect(url_for("index"))
-        articles[topic] = content
-        return render_template("article.html", topic=topic, content=content)
+        article_id = save_article(
+            get_db_client(), topic=topic, status="draft", markdown=content
+        )
+        return render_template(
+            "article.html",
+            topic=topic,
+            content=content,
+            article_id=article_id,
+            form_action=url_for("publish_article"),
+            button_label="Publish Article",
+        )
     # GET request: show form with options
     topic = request.args.get("topic")
     if not topic:
@@ -100,6 +124,35 @@ def publish_article() -> str:
     except MediumError as exc:
         flash(str(exc), "danger")
     return redirect(url_for("index"))
+
+
+@app.route("/articles")
+def list_articles_view() -> str:
+    """Display all stored articles."""
+    articles = list_articles(get_db_client())
+    return render_template("articles.html", articles=articles)
+
+
+@app.route("/articles/<int:article_id>", methods=["GET", "POST"])
+def edit_article(article_id: int) -> str:
+    """Show or edit a stored article."""
+    client = get_db_client()
+    if request.method == "POST":
+        content = request.form.get("content", "")
+        update_article(client, article_id, markdown=content)
+        flash("Article updated", "success")
+    article = fetch_article(client, article_id)
+    if not article:
+        flash("Article not found", "warning")
+        return redirect(url_for("list_articles_view"))
+    return render_template(
+        "article.html",
+        topic=article["topic"],
+        content=article.get("markdown", ""),
+        article_id=article_id,
+        form_action=url_for("edit_article", article_id=article_id),
+        button_label="Save Article",
+    )
 
 
 if __name__ == "__main__":
