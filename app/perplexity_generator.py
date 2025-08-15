@@ -275,7 +275,6 @@ Common Pitfalls & Fixes
 Industry Use Cases & Hiring Signals
 Next Steps / Extensions
 References & Credits
-Used Resources to Curate
 
 Diagram Requirements (Step 3)
 Provide {diagram_language} `diagrams` library code blocks and describe how to render them. Use multiple small diagrams where helpful.
@@ -284,10 +283,10 @@ Hands‑On & Real‑World (Step 4)
 Include 2–3 production‑style examples mapping to {stack_focus}. Show working code in appropriate languages and include infra/deploy notes where relevant. Add metrics/observability hints.
 
 Quality Bar (Step 5)
-Use clear numbered steps, short paragraphs, and simple words. Validate every command or code block. Credit third‑party sources. Avoid defaulting to Python for examples unless the topic demands it. End with a "Used Resources to Curate" section listing all sources.
+Use clear numbered steps, short paragraphs, and simple words. Validate every command or code block. Credit third‑party sources. Avoid defaulting to Python for examples unless the topic demands it.
 
 Final Delivery Format
-Write the article or series in {tone} tone for {audience_level} learners, timebox: {timebox}. Use section headers, checklists, tables where helpful. Include {diagram_language} `diagrams` code blocks and notes for rendering them. Conclude with a call to action: {call_to_action}. End with "References & Credits" and "Used Resources to Curate" lists.
+Write the article or series in {tone} tone for {audience_level} learners, timebox: {timebox}. Use section headers, checklists, tables where helpful. Include {diagram_language} `diagrams` code blocks and notes for rendering them. Conclude with a call to action: {call_to_action}. End with a "References & Credits" list.
         """.strip()
 
         payload = {
