@@ -60,6 +60,7 @@ def test_cmd_generate_with_refine(monkeypatch):
         stack_focus="",
         timebox="~15-minute read",
         diagram_language="python",
+        diagram_sections=[],
         save_md=None,
         publish=False,
         refine=True,

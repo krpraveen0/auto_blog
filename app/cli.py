@@ -175,6 +175,7 @@ def cmd_generate(args: argparse.Namespace) -> None:
         stack_focus=stack_focus,
         timebox=args.timebox,
         diagram_language=args.diagram_language,
+        diagram_sections=args.diagram_sections,
     )
     article_md = (
         generator.refine_article(article_md_raw, model=args.model)
@@ -375,6 +376,13 @@ def add_generate_args(p: argparse.ArgumentParser) -> None:
         "--diagram-language",
         default="python",
         help="Language for diagram code blocks (e.g. 'python', 'mermaid').",
+    )
+    p.add_argument(
+        "--diagram-section",
+        action="append",
+        dest="diagram_sections",
+        default=[],
+        help="Section name requiring its own diagram (repeatable).",
     )
     p.add_argument(
         "--refine",
