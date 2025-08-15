@@ -56,15 +56,20 @@ def render_diagrams_to_images(md: str, article_id: int) -> Tuple[str, List[str]]
     out_md_parts: List[str] = []
     image_urls: List[str] = []
     last_end = 0
+    diagram_count = 0
 
-    for idx, match in enumerate(CODE_BLOCK_RE.finditer(md), start=1):
+    for match in CODE_BLOCK_RE.finditer(md):
         out_md_parts.append(md[last_end:match.start()])
         code = match.group(1).strip()
         if "from diagrams" in code or "Diagram(" in code:
             try:
                 image_bytes, _ = _execute_diagram(code)
                 name_match = DIAGRAM_TYPE_RE.search(code)
-                diagram_type = name_match.group(1) if name_match else f"Diagram {idx}"
+                if name_match:
+                    diagram_type = name_match.group(1)
+                else:
+                    diagram_count += 1
+                    diagram_type = f"Diagram {diagram_count}"
                 url = save_article_image(article_id, diagram_type, image_bytes)
                 image_urls.append(url)
                 out_md_parts.append(f"![{diagram_type}]({url})")
