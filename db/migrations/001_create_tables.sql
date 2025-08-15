@@ -10,6 +10,7 @@ CREATE TABLE articles (
     topic VARCHAR NOT NULL,
     status VARCHAR NOT NULL,
     markdown TEXT,
+    markdown_raw TEXT,
     series_id INTEGER REFERENCES series(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     scheduled_at TIMESTAMPTZ
