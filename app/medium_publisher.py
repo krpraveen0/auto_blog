@@ -14,6 +14,8 @@ https://github.com/Medium/medium-api-docs for full API details.
 from __future__ import annotations
 
 import os
+import re
+import tempfile
 from typing import Optional, List, Dict, Any, Literal
 
 import requests
@@ -180,6 +182,31 @@ class MediumPublisher:
             Parsed JSON response from Medium's API describing the created post.
         """
         user_id = self.get_user_id()
+
+        # Ensure images are hosted on Medium. Upload and rewrite URLs when needed.
+        image_links = re.findall(r"!\[[^\]]*\]\(([^)]+)\)", content_markdown)
+        for link in image_links:
+            if "medium.com" in link:
+                continue
+            temp_path = None
+            if link.startswith("http://") or link.startswith("https://"):
+                # Fetch remote image then upload
+                resp = requests.get(link, timeout=30)
+                resp.raise_for_status()
+                fh = tempfile.NamedTemporaryFile(delete=False)
+                fh.write(resp.content)
+                fh.flush()
+                fh.close()
+                temp_path = fh.name
+            else:
+                temp_path = link
+            try:
+                new_url = self.upload_image(temp_path)
+                content_markdown = content_markdown.replace(link, new_url)
+            finally:
+                if temp_path and temp_path != link and os.path.exists(temp_path):
+                    os.remove(temp_path)
+
         body: Dict[str, Any] = {
             "title": title,
             "contentFormat": content_format,
