@@ -25,6 +25,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List, Optional
 import re
+import yaml
 
 from .perplexity_generator import PerplexityGenerator, PerplexityError
 from .medium_publisher import MediumPublisher
@@ -41,29 +42,29 @@ from .db import (
 
 
 def parse_frontmatter(md: str) -> dict:
-    """Extract a minimal YAML frontmatter from a Markdown document.
+    """Extract YAML frontmatter from a Markdown document.
 
-    Supports simple ``key: value`` pairs separated by newlines. This helper
-    returns a dictionary of keys and values if a fenced frontmatter block is
-    found at the top of the file. It gracefully handles malformed input by
-    returning an empty dict.
+    The frontmatter is expected to be enclosed in ``---`` fences at the top of
+    the document. :func:`yaml.safe_load` is used to parse the contents and the
+    resulting dictionary is returned. Any parsing errors or non‑mapping
+    frontmatter result in an empty ``dict``.
     """
+
     if not md.startswith("---"):
         return {}
+
     try:
         fence_end = md.index("\n---", 3)
-        raw = md[3:fence_end].strip()
-        meta = {}
-        for line in raw.splitlines():
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue
-            if ":" in line:
-                k, v = line.split(":", 1)
-                meta[k.strip()] = v.strip().strip('"').strip("'")
-        return meta
+        raw = md[3:fence_end]
     except ValueError:
         return {}
+
+    try:
+        data = yaml.safe_load(raw) or {}
+    except yaml.YAMLError:
+        return {}
+
+    return data if isinstance(data, dict) else {}
 
 
 # Map common technology keywords to canonical stack focus labels.
