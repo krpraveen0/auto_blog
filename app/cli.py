@@ -182,7 +182,7 @@ def cmd_generate(args: argparse.Namespace) -> None:
         else article_md_raw
     )
 
-    article_md, diagram_paths = render_diagrams_to_images(article_md)
+    article_md, _ = render_diagrams_to_images(article_md, article_id=args.id)
 
     if args.save_md:
         outfile = Path(args.save_md)
@@ -208,12 +208,6 @@ def cmd_generate(args: argparse.Namespace) -> None:
         tags = (meta_tags or args.tags)[:5]
 
         publisher = MediumPublisher(token=args.medium_token)
-        for path in diagram_paths:
-            try:
-                url = publisher.upload_image(path)
-                article_md = article_md.replace(path, url)
-            except Exception as exc:  # pragma: no cover - network failures
-                print(f"[WARN] Failed to upload image {path}: {exc}")
         resp = publisher.publish_article(
             title=title,
             content_markdown=article_md,
@@ -238,7 +232,7 @@ def cmd_publish(args: argparse.Namespace) -> None:
         raise SystemExit(f"Article {args.id} has no markdown to publish")
     topic = row["topic"]
 
-    article_md, diagram_paths = render_diagrams_to_images(article_md)
+    article_md, _ = render_diagrams_to_images(article_md, article_id=args.id)
 
     meta = parse_frontmatter(article_md)
     title = meta.get("title") or f"{topic} — with Indian Mini Projects by Praveen"
@@ -247,12 +241,6 @@ def cmd_publish(args: argparse.Namespace) -> None:
     tags = (meta_tags or args.tags)[:5]
 
     publisher = MediumPublisher(token=args.medium_token)
-    for path in diagram_paths:
-        try:
-            url = publisher.upload_image(path)
-            article_md = article_md.replace(path, url)
-        except Exception as exc:  # pragma: no cover - network failures
-            print(f"[WARN] Failed to upload image {path}: {exc}")
     resp = publisher.publish_article(
         title=title,
         content_markdown=article_md,

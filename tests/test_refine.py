@@ -31,7 +31,7 @@ def test_cmd_generate_with_refine(monkeypatch):
             return refined_md
 
     monkeypatch.setattr(cli, "PerplexityGenerator", DummyGenerator)
-    monkeypatch.setattr(cli, "render_diagrams_to_images", lambda md: (md, []))
+    monkeypatch.setattr(cli, "render_diagrams_to_images", lambda md, article_id: (md, []))
 
     captured = {}
 
