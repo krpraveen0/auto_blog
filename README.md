@@ -65,6 +65,10 @@ Key options for `generate`:
 - `--publish` to upload to Medium; `--status {draft|public|unlisted}`, `--tags`, `--canonical-url`
 - `--save-md path` to persist generated Markdown locally
 - `--pplx-key` and `--medium-token` override `.env` values
+- `--diagram-language` to choose diagram code block syntax (e.g. `python`, `mermaid`)
+- `--diagram-section SECTION` to require a diagram for a specific section (repeatable)
+
+See [`docs/diagrams.md`](docs/diagrams.md) for details and examples of using multiple diagrams.
 
 Key options for `publish`:
 
