@@ -17,7 +17,7 @@ from __future__ import annotations
 import os
 import json
 import re
-from typing import Literal, Optional, Dict, Any
+from typing import Literal, Optional, Dict, Any, List
 
 import requests
 from requests.adapters import HTTPAdapter, Retry
@@ -187,6 +187,7 @@ Respond ONLY with a JSON array of strings.
         stack_focus: str = "",
         timebox: str = "~15-minute read",
         diagram_language: str = "python",
+        diagram_sections: Optional[List[str]] = None,
     ) -> str:
         """
         Generate an article in Markdown format around a given topic.
@@ -232,6 +233,9 @@ Respond ONLY with a JSON array of strings.
             Optional duration such as ``"30-day bootcamp"`` or ``"~15-minute read"``.
         diagram_language:
             Language to use for diagram code blocks (e.g. ``"python"`` or ``"mermaid"``).
+        diagram_sections:
+            Optional list of section names that should each include a
+            dedicated {diagram_language} diagram code block.
 
         Returns
         -------
@@ -243,6 +247,13 @@ Respond ONLY with a JSON array of strings.
             "Produce publish‑ready Markdown articles with runnable code, "
             "practical projects and viral, shareable hooks."
         )
+        section_instruction = ""
+        if diagram_sections:
+            section_lines = "\n".join(
+                f'For section "{section}", include a separate {diagram_language} `diagrams` code block.'
+                for section in diagram_sections
+            )
+            section_instruction = f"\n{section_lines}"
         user_prompt = f"""
 Role & Goal
 Act as a passionate senior developer, tech mentor, and content curator across DSA, ML, AI, Go (Golang), Java, React, AWS, and System Design. Use Python only when generating `diagrams` library code; otherwise choose languages that best suit each topic. Create either a single deep‑dive article or a multi‑part bootcamp series for Medium and similar platforms. Make it hands‑on, industry‑relevant, beginner‑friendly (explain like I’m 5), and fully attributed.
@@ -276,10 +287,10 @@ Industry Use Cases & Hiring Signals
 Next Steps / Extensions
 References & Credits
 
-Diagram Requirements (Step 3)
-Provide {diagram_language} `diagrams` library code blocks and describe how to render them. Use multiple small diagrams where helpful.
+ Diagram Requirements (Step 3)
+ Provide {diagram_language} `diagrams` library code blocks and describe how to render them. Use multiple small diagrams where helpful.{section_instruction}
 
-Hands‑On & Real‑World (Step 4)
+ Hands‑On & Real‑World (Step 4)
 Include 2–3 production‑style examples mapping to {stack_focus}. Show working code in appropriate languages and include infra/deploy notes where relevant. Add metrics/observability hints.
 
 Quality Bar (Step 5)
