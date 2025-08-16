@@ -122,7 +122,15 @@ def update_article(
     }
     if not values:
         return
-    client.table("articles").update(values).eq("id", article_id).execute()
+    try:
+        client.table("articles").update(values).eq("id", article_id).execute()
+    except APIError as exc:
+        if getattr(exc, "code", None) == "PGRST204" and "summary" in values:
+            values.pop("summary")
+            if values:
+                client.table("articles").update(values).eq("id", article_id).execute()
+        else:
+            raise
 
 
 def save_article(
@@ -148,10 +156,29 @@ def save_article(
     }
     payload = {k: v for k, v in payload.items() if v is not None}
     insert_builder = client.table("articles").insert(payload)
+
+    # Older versions of the Supabase client exposed ``select`` on the insert
+    # builder to limit returned columns.  Newer releases removed this helper and
+    # instead return the inserted row directly.  Attempt to use ``select`` when
+    # available but gracefully fall back when it's missing.
+    try:  # Supabase <1.0
+        insert_builder = insert_builder.select("id")
+    except AttributeError:  # Supabase >=1.0
+        pass
+
     try:
-        inserted = insert_builder.select("id").execute()
-    except AttributeError:
         inserted = insert_builder.execute()
+    except APIError as exc:
+        # Some deployments may not have run migrations adding the ``summary``
+        # column yet.  ``postgrest`` reports this with code ``PGRST204``.  For
+        # compatibility with older schemas, retry the insert without the summary
+        # field when we hit this specific error.
+        if getattr(exc, "code", None) == "PGRST204" and "summary" in payload:
+            payload.pop("summary")
+            inserted = client.table("articles").insert(payload).execute()
+        else:
+            raise
+
     return inserted.data[0]["id"]
 
 
