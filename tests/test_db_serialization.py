@@ -6,6 +6,7 @@ from types import SimpleNamespace
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from app.db import save_article, update_article, fetch_article
+from postgrest.exceptions import APIError
 
 
 def test_save_article_serializes_datetime():
@@ -202,3 +203,53 @@ def test_fetch_article_returns_summary():
     client = DummyClient()
     article = fetch_article(client, 1)
     assert article["summary"] == "short"
+
+
+def test_save_article_drops_missing_summary():
+    calls = []
+
+    class DummyInsert:
+        def __init__(self, payload, *, error=False):
+            calls.append(dict(payload))
+            self._error = error
+
+        def execute(self):
+            if self._error:
+                raise APIError(
+                    {
+                        "message": "Could not find the 'summary' column of 'articles' in the schema cache",
+                        "code": "PGRST204",
+                        "hint": None,
+                        "details": None,
+                    }
+                )
+            return SimpleNamespace(data=[{"id": 1}])
+
+    class DummyTable:
+        def __init__(self):
+            self.calls = 0
+
+        def insert(self, payload):
+            self.calls += 1
+            # First call simulates missing column error; second succeeds
+            return DummyInsert(payload, error=self.calls == 1)
+
+    class DummyClient:
+        def __init__(self):
+            self._table = DummyTable()
+
+        def table(self, name):
+            assert name == "articles"
+            return self._table
+
+    client = DummyClient()
+    save_article(
+        client,
+        topic="topic",
+        status="planned",
+        markdown="",
+        summary="short",
+    )
+
+    assert calls[0]["summary"] == "short"
+    assert "summary" not in calls[1]
