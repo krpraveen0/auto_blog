@@ -64,10 +64,9 @@ def get_or_create_series(client: Client, topic: str) -> int:
     # efficient ``select`` when available but fall back to a plain insert for
     # compatibility with newer clients.
     insert_builder = client.table("series").insert({"topic": topic})
-    try:  # Supabase <1.0
-        inserted = insert_builder.select("id").execute()
-    except AttributeError:  # Supabase >=1.0
-        inserted = insert_builder.execute()
+    if hasattr(insert_builder, "select"):  # Supabase <1.0
+        insert_builder = insert_builder.select("id")
+    inserted = insert_builder.execute()
     return inserted.data[0]["id"]
 
 
@@ -161,10 +160,8 @@ def save_article(
     # builder to limit returned columns.  Newer releases removed this helper and
     # instead return the inserted row directly.  Attempt to use ``select`` when
     # available but gracefully fall back when it's missing.
-    try:  # Supabase <1.0
+    if hasattr(insert_builder, "select"):  # Supabase <1.0
         insert_builder = insert_builder.select("id")
-    except AttributeError:  # Supabase >=1.0
-        pass
 
     try:
         inserted = insert_builder.execute()
