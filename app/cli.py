@@ -149,7 +149,15 @@ def cmd_list(args: argparse.Namespace) -> None:
     rows = list_planned_articles(client)
     for row in rows:
         sched = row.get("scheduled_at")
-        sched_str = sched.isoformat() if sched else "-"
+        sched_dt = None
+        if isinstance(sched, str):
+            try:
+                sched_dt = datetime.fromisoformat(sched)
+            except ValueError:
+                sched_dt = None
+        else:
+            sched_dt = sched
+        sched_str = sched_dt.isoformat() if sched_dt else (sched if isinstance(sched, str) else "-")
         print(f"{row['id']}: {row['topic']} (scheduled {sched_str})")
 
 
