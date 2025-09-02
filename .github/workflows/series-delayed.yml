@@ -14,8 +14,6 @@ on:
         description: 'Hours between scheduled publications'
         required: false
         default: '24'
-  schedule:
-    - cron: "0 * * * *"
 
 jobs:
   plan:
@@ -39,22 +37,3 @@ jobs:
             --posts "${{ github.event.inputs.posts }}" \
             --gap-hours "${{ github.event.inputs.gap_hours }}"
 
-  generate:
-    if: github.event_name == 'schedule'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      - run: pip install -r requirements.txt
-      - name: Generate and publish next scheduled article
-        env:
-          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
-          MEDIUM_TOKEN: ${{ secrets.MEDIUM_TOKEN }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
-        run: |
-          python -m app.cli auto \
-            --db-key "$SUPABASE_KEY" \
-            --publish
