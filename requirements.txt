@@ -1,0 +1,61 @@
+# Core dependencies
+requests>=2.31.0
+feedparser>=6.0.10
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# LLM Integration
+openai>=1.10.0  # For Perplexity API (uses OpenAI SDK format)
+
+# Data processing
+pyyaml>=6.0
+python-dateutil>=2.8.2
+pytz>=2023.3
+
+# Deduplication & similarity
+python-Levenshtein>=0.21.0
+fuzzywuzzy>=0.18.0
+
+# Web scraping (minimal use)
+selenium>=4.15.0  # Only if needed for JS-heavy sites
+
+# Content formatting
+markdown>=3.5
+jinja2>=3.1.2
+
+# Publishing
+linkedin-api>=2.2.0  # Unofficial LinkedIn API
+PyGithub>=2.1.1
+
+# Utilities
+python-dotenv>=1.0.0
+click>=8.1.7  # CLI framework
+colorama>=0.4.6  # Colored terminal output
+tqdm>=4.66.0  # Progress bars
+
+# Scheduling (for local dev)
+schedule>=1.2.0
+apscheduler>=3.10.4
+
+# Logging & monitoring
+structlog>=23.2.0
+python-json-logger>=2.0.7
+
+# Database (optional)
+sqlalchemy>=2.0.23
+alembic>=1.13.0
+
+# Testing
+pytest>=7.4.3
+pytest-cov>=4.1.0
+pytest-mock>=3.12.0
+responses>=0.24.0
+
+# Code quality
+black>=23.12.0
+flake8>=6.1.0
+mypy>=1.7.0
+isort>=5.13.0
+
+# Security
+cryptography>=41.0.7

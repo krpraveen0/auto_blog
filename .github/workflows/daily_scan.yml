@@ -1,0 +1,156 @@
+name: Daily AI Research Scan
+
+on:
+  schedule:
+    # Run daily at 9 AM UTC (adjust as needed)
+    - cron: '0 9 * * *'
+  
+  workflow_dispatch:  # Allow manual trigger
+    inputs:
+      source:
+        description: 'Source to fetch from'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - arxiv
+          - blogs
+          - hackernews
+          - github
+      count:
+        description: 'Number of items to generate'
+        required: false
+        default: '5'
+
+jobs:
+  fetch_and_generate:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Initialize project
+        run: |
+          python main.py init
+      
+      - name: Fetch content
+        env:
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+        run: |
+          SOURCE="${{ github.event.inputs.source || 'all' }}"
+          python main.py fetch --source $SOURCE
+      
+      - name: Generate content
+        env:
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+        run: |
+          COUNT="${{ github.event.inputs.count || '5' }}"
+          python main.py generate --count $COUNT --format both
+      
+      - name: Upload drafts
+        uses: actions/upload-artifact@v3
+        with:
+          name: content-drafts
+          path: |
+            data/drafts/blog/*.md
+            data/drafts/linkedin/*.txt
+          retention-days: 30
+      
+      - name: Save metrics
+        run: |
+          # Save metrics to data/metrics.json
+          python -c "
+          import json
+          from pathlib import Path
+          from datetime import datetime
+          
+          metrics_file = Path('data/metrics.json')
+          metrics = json.loads(metrics_file.read_text()) if metrics_file.exists() else []
+          
+          # Count files
+          blog_count = len(list(Path('data/drafts/blog').glob('*.md')))
+          linkedin_count = len(list(Path('data/drafts/linkedin').glob('*.txt')))
+          
+          metrics.append({
+              'timestamp': datetime.now().isoformat(),
+              'fetched': 0,  # Would need to track this
+              'generated': blog_count + linkedin_count,
+              'published': 0
+          })
+          
+          metrics_file.write_text(json.dumps(metrics, indent=2))
+          "
+      
+      - name: Commit metrics
+        run: |
+          git config --global user.name 'AI Research Publisher'
+          git config --global user.email 'bot@airesearch.publisher'
+          git add data/metrics.json
+          git diff --quiet && git diff --staged --quiet || git commit -m "Update metrics [skip ci]"
+          git push
+        continue-on-error: true
+      
+      - name: Send notification
+        if: success()
+        run: |
+          echo "✅ Daily scan complete!"
+          echo "Generated $(ls data/drafts/blog/*.md 2>/dev/null | wc -l) blog drafts"
+          echo "Generated $(ls data/drafts/linkedin/*.txt 2>/dev/null | wc -l) LinkedIn drafts"
+
+  # Optional: Auto-publish with approval
+  publish_with_approval:
+    needs: fetch_and_generate
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    
+    environment:
+      name: production
+      # Requires manual approval in GitHub
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      
+      - name: Download drafts
+        uses: actions/download-artifact@v3
+        with:
+          name: content-drafts
+          path: data/drafts/
+      
+      - name: Publish to GitHub Pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPO: ${{ github.repository }}
+        run: |
+          python main.py publish --platform blog --approve
+      
+      - name: Publish to LinkedIn
+        env:
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_USER_ID: ${{ secrets.LINKEDIN_USER_ID }}
+        run: |
+          python main.py publish --platform linkedin --approve
+        if: env.LINKEDIN_ACCESS_TOKEN != ''

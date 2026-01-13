@@ -1,0 +1,181 @@
+# AI Research Publisher Configuration
+
+# Sources to monitor
+sources:
+  arxiv:
+    enabled: true
+    categories:
+      - "cs.AI"      # Artificial Intelligence
+      - "cs.LG"      # Machine Learning
+      - "cs.CL"      # Computation and Language
+      - "cs.CV"      # Computer Vision
+    max_results: 20
+    
+  blogs:
+    enabled: true
+    feeds:
+      - name: "OpenAI"
+        url: "https://openai.com/blog/rss.xml"
+        priority: high
+      - name: "Google DeepMind"
+        url: "https://deepmind.google/blog/rss.xml"
+        priority: high
+      - name: "Anthropic"
+        url: "https://www.anthropic.com/blog/rss"
+        priority: high
+      - name: "Meta AI"
+        url: "https://ai.meta.com/blog/rss/"
+        priority: high
+      - name: "Hugging Face"
+        url: "https://huggingface.co/blog/feed.xml"
+        priority: medium
+        
+  hackernews:
+    enabled: true
+    filter_tags: ["ai", "ml", "llm", "machine_learning"]
+    min_points: 50
+    max_results: 15
+    
+  github:
+    enabled: true
+    topics: ["machine-learning", "artificial-intelligence", "llm", "transformers"]
+    min_stars: 100
+    max_results: 10
+
+# Filtering and ranking
+filters:
+  max_age_days: 7  # Only content from last 7 days
+  
+  keywords:
+    high_priority:
+      - "LLM"
+      - "large language model"
+      - "transformer"
+      - "GPT"
+      - "BERT"
+      - "diffusion"
+      - "RAG"
+      - "retrieval augmented"
+      - "agent"
+      - "multimodal"
+      - "reinforcement learning"
+      - "RLHF"
+      - "fine-tuning"
+      - "prompt engineering"
+      
+    medium_priority:
+      - "neural network"
+      - "deep learning"
+      - "computer vision"
+      - "NLP"
+      - "generative AI"
+      - "embedding"
+      - "attention mechanism"
+      
+  exclude_keywords:
+    - "cryptocurrency"
+    - "blockchain"
+    - "web3"
+    
+  deduplication:
+    title_similarity_threshold: 0.85
+    url_hash: true
+    
+  ranking:
+    weights:
+      recency: 0.3
+      source_priority: 0.3
+      keyword_match: 0.2
+      engagement: 0.2  # HN points, GitHub stars, etc.
+
+# LLM Configuration (Perplexity)
+llm:
+  provider: "perplexity"
+  model: "sonar-pro"
+  api_timeout: 60
+  max_retries: 3
+  
+  generation_params:
+    temperature: 0.3  # Low temp for factual content
+    max_tokens: 2000
+    top_p: 0.9
+    
+  rate_limiting:
+    requests_per_minute: 20
+    
+  prompt_stages:
+    - "fact_extraction"
+    - "engineer_summary"
+    - "impact_analysis"
+    - "application_mapping"
+    - "blog_synthesis"
+    - "linkedin_formatting"
+    - "credibility_check"
+
+# Content formatting
+formatting:
+  blog:
+    target_words: 900
+    tone: "analytical"
+    include_references: true
+    markdown_flavor: "github"
+    
+  linkedin:
+    max_words: 120
+    bullet_points: 3
+    hashtag_count: 4
+    emojis: false
+    
+# Publishing configuration
+publishing:
+  blog:
+    enabled: true
+    auto_publish: false  # Require manual approval
+    output_dir: "data/drafts/blog"
+    github_pages:
+      enabled: true
+      branch: "gh-pages"
+      path: "_posts"
+      
+  linkedin:
+    enabled: true
+    auto_publish: false  # Require manual approval
+    output_dir: "data/drafts/linkedin"
+    api_version: "v2"
+    
+  approval_workflow:
+    enabled: true
+    require_human_review: true
+    
+# Scheduling
+scheduling:
+  daily_scan:
+    enabled: true
+    time: "09:00"  # UTC
+    timezone: "UTC"
+    
+  weekly_digest:
+    enabled: true
+    day: "Monday"
+    time: "08:00"
+    max_posts: 5
+
+# Logging and monitoring
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "logs/app.log"
+  rotate: true
+  max_bytes: 10485760  # 10MB
+  backup_count: 5
+  
+monitoring:
+  track_metrics: true
+  metrics_file: "data/metrics.json"
+  
+# Cache settings
+cache:
+  enabled: true
+  ttl_hours: 24
+  max_size_mb: 100
+  directory: "data/cache"
