@@ -1,0 +1,87 @@
+name: Weekly Digest
+
+on:
+  schedule:
+    # Run every Monday at 8 AM UTC
+    - cron: '0 8 * * 1'
+  
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  weekly_summary:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      
+      - name: Generate weekly metrics
+        run: |
+          python main.py metrics --days 7
+      
+      - name: Create summary
+        run: |
+          python -c "
+          import json
+          from pathlib import Path
+          from datetime import datetime, timedelta
+          
+          # Read metrics
+          metrics_file = Path('data/metrics.json')
+          if not metrics_file.exists():
+              print('No metrics available')
+              exit(0)
+          
+          metrics = json.loads(metrics_file.read_text())
+          
+          # Filter last 7 days
+          cutoff = datetime.now() - timedelta(days=7)
+          recent = [
+              m for m in metrics 
+              if datetime.fromisoformat(m['timestamp']) >= cutoff
+          ]
+          
+          # Calculate totals
+          total_generated = sum(m.get('generated', 0) for m in recent)
+          total_published = sum(m.get('published', 0) for m in recent)
+          
+          # Create summary
+          summary = f'''# Weekly AI Research Summary
+          
+**Week of {datetime.now().strftime('%B %d, %Y')}**
+
+## Metrics
+- Content Generated: {total_generated}
+- Content Published: {total_published}
+- Days Active: {len(recent)}
+
+## Top Sources
+- arXiv papers
+- Company AI blogs
+- GitHub trending
+- Hacker News
+
+---
+*Automated weekly report from AI Research Publisher*
+'''
+          
+          Path('weekly_summary.md').write_text(summary)
+          print(summary)
+          "
+      
+      - name: Upload summary
+        uses: actions/upload-artifact@v3
+        with:
+          name: weekly-summary
+          path: weekly_summary.md
+          retention-days: 90
