@@ -128,6 +128,10 @@ Rules:
 - Start with a factual hook, not a sensational claim.
 - Use bullet points for clarity.
 - Avoid emojis and buzzwords.
+- Do NOT include hashtags in the post (they will be added separately).
+- Do NOT include citation markers like [1], [2], [3].
+- Remove any markdown formatting (*italic* or **bold**).
+- Do not add filler words like "like", "interesting", "exciting" at the end.
 - End with one thoughtful takeaway.
 
 Structure:
@@ -135,8 +139,7 @@ Structure:
 - 3 key points
 - One practical takeaway
 
-Hashtags:
-- Use 3–5 relevant technical hashtags only.
+IMPORTANT: Do NOT add hashtags to the content. Hashtags will be added separately.
 
 Title: {title}
 URL: {url}

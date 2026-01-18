@@ -4,11 +4,15 @@ LinkedIn publisher using UGC API
 
 import os
 import requests
+import json
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Tuple
 from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
+
+# LinkedIn API constants
+MAX_CONTENT_LENGTH = 3000  # LinkedIn's typical character limit for text posts
 
 
 class LinkedInPublisher:
@@ -24,14 +28,51 @@ class LinkedInPublisher:
         # Get credentials from environment
         self.access_token = os.getenv('LINKEDIN_ACCESS_TOKEN')
         self.user_id = os.getenv('LINKEDIN_USER_ID')
+        self.user_urn = None
         
         if not self.access_token:
             logger.warning("LINKEDIN_ACCESS_TOKEN not set, publishing will fail")
         
         if not self.user_id:
             logger.warning("LINKEDIN_USER_ID not set, publishing will fail")
+        else:
+            # Ensure user_id is properly formatted as URN
+            self.user_urn = self._normalize_user_urn(self.user_id)
     
-    def publish(self, draft_path: Path) -> bool:
+    def _normalize_user_urn(self, user_id: str) -> str:
+        """
+        Normalize user ID to URN format.
+        Handles both plain IDs and already-formatted URNs.
+        
+        Args:
+            user_id: Either plain ID (e.g., 'aQxKAY9vaq') or URN (e.g., 'urn:li:person:aQxKAY9vaq')
+            
+        Returns:
+            Properly formatted URN
+        """
+        if user_id.startswith('urn:li:person:'):
+            return user_id
+        return f"urn:li:person:{user_id}"
+    
+    def _validate_content(self, content: str) -> Tuple[bool, str]:
+        """
+        Validate post content before publishing.
+        
+        Args:
+            content: Post content to validate
+            
+        Returns:
+            Tuple of (is_valid, error_message)
+        """
+        if not content or not content.strip():
+            return False, "Content cannot be empty"
+        
+        if len(content) > MAX_CONTENT_LENGTH:
+            return False, f"Content exceeds {MAX_CONTENT_LENGTH} character limit (got {len(content)})"
+        
+        return True, ""
+    
+    def publish(self, draft_path: Path) -> Dict:
         """
         Publish a LinkedIn draft
         
@@ -39,34 +80,40 @@ class LinkedInPublisher:
             draft_path: Path to text draft file
             
         Returns:
-            True if successful
+            Dict with 'success', 'post_url', and 'error' keys
         """
         if not self.enabled:
             logger.info("LinkedIn publishing is disabled")
-            return False
+            return {'success': False, 'error': 'Publishing is disabled'}
         
         if not self.access_token or not self.user_id:
             logger.error("LinkedIn credentials not configured")
-            return False
+            return {'success': False, 'error': 'Credentials not configured'}
         
         try:
             # Read draft content
             with open(draft_path, 'r') as f:
                 content = f.read()
             
-            # Publish via UGC API
-            success = self._post_to_linkedin(content)
+            # Validate content before posting
+            is_valid, error_msg = self._validate_content(content)
+            if not is_valid:
+                logger.error(f"Content validation failed: {error_msg}")
+                return {'success': False, 'error': error_msg}
             
-            if success:
+            # Publish via UGC API
+            result = self._post_to_linkedin(content)
+            
+            if result.get('success'):
                 logger.info(f"Published LinkedIn post from {draft_path}")
             
-            return success
+            return result
             
         except Exception as e:
             logger.error(f"Failed to publish to LinkedIn: {e}")
-            return False
+            return {'success': False, 'error': str(e)}
     
-    def _post_to_linkedin(self, content: str) -> bool:
+    def _post_to_linkedin(self, content: str) -> Dict:
         """Post content to LinkedIn UGC API"""
         
         url = f"{self.API_BASE}/ugcPosts"
@@ -79,7 +126,7 @@ class LinkedInPublisher:
         
         # Build UGC post payload
         payload = {
-            "author": f"urn:li:person:{self.user_id}",
+            "author": self.user_urn,  # Use normalized URN
             "lifecycleState": "PUBLISHED",
             "specificContent": {
                 "com.linkedin.ugc.ShareContent": {
@@ -94,19 +141,60 @@ class LinkedInPublisher:
             }
         }
         
+        # Log sanitized payload for debugging (without auth token)
+        debug_payload = payload.copy()
+        logger.debug(f"LinkedIn API request to {url} with payload: {json.dumps(debug_payload, indent=2)}")
+        
         try:
             response = requests.post(url, headers=headers, json=payload, timeout=30)
-            response.raise_for_status()
             
-            logger.info("Successfully posted to LinkedIn")
-            return True
+            # Check for successful response (201 Created)
+            if response.status_code == 201:
+                logger.info("Successfully posted to LinkedIn (201 Created)")
+                
+                # Extract post ID from response headers or body
+                post_id = None
+                response_data = response.json() if response.content else {}
+                
+                # LinkedIn returns post ID in 'id' field or x-restli-id header
+                if 'id' in response_data:
+                    post_id = response_data['id']
+                elif 'x-restli-id' in response.headers:
+                    post_id = response.headers['x-restli-id']
+                
+                # Construct post URL
+                post_url = ''
+                if post_id:
+                    # Extract activity ID from URN format: urn:li:activity:1234567890
+                    if 'activity:' in post_id:
+                        activity_id = post_id.split('activity:')[-1]
+                        post_url = f"https://www.linkedin.com/feed/update/{post_id}/"
+                    else:
+                        post_url = f"https://www.linkedin.com/feed/update/urn:li:activity:{post_id}/"
+                
+                return {'success': True, 'post_url': post_url, 'post_id': post_id}
+            elif response.ok:
+                # Handle other 2xx responses
+                logger.warning(f"LinkedIn API returned {response.status_code}, expected 201")
+                logger.info("Post may have been successful")
+                return {'success': True, 'post_url': ''}
+            else:
+                error_msg = f"LinkedIn API error: {response.status_code} - {response.text}"
+                logger.error(error_msg)
+                return {'success': False, 'error': error_msg}
             
         except requests.exceptions.HTTPError as e:
-            logger.error(f"LinkedIn API error: {e.response.status_code} - {e.response.text}")
-            return False
+            error_msg = f"HTTP error: {e.response.status_code} - {e.response.text}"
+            logger.error(f"LinkedIn API {error_msg}")
+            return {'success': False, 'error': error_msg}
+        except requests.exceptions.Timeout:
+            error_msg = "Request timed out (30 seconds)"
+            logger.error(f"LinkedIn API {error_msg}")
+            return {'success': False, 'error': error_msg}
         except Exception as e:
-            logger.error(f"Failed to post to LinkedIn: {e}")
-            return False
+            error_msg = str(e)
+            logger.error(f"Failed to post to LinkedIn: {error_msg}")
+            return {'success': False, 'error': error_msg}
     
     def get_profile(self) -> Dict:
         """Get LinkedIn profile information (for testing)"""

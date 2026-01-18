@@ -1,0 +1,185 @@
+name: Generate Content on Demand (Topic)
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: 'Topic to search for (e.g., "quantum computing", "AI safety", "LLM agents")'
+        required: true
+        type: string
+      count:
+        description: 'Number of items to generate'
+        required: false
+        default: '2'
+        type: choice
+        options:
+          - '1'
+          - '2'
+          - '3'
+          - '4'
+          - '5'
+      format:
+        description: 'Content format to generate'
+        required: false
+        default: 'both'
+        type: choice
+        options:
+          - 'blog'
+          - 'linkedin'
+          - 'both'
+      sources:
+        description: 'Content sources'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - 'all'
+          - 'arxiv'
+          - 'blogs'
+          - 'hackernews'
+          - 'github'
+
+jobs:
+  generate_topic_content:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Initialize project
+        run: |
+          python main.py init
+      
+      - name: Validate environment
+        run: |
+          set +e
+          if [ -z "${{ secrets.PERPLEXITY_API_KEY }}" ]; then
+            echo "❌ Error: PERPLEXITY_API_KEY not configured"
+            echo "Add to: Settings > Secrets and variables > Actions > PERPLEXITY_API_KEY"
+            exit 1
+          fi
+          echo "✅ LLM API credentials validated"
+      
+      - name: Fetch content for topic
+        env:
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+        run: |
+          set +e
+          
+          TOPIC="${{ github.event.inputs.topic }}"
+          SOURCE="${{ github.event.inputs.sources || 'all' }}"
+          
+          echo "🔍 Fetching content for topic: '$TOPIC'"
+          echo "  - Source: $SOURCE"
+          echo "  - Timestamp: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          echo ""
+          
+          python main.py fetch --source $SOURCE
+          
+          FETCH_EXIT_CODE=$?
+          
+          if [ $FETCH_EXIT_CODE -eq 0 ]; then
+            echo "✅ Content fetched successfully"
+          else
+            echo "⚠️ Fetch completed with warnings (continuing)"
+          fi
+      
+      - name: Generate content
+        env:
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+        id: generate
+        run: |
+          set +e
+          
+          COUNT="${{ github.event.inputs.count || '2' }}"
+          FORMAT="${{ github.event.inputs.format || 'both' }}"
+          TOPIC="${{ github.event.inputs.topic }}"
+          
+          echo "✨ Generating content..."
+          echo "  - Topic: '$TOPIC'"
+          echo "  - Count: $COUNT"
+          echo "  - Format: $FORMAT"
+          echo ""
+          
+          python main.py generate --count $COUNT --format $FORMAT
+          
+          GENERATE_EXIT_CODE=$?
+          
+          if [ $GENERATE_EXIT_CODE -eq 0 ]; then
+            echo ""
+            echo "✅ Content generation completed"
+            
+            # Count generated files
+            BLOG_COUNT=$(find data/drafts/blog -name "*.md" -type f 2>/dev/null | wc -l)
+            LINKEDIN_COUNT=$(find data/drafts/linkedin -name "*.txt" -type f 2>/dev/null | wc -l)
+            
+            echo "  - Blog posts: $BLOG_COUNT"
+            echo "  - LinkedIn posts: $LINKEDIN_COUNT"
+            echo "generated=true" >> $GITHUB_OUTPUT
+          else
+            echo ""
+            echo "⚠️ Content generation encountered errors"
+            echo "Check logs above for details"
+            echo "generated=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+      
+      - name: Collect generated content
+        if: steps.generate.outputs.generated == 'true'
+        run: |
+          echo "📂 Generated content summary:"
+          echo ""
+          echo "Blog posts:"
+          if [ -d "data/drafts/blog" ]; then
+            find data/drafts/blog -name "*.md" -type f -exec basename {} \; | sed 's/^/  - /'
+          else
+            echo "  (none)"
+          fi
+          
+          echo ""
+          echo "LinkedIn posts:"
+          if [ -d "data/drafts/linkedin" ]; then
+            find data/drafts/linkedin -name "*.txt" -type f -exec basename {} \; | sed 's/^/  - /'
+          else
+            echo "  (none)"
+          fi
+      
+      - name: Upload generated content
+        if: steps.generate.outputs.generated == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: topic-content-${{ github.event.inputs.topic }}
+          path: |
+            data/drafts/blog/*.md
+            data/drafts/linkedin/*.txt
+          retention-days: 30
+          if-no-files-found: warn
+      
+      - name: Create generation summary
+        if: always()
+        run: |
+          echo "📋 Topic-Based Generation Summary:"
+          echo "  - Workflow: Generate Content on Demand"
+          echo "  - Topic: '${{ github.event.inputs.topic }}'"
+          echo "  - Count requested: ${{ github.event.inputs.count }}"
+          echo "  - Format: ${{ github.event.inputs.format }}"
+          echo "  - Source(s): ${{ github.event.inputs.sources }}"
+          echo "  - Timestamp: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          echo "  - Status: ${{ job.status }}"
+          echo ""
+          echo "💡 Next steps:"
+          echo "  1. Review the generated content (check artifacts)"
+          echo "  2. To publish: Use 'Publish LinkedIn - Manual' workflow"
+          echo "  3. Or wait for scheduled publishing at 10 AM UTC"

@@ -28,6 +28,7 @@ from formatters.linkedin import LinkedInFormatter
 from publishers.github_pages import GitHubPagesPublisher
 from publishers.linkedin_api import LinkedInPublisher
 from utils.cache import Cache
+from utils.database import Database
 import yaml
 
 logger = setup_logger(__name__)
@@ -94,7 +95,7 @@ def fetch(source, cache):
     ranker = ContentRanker(config['filters']['ranking'])
     ranked_content = ranker.rank(unique_content)
     
-    # Save results
+    # Save results to JSON
     output_path = Path('data/fetched/latest.json')
     output_path.parent.mkdir(parents=True, exist_ok=True)
     
@@ -103,6 +104,11 @@ def fetch(source, cache):
         json.dump(ranked_content, f, indent=2, default=str)
     
     logger.info(f"Saved {len(ranked_content)} items to {output_path}")
+    
+    # Save to database
+    db = Database()
+    db_saved = db.save_papers(ranked_content)
+    logger.info(f"Saved {db_saved} items to database")
     
     # Display top 10
     click.echo("\n📊 Top 10 Items:")
@@ -121,9 +127,16 @@ def generate(count, format):
     
     config = load_config()
     
+    # Check if latest.json exists
+    json_path = Path('data/fetched/latest.json')
+    if not json_path.exists():
+        click.echo("❌ No fetched content found. Please run 'fetch' command first:")
+        click.echo("   python main.py fetch")
+        return
+    
     # Load fetched content
     import json
-    with open('data/fetched/latest.json', 'r') as f:
+    with open(json_path, 'r') as f:
         items = json.load(f)[:count]
     
     if not items:
@@ -136,6 +149,9 @@ def generate(count, format):
     # Initialize formatters
     blog_formatter = BlogFormatter(config['formatting']['blog'])
     linkedin_formatter = LinkedInFormatter(config['formatting']['linkedin'])
+    
+    # Initialize database
+    db = Database()
     
     generated_count = 0
     
@@ -150,27 +166,51 @@ def generate(count, format):
             if format in ['blog', 'both']:
                 blog_article = blog_formatter.format(item, analysis)
                 
-                # Save draft
+                # Save draft to file
                 blog_path = Path(f"data/drafts/blog/{item['id']}.md")
                 blog_path.parent.mkdir(parents=True, exist_ok=True)
                 
                 with open(blog_path, 'w') as f:
                     f.write(blog_article)
                 
-                click.echo(f"  ✅ Blog article: {blog_path}")
+                # Save to database with status='drafted'
+                content_id = db.save_generated_content(
+                    paper_id=item['id'],
+                    content_type='blog',
+                    content=blog_article,
+                    analysis=analysis,
+                    file_path=str(blog_path)
+                )
+                
+                click.echo(f"  ✅ Blog article: {blog_path} (DB ID: {content_id})")
             
             # Generate LinkedIn post
             if format in ['linkedin', 'both']:
                 linkedin_post = linkedin_formatter.format(item, analysis)
                 
-                # Save draft
-                linkedin_path = Path(f"data/drafts/linkedin/{item['id']}.txt")
-                linkedin_path.parent.mkdir(parents=True, exist_ok=True)
-                
-                with open(linkedin_path, 'w') as f:
-                    f.write(linkedin_post)
-                
-                click.echo(f"  ✅ LinkedIn post: {linkedin_path}")
+                # Validate content before saving
+                is_valid, validation_error = analyzer.validate_linkedin_content(linkedin_post)
+                if not is_valid:
+                    click.echo(f"  ⚠️  LinkedIn validation failed: {validation_error}")
+                    click.echo(f"  Skipping this LinkedIn post")
+                else:
+                    # Save draft to file
+                    linkedin_path = Path(f"data/drafts/linkedin/{item['id']}.txt")
+                    linkedin_path.parent.mkdir(parents=True, exist_ok=True)
+                    
+                    with open(linkedin_path, 'w') as f:
+                        f.write(linkedin_post)
+                    
+                    # Save to database with status='drafted'
+                    content_id = db.save_generated_content(
+                        paper_id=item['id'],
+                        content_type='linkedin',
+                        content=linkedin_post,
+                        analysis=analysis,
+                        file_path=str(linkedin_path)
+                    )
+                    
+                    click.echo(f"  ✅ LinkedIn post: {linkedin_path} (DB ID: {content_id})")
             
             generated_count += 1
             
@@ -205,21 +245,57 @@ def review():
 @click.option('--platform', type=click.Choice(['blog', 'linkedin', 'both']), 
               default='both', help='Publishing platform')
 @click.option('--approve', is_flag=True, help='Skip approval prompts')
-def publish(platform, approve):
-    """Publish approved content"""
+@click.option('--batch-delay', default=300, help='Delay between LinkedIn posts (seconds, default: 5 min)')
+@click.option('--limit', default=None, type=int, help='Limit number of posts to publish')
+def publish(platform, approve, batch_delay, limit):
+    """Publish approved content with database status tracking"""
+    import time
+    from datetime import datetime
+    
     logger.info(f"Publishing to: {platform}")
     
     config = load_config()
     
-    # Initialize publishers
-    github_publisher = GitHubPagesPublisher(config['publishing']['blog'])
-    linkedin_publisher = LinkedInPublisher(config['publishing']['linkedin'])
+    # Initialize publishers only for selected platform
+    github_publisher = None
+    linkedin_publisher = None
+    
+    if platform in ['blog', 'both']:
+        github_publisher = GitHubPagesPublisher(config['publishing']['blog'])
+    
+    if platform in ['linkedin', 'both']:
+        linkedin_publisher = LinkedInPublisher(config['publishing']['linkedin'])
+    
+    # Initialize database
+    db = Database()
     
     published_count = 0
+    
+    # Check LinkedIn credentials before starting
+    if platform in ['linkedin', 'both'] and linkedin_publisher:
+        if not linkedin_publisher.access_token or not linkedin_publisher.user_id:
+            click.echo("\n❌ LinkedIn credentials not configured!")
+            click.echo("\n📋 Setup Instructions:")
+            click.echo("1. Go to: https://www.linkedin.com/developers/apps")
+            click.echo("2. Create a new app or select existing one")
+            click.echo("3. Add OAuth 2.0 scopes: w_member_social (for posting)")
+            click.echo("4. Generate access token from Auth tab")
+            click.echo("5. Get your User ID from: https://www.linkedin.com/in/YOUR-PROFILE (last part of URL)")
+            click.echo("\n6. Set environment variables:")
+            click.echo("   export LINKEDIN_ACCESS_TOKEN='your_token_here'")
+            click.echo("   export LINKEDIN_USER_ID='your_user_id_here'")
+            click.echo("\n   Or add to .env file:")
+            click.echo("   LINKEDIN_ACCESS_TOKEN=your_token_here")
+            click.echo("   LINKEDIN_USER_ID=your_user_id_here")
+            click.echo("\n⚠️  Note: Access tokens typically expire after 60 days")
+            return
     
     # Publish blog articles
     if platform in ['blog', 'both']:
         blog_drafts = list(Path('data/drafts/blog').glob('*.md'))
+        
+        if limit:
+            blog_drafts = blog_drafts[:limit]
         
         for draft in blog_drafts:
             if not approve:
@@ -232,27 +308,66 @@ def publish(platform, approve):
                     continue
             
             try:
-                github_publisher.publish(draft)
-                click.echo(f"  ✅ Published: {draft.name}")
+                # Publish to GitHub Pages
+                success = github_publisher.publish(draft)
                 
-                # Move to published
-                published_path = Path(f"data/published/blog/{draft.name}")
-                published_path.parent.mkdir(parents=True, exist_ok=True)
-                draft.rename(published_path)
-                
-                published_count += 1
+                if success:
+                    click.echo(f"  ✅ Published: {draft.name}")
+                    
+                    # Update database status
+                    try:
+                        content_record = db.get_content_by_file_path(str(draft))
+                        if content_record:
+                            db.update_content_status(
+                                content_record['id'], 
+                                'published',
+                                published_url=github_publisher.get_post_url(draft)
+                            )
+                            click.echo(f"  📊 Database updated: ID {content_record['id']}")
+                        else:
+                            click.echo(f"  ⚠️  Draft not in database (created before tracking)")
+                    except Exception as db_error:
+                        logger.error(f"Database update failed: {db_error}")
+                        click.echo(f"  ⚠️  Database update failed: {db_error}")
+                        click.echo(f"      Post was published successfully")
+                    
+                    # Move to published
+                    published_path = Path(f"data/published/blog/{draft.name}")
+                    published_path.parent.mkdir(parents=True, exist_ok=True)
+                    draft.rename(published_path)
+                    
+                    published_count += 1
+                else:
+                    click.echo(f"  ❌ Failed to publish: {draft.name}")
                 
             except Exception as e:
                 logger.error(f"Failed to publish {draft.name}: {e}")
                 click.echo(f"  ❌ Error: {e}")
     
-    # Publish LinkedIn posts
+    # Publish LinkedIn posts with batch delays
     if platform in ['linkedin', 'both']:
         linkedin_drafts = list(Path('data/drafts/linkedin').glob('*.txt'))
         
-        for draft in linkedin_drafts:
+        if limit:
+            linkedin_drafts = linkedin_drafts[:limit]
+        
+        total_linkedin = len(linkedin_drafts)
+        
+        if total_linkedin > 0:
+            click.echo(f"\n📅 Best times to post on LinkedIn:")
+            click.echo("   • Weekdays: 8-10 AM, 12 PM, 5-6 PM")
+            click.echo("   • Avoid: Weekends, late nights")
+            current_hour = datetime.now().hour
+            if current_hour < 8 or current_hour > 18:
+                click.echo(f"   ⚠️  Current time ({datetime.now().strftime('%I:%M %p')}) is outside optimal posting hours")
+            
+            if total_linkedin > 1:
+                total_time = (total_linkedin - 1) * batch_delay
+                click.echo(f"\n⏱️  Publishing {total_linkedin} posts with {batch_delay}s delays (~{total_time//60} min total)")
+        
+        for idx, draft in enumerate(linkedin_drafts, 1):
             if not approve:
-                click.echo(f"\n💼 Review: {draft.name}")
+                click.echo(f"\n💼 Review [{idx}/{total_linkedin}]: {draft.name}")
                 with open(draft, 'r') as f:
                     content = f.read()
                     click.echo(content + "\n")
@@ -261,21 +376,57 @@ def publish(platform, approve):
                     continue
             
             try:
-                linkedin_publisher.publish(draft)
-                click.echo(f"  ✅ Published: {draft.name}")
+                # Publish to LinkedIn
+                result = linkedin_publisher.publish(draft)
                 
-                # Move to published
-                published_path = Path(f"data/published/linkedin/{draft.name}")
-                published_path.parent.mkdir(parents=True, exist_ok=True)
-                draft.rename(published_path)
-                
-                published_count += 1
+                if result and result.get('success'):
+                    post_url = result.get('post_url', '')
+                    click.echo(f"  ✅ Published: {draft.name}")
+                    if post_url:
+                        click.echo(f"  🔗 URL: {post_url}")
+                    
+                    # Update database status
+                    try:
+                        content_record = db.get_content_by_file_path(str(draft))
+                        if content_record:
+                            db.update_content_status(
+                                content_record['id'], 
+                                'published',
+                                published_url=post_url
+                            )
+                            click.echo(f"  📊 Database updated: ID {content_record['id']} → 'published'")
+                        else:
+                            click.echo(f"  ⚠️  Draft not in database (created before tracking)")
+                    except Exception as db_error:
+                        logger.error(f"Database update failed: {db_error}")
+                        click.echo(f"  ⚠️  Database update failed: {db_error}")
+                        click.echo(f"      Post was published successfully")
+                    
+                    # Move to published
+                    published_path = Path(f"data/published/linkedin/{draft.name}")
+                    published_path.parent.mkdir(parents=True, exist_ok=True)
+                    draft.rename(published_path)
+                    
+                    published_count += 1
+                    
+                    # Add delay between posts (except for last one)
+                    if idx < total_linkedin and batch_delay > 0:
+                        click.echo(f"  ⏳ Waiting {batch_delay}s before next post...")
+                        time.sleep(batch_delay)
+                else:
+                    click.echo(f"  ❌ Failed to publish: {draft.name}")
+                    if result and 'error' in result:
+                        click.echo(f"  ℹ️  {result['error']}")
                 
             except Exception as e:
                 logger.error(f"Failed to publish {draft.name}: {e}")
                 click.echo(f"  ❌ Error: {e}")
     
     click.echo(f"\n✨ Published {published_count} items")
+    
+    # Show database summary
+    drafted = db.get_drafted_content()
+    click.echo(f"📊 Database Status: {len(drafted)} drafts remaining")
 
 
 @cli.command()

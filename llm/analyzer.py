@@ -182,3 +182,49 @@ class ContentAnalyzer:
         )
         
         return check_result.strip()
+    
+    def validate_linkedin_content(self, content: str) -> tuple:
+        """
+        Validate LinkedIn content before publishing
+        
+        Args:
+            content: Generated LinkedIn post content
+            
+        Returns:
+            (is_valid, error_message) - tuple of boolean and error string
+        """
+        issues = []
+        
+        # Check for citation markers
+        import re
+        if re.search(r'\[\d+\]', content):
+            issues.append("Contains citation markers like [1], [2]")
+        
+        # Check for invalid hashtag markers
+        if 'hashtag#' in content:
+            issues.append("Contains 'hashtag#' instead of proper hashtags")
+        
+        # Check for filler words at the end
+        filler_words = ['like', 'interesting', 'exciting', 'amazing', 'fantastic']
+        for word in filler_words:
+            if re.search(rf'\b{word}\s*\.?\s*$', content, re.IGNORECASE):
+                issues.append(f"Ends with filler word: '{word}'")
+                break
+        
+        # Check for markdown formatting
+        if '**' in content or '__' in content or ('*' in content and not content.count('*') % 2):
+            issues.append("Contains markdown formatting")
+        
+        # Check word count (should be ~120 words)
+        word_count = len(content.split())
+        if word_count > 300:
+            issues.append(f"Too long: {word_count} words (max 300)")
+        
+        is_valid = len(issues) == 0
+        error_msg = "; ".join(issues) if issues else ""
+        
+        logger.info(f"LinkedIn content validation: {'PASS' if is_valid else 'FAIL'}")
+        if not is_valid:
+            logger.warning(f"Validation issues: {error_msg}")
+        
+        return is_valid, error_msg

@@ -1,0 +1,126 @@
+name: Publish LinkedIn - Manual (One-Click)
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_drafted:
+        description: 'Skip drafted posts and generate new content first'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+jobs:
+  publish_single_post:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Initialize project
+        run: |
+          python main.py init
+      
+      - name: Validate environment
+        run: |
+          set +e
+          if [ -z "${{ secrets.LINKEDIN_ACCESS_TOKEN }}" ]; then
+            echo "❌ Error: LINKEDIN_ACCESS_TOKEN not configured"
+            echo "Add to: Settings > Secrets and variables > Actions > LINKEDIN_ACCESS_TOKEN"
+            exit 1
+          fi
+          if [ -z "${{ secrets.LINKEDIN_USER_ID }}" ]; then
+            echo "❌ Error: LINKEDIN_USER_ID not configured"
+            echo "Add to: Settings > Secrets and variables > Actions > LINKEDIN_USER_ID"
+            exit 1
+          fi
+          echo "✅ LinkedIn credentials validated"
+      
+      - name: Generate new content if needed
+        if: github.event.inputs.skip_drafted == 'true'
+        env:
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+        run: |
+          echo "🔄 Generating new LinkedIn content..."
+          python main.py fetch --source all
+          python main.py generate --count 1 --format linkedin
+          echo "✅ New content generated"
+      
+      - name: Check for content
+        id: check_content
+        run: |
+          set +e
+          DRAFT_COUNT=$(find data/drafts/linkedin -name "*.txt" -type f 2>/dev/null | wc -l)
+          echo "draft_count=$DRAFT_COUNT" >> $GITHUB_OUTPUT
+          
+          if [ "$DRAFT_COUNT" -eq 0 ]; then
+            echo "❌ No LinkedIn posts available to publish"
+            echo "   Run 'Daily AI Research Scan' to generate content first"
+            exit 1
+          fi
+          
+          # Get the first draft file for reference
+          FIRST_DRAFT=$(find data/drafts/linkedin -name "*.txt" -type f | head -1)
+          echo "first_draft=$FIRST_DRAFT" >> $GITHUB_OUTPUT
+          echo "✅ Found $DRAFT_COUNT drafted post(s)"
+      
+      - name: Publish single post
+        if: steps.check_content.outputs.draft_count > 0
+        env:
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_USER_ID: ${{ secrets.LINKEDIN_USER_ID }}
+        run: |
+          set +e
+          
+          echo "📤 Publishing 1 LinkedIn post..."
+          echo "  - Timestamp: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          echo ""
+          
+          OUTPUT=$(python main.py publish --platform linkedin --approve --limit 1 2>&1)
+          PUBLISH_EXIT_CODE=$?
+          
+          echo "$OUTPUT"
+          
+          if [ $PUBLISH_EXIT_CODE -eq 0 ]; then
+            echo ""
+            echo "✅ Post published successfully!"
+            echo ""
+            echo "Published post details:"
+            # Extract published URL from output if available
+            PUBLISHED_URL=$(echo "$OUTPUT" | grep -oP 'https://www\.linkedin\.com[^\s]+' | head -1)
+            if [ ! -z "$PUBLISHED_URL" ]; then
+              echo "  📎 URL: $PUBLISHED_URL"
+            fi
+            exit 0
+          else
+            echo ""
+            echo "❌ Failed to publish post"
+            echo "Error details are shown above"
+            exit 1
+          fi
+      
+      - name: Publish result summary
+        if: always()
+        run: |
+          echo "📋 One-Click Publish Summary:"
+          echo "  - Workflow: Publish LinkedIn - Manual"
+          echo "  - Posts published: $([[ '${{ job.status }}' == 'success' ]] && echo '1' || echo '0')"
+          echo "  - Timestamp: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          echo "  - Status: ${{ job.status }}"
+          echo ""
+          echo "💡 Tip: Check the logs above for published post URL"

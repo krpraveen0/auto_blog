@@ -1,0 +1,124 @@
+name: Publish LinkedIn - Scheduled
+
+on:
+  schedule:
+    # Run daily at 10 AM UTC (1 hour after daily_scan generation at 9 AM)
+    - cron: '0 10 * * *'
+  
+  workflow_dispatch:
+    inputs:
+      batch_size:
+        description: 'Number of posts to publish (1-5)'
+        required: true
+        default: '2'
+        type: choice
+        options:
+          - '1'
+          - '2'
+          - '3'
+          - '4'
+          - '5'
+      batch_delay:
+        description: 'Delay in seconds between posts (default: 300)'
+        required: false
+        default: '300'
+
+jobs:
+  publish_linkedin:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Initialize project
+        run: |
+          python main.py init
+      
+      - name: Validate environment
+        run: |
+          set +e
+          if [ -z "${{ secrets.LINKEDIN_ACCESS_TOKEN }}" ]; then
+            echo "❌ Error: LINKEDIN_ACCESS_TOKEN not configured"
+            echo "Add to: Settings > Secrets and variables > Actions > LINKEDIN_ACCESS_TOKEN"
+            exit 1
+          fi
+          if [ -z "${{ secrets.LINKEDIN_USER_ID }}" ]; then
+            echo "❌ Error: LINKEDIN_USER_ID not configured"
+            echo "Add to: Settings > Secrets and variables > Actions > LINKEDIN_USER_ID"
+            exit 1
+          fi
+          echo "✅ LinkedIn credentials validated"
+      
+      - name: Check for drafted posts
+        id: check_drafts
+        run: |
+          set +e
+          DRAFT_COUNT=$(find data/drafts/linkedin -name "*.txt" -type f 2>/dev/null | wc -l)
+          echo "draft_count=$DRAFT_COUNT" >> $GITHUB_OUTPUT
+          
+          if [ "$DRAFT_COUNT" -eq 0 ]; then
+            echo "⚠️ No drafted LinkedIn posts found"
+            echo "Run 'Daily AI Research Scan' workflow first to generate content"
+          else
+            echo "✅ Found $DRAFT_COUNT drafted LinkedIn posts"
+          fi
+      
+      - name: Publish to LinkedIn
+        if: steps.check_drafts.outputs.draft_count > 0
+        env:
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_USER_ID: ${{ secrets.LINKEDIN_USER_ID }}
+        run: |
+          set +e
+          
+          BATCH_SIZE="${{ github.event.inputs.batch_size || '2' }}"
+          BATCH_DELAY="${{ github.event.inputs.batch_delay || '300' }}"
+          
+          echo "📱 Publishing LinkedIn posts..."
+          echo "  - Batch size: $BATCH_SIZE"
+          echo "  - Delay between posts: ${BATCH_DELAY}s"
+          echo "  - Timestamp: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          echo ""
+          
+          python main.py publish --platform linkedin --approve --limit $BATCH_SIZE --batch-delay $BATCH_DELAY
+          
+          PUBLISH_EXIT_CODE=$?
+          
+          if [ $PUBLISH_EXIT_CODE -eq 0 ]; then
+            echo ""
+            echo "✅ LinkedIn publishing completed successfully"
+            exit 0
+          else
+            echo ""
+            echo "⚠️ Error during LinkedIn publishing"
+            echo "Posts were NOT published to avoid spam"
+            echo "Check logs above for error details"
+            exit 1
+          fi
+      
+      - name: Skip publishing - no drafts
+        if: steps.check_drafts.outputs.draft_count == 0
+        run: |
+          echo "⏭️ Skipping LinkedIn publishing"
+          echo "No drafted posts available to publish"
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "📋 Workflow Summary:"
+          echo "  - Workflow: Publish LinkedIn - Scheduled"
+          echo "  - Timestamp: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          echo "  - Status: Check logs above"
