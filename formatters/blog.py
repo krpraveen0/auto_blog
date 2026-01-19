@@ -31,10 +31,20 @@ class BlogFormatter:
         """
         logger.info(f"Formatting blog article: {item.get('title')}")
         
-        # Generate blog content from analysis
-        from llm.analyzer import ContentAnalyzer
-        analyzer = ContentAnalyzer(self.config)
-        blog_content = analyzer.generate_blog(analysis)
+        # Check if this is a GitHub repository and ELI5 analysis is available
+        is_github = item.get('source') == 'github'
+        has_eli5_analysis = 'eli5_what' in analysis
+        
+        if is_github and has_eli5_analysis:
+            logger.info("Using ELI5 format for GitHub repository")
+            from llm.analyzer import ContentAnalyzer
+            analyzer = ContentAnalyzer(self.config)
+            blog_content = analyzer.generate_github_eli5_blog(item, analysis)
+        else:
+            # Generate blog content from analysis using standard approach
+            from llm.analyzer import ContentAnalyzer
+            analyzer = ContentAnalyzer(self.config)
+            blog_content = analyzer.generate_blog(analysis)
         
         # Build markdown post with frontmatter
         post = self._build_post(item, analysis, blog_content)
@@ -113,7 +123,7 @@ source_url: {item.get('url', '')}
         return sorted(list(tags))[:6]  # Max 6 tags
     
     def _generate_source_section(self, item: Dict) -> str:
-        """Generate source attribution section"""
+        """Generate source attribution section with GitHub statistics if applicable"""
         
         source_name = item.get('source_name', item.get('source', 'Unknown'))
         url = item.get('url', '')
@@ -122,12 +132,48 @@ source_url: {item.get('url', '')}
 
 **Original Publication:** [{source_name}]({url})"""
         
-        if item.get('authors'):
-            authors = ', '.join(item['authors']) if isinstance(item['authors'], list) else item['authors']
-            section += f"\n**Authors:** {authors}"
-        
-        if item.get('published'):
-            section += f"\n**Published:** {item['published']}"
+        # Add GitHub-specific statistics
+        if item.get('source') == 'github':
+            section += f"\n\n### Repository Statistics"
+            section += f"\n- ⭐ Stars: {item.get('stars', 0):,}"
+            section += f"\n- 🔱 Forks: {item.get('forks', 0):,}"
+            
+            if item.get('watchers'):
+                section += f"\n- 👀 Watchers: {item.get('watchers', 0):,}"
+            
+            if item.get('contributors_count'):
+                section += f"\n- 👥 Contributors: {item.get('contributors_count', 0):,}"
+            
+            if item.get('open_issues'):
+                section += f"\n- 📋 Open Issues: {item.get('open_issues', 0):,}"
+            
+            if item.get('language'):
+                section += f"\n- 💻 Primary Language: {item.get('language')}"
+            
+            if item.get('license'):
+                section += f"\n- 📜 License: {item.get('license')}"
+            
+            # Trending metrics
+            if item.get('stars_per_day'):
+                section += f"\n- 📈 Growth: {item.get('stars_per_day', 0):.1f} stars/day"
+            
+            if item.get('is_recently_active'):
+                section += f"\n- 🔥 Recently Active"
+            
+            # Topics/Tags
+            if item.get('topics'):
+                topics = item.get('topics', [])
+                if isinstance(topics, list) and topics:
+                    topics_str = ', '.join([f"`{t}`" for t in topics[:5]])
+                    section += f"\n- 🏷️ Topics: {topics_str}"
+        else:
+            # Non-GitHub sources
+            if item.get('authors'):
+                authors = ', '.join(item['authors']) if isinstance(item['authors'], list) else item['authors']
+                section += f"\n**Authors:** {authors}"
+            
+            if item.get('published'):
+                section += f"\n**Published:** {item['published']}"
         
         section += "\n\n*This article was automatically generated using AI analysis. Please refer to the original source for complete details.*"
         

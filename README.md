@@ -2,13 +2,26 @@
 
 **A personal AI research editor that scans trusted sources, filters signal from noise, and converts updates into blog-ready articles and LinkedIn posts.**
 
+## 🆕 New: GitHub Trending + ELI5 Features
+
+This system now includes **enhanced GitHub repository tracking** with comprehensive statistics and **ELI5 (Explain Like I'm 5) blog generation**:
+
+- 📊 **Comprehensive GitHub Stats**: Stars, forks, watchers, contributors, trending metrics
+- 🎓 **ELI5 Blog Generation**: Makes complex technical projects accessible with simple language and analogies
+- 🌐 **GitHub Pages Integration**: Automatically generated searchable index of published blogs
+- 💾 **Enhanced Database**: SQLite storage with 19+ fields for repository statistics
+- 🔍 **Search & Filter**: Beautiful web interface to browse and search blogs
+
+[📖 Read the full documentation](./GITHUB_ELI5_FEATURES.md)
+
 ## 🎯 What This Does
 
-- **Scans** trusted AI/ML/LLM sources (arXiv, company blogs, Hacker News, GitHub)
+- **Scans** trusted AI/ML/LLM sources (arXiv, company blogs, Hacker News, **GitHub trending repos**)
 - **Filters** using relevance heuristics and deduplication
 - **Analyzes** using Perplexity AI (sonar-pro model) for credible insights
-- **Generates** blog articles (800-1000 words), LinkedIn posts (120 words), and comprehensive Medium articles (2000+ words with Mermaid diagrams)
-- **Publishes** to GitHub Pages, LinkedIn, and Medium (with approval flow)
+- **Generates** blog articles (800-1000 words with **ELI5 style for GitHub**), LinkedIn posts (120 words), and comprehensive Medium articles (2000+ words with Mermaid diagrams)
+- **Stores** all content in SQLite database with comprehensive metadata
+- **Publishes** to GitHub Pages (with searchable index), LinkedIn, and Medium (with approval flow)
 - **Automates** via GitHub Actions (daily/weekly)
 
 ## 🏗️ Architecture
@@ -138,16 +151,43 @@ publishing:
 ```bash
 # Fetch and analyze
 python main.py fetch
+python main.py fetch --source github  # Fetch GitHub trending repos only
 
 # Generate content (choose format: blog, linkedin, medium, or all)
-python main.py generate --format medium --count 1  # Comprehensive Medium article with diagrams
-python main.py generate --format all --count 2     # Generate all formats
+# GitHub repos automatically get ELI5 (Explain Like I'm 5) style blogs!
+python main.py generate --format blog --count 3      # Blog articles with ELI5 for GitHub
+python main.py generate --format medium --count 1    # Comprehensive Medium article with diagrams
+python main.py generate --format all --count 2       # Generate all formats
 
 # Review drafts
 python main.py review
 
+# View database statistics
+python main.py db-stats
+
+# Generate GitHub Pages index (searchable website)
+python main.py generate-index
+
 # Publish (with approval)
 python main.py publish --platform medium --medium-status draft
+```
+
+### 4. Enable GitHub Pages (NEW!)
+
+After generating some blogs, create a beautiful searchable website:
+
+```bash
+# Generate the GitHub Pages site
+python main.py generate-index
+
+# Commit and push the docs/ folder
+git add docs/
+git commit -m "Add GitHub Pages site"
+git push
+
+# Then in your GitHub repository:
+# Settings > Pages > Source: Deploy from branch > Select branch and /docs folder
+# Your site will be at: https://USERNAME.github.io/REPO-NAME/
 ```
 
 ## 🧪 Development Phases
