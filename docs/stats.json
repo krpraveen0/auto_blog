@@ -1,0 +1,15 @@
+{
+  "total_papers": 55,
+  "content_by_type": {
+    "blog": 2,
+    "linkedin": 3
+  },
+  "content_by_status": {
+    "drafted": 4,
+    "published": 1
+  },
+  "github_repos": 1,
+  "top_languages": {
+    "Python": 1
+  }
+}
