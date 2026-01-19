@@ -364,10 +364,12 @@ class Database:
             ORDER BY gc.published_at DESC, gc.created_at DESC
         '''
         
+        params = [status]
         if limit:
-            query += f' LIMIT {limit}'
+            query += ' LIMIT ?'
+            params.append(limit)
         
-        cursor.execute(query, (status,))
+        cursor.execute(query, params)
         rows = cursor.fetchall()
         
         blogs = []
@@ -377,12 +379,12 @@ class Database:
             if blog.get('topics'):
                 try:
                     blog['topics'] = json.loads(blog['topics'])
-                except:
+                except (json.JSONDecodeError, TypeError):
                     blog['topics'] = []
             if blog.get('languages'):
                 try:
                     blog['languages'] = json.loads(blog['languages'])
-                except:
+                except (json.JSONDecodeError, TypeError):
                     blog['languages'] = {}
             blogs.append(blog)
         

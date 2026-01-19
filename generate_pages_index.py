@@ -283,7 +283,7 @@ def generate_index_html():
         try:
             date_obj = datetime.fromisoformat(published_at.replace('Z', '+00:00'))
             formatted_date = date_obj.strftime('%B %d, %Y')
-        except:
+        except (ValueError, TypeError):
             formatted_date = 'Recent'
         
         source = blog.get('source', 'unknown')

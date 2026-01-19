@@ -106,18 +106,45 @@ class GitHubFetcher:
         Returns:
             Dictionary with trending metrics
         """
-        created_at = datetime.fromisoformat(repo['created_at'].replace('Z', '+00:00'))
-        updated_at = datetime.fromisoformat(repo['updated_at'].replace('Z', '+00:00'))
+        # Get timestamps with defaults
+        created_at_str = repo.get('created_at')
+        updated_at_str = repo.get('updated_at')
+        
+        if not created_at_str or not updated_at_str:
+            logger.warning(f"Missing timestamp data for repo {repo.get('full_name', 'unknown')}")
+            return {
+                'days_since_creation': 0,
+                'days_since_update': 0,
+                'stars_per_day': 0.0,
+                'forks_per_day': 0.0,
+                'activity_score': 0.0,
+                'is_recently_active': False
+            }
+        
+        try:
+            created_at = datetime.fromisoformat(created_at_str.replace('Z', '+00:00'))
+            updated_at = datetime.fromisoformat(updated_at_str.replace('Z', '+00:00'))
+        except (ValueError, TypeError) as e:
+            logger.warning(f"Invalid timestamp format for repo {repo.get('full_name', 'unknown')}: {e}")
+            return {
+                'days_since_creation': 0,
+                'days_since_update': 0,
+                'stars_per_day': 0.0,
+                'forks_per_day': 0.0,
+                'activity_score': 0.0,
+                'is_recently_active': False
+            }
+        
         now = datetime.now(created_at.tzinfo)
         
         # Calculate days since creation
         days_since_creation = (now - created_at).days or 1  # Avoid division by zero
         
         # Calculate stars per day (velocity)
-        stars_per_day = repo['stargazers_count'] / days_since_creation
+        stars_per_day = repo.get('stargazers_count', 0) / days_since_creation
         
         # Calculate forks per day
-        forks_per_day = repo['forks_count'] / days_since_creation
+        forks_per_day = repo.get('forks_count', 0) / days_since_creation
         
         # Calculate days since last update
         days_since_update = (now - updated_at).days
