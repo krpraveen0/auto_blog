@@ -25,9 +25,10 @@ class GitHubPagesPublisher:
         self.path = gh_config.get('path', '_posts')
         
         # Initialize GitHub client
-        github_token = os.getenv('GITHUB_TOKEN')
+        # Try GH_PAGES_TOKEN first (new), fallback to GITHUB_TOKEN (legacy) for backward compatibility
+        github_token = os.getenv('GH_PAGES_TOKEN') or os.getenv('GITHUB_TOKEN')
         if not github_token:
-            logger.warning("GITHUB_TOKEN not set, publishing will fail")
+            logger.warning("GH_PAGES_TOKEN not set, publishing will fail")
             self.github = None
         else:
             self.github = Github(github_token)

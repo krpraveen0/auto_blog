@@ -64,8 +64,8 @@ def test_content_analyzer():
 
 
 @pytest.mark.skipif(
-    not os.getenv('GITHUB_TOKEN'),
-    reason="GITHUB_TOKEN not set"
+    not os.getenv('GH_PAGES_TOKEN') and not os.getenv('GITHUB_TOKEN'),
+    reason="GH_PAGES_TOKEN not set"
 )
 def test_github_publisher_init():
     """Test GitHub Pages publisher initialization"""

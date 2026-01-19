@@ -228,3 +228,124 @@ class ContentAnalyzer:
             logger.warning(f"Validation issues: {error_msg}")
         
         return is_valid, error_msg
+    
+    def analyze_for_medium(self, item: Dict) -> Dict:
+        """
+        Run comprehensive analysis pipeline for Medium articles with diagrams
+        
+        Args:
+            item: Content item dictionary
+            
+        Returns:
+            Comprehensive analysis dictionary with all sections and diagrams
+        """
+        logger.info(f"Running comprehensive Medium analysis for: {item.get('title', 'Unknown')}")
+        
+        # Start with standard analysis
+        analysis = self.analyze(item)
+        
+        # Add comprehensive sections for Medium
+        content = self._prepare_content(item)
+        
+        try:
+            # Generate methodology section
+            logger.info("Generating methodology section")
+            methodology_prompt = get_prompt('methodology', content=content)
+            analysis['methodology'] = self.client.generate(
+                system_prompt=self.system_prompt,
+                user_prompt=methodology_prompt,
+                max_tokens=1000
+            ).strip()
+            
+            # Generate results section
+            logger.info("Generating results section")
+            results_prompt = get_prompt('results', content=content)
+            analysis['results'] = self.client.generate(
+                system_prompt=self.system_prompt,
+                user_prompt=results_prompt,
+                max_tokens=1000
+            ).strip()
+            
+            # Generate comprehensive Medium article
+            logger.info("Generating comprehensive Medium article")
+            analyzed_content = self._format_analysis(analysis)
+            medium_prompt = get_prompt(
+                'medium_synthesis',
+                title=item.get('title', ''),
+                url=item.get('url', ''),
+                analyzed_content=analyzed_content
+            )
+            analysis['medium_synthesis'] = self.client.generate(
+                system_prompt=self.system_prompt,
+                user_prompt=medium_prompt,
+                max_tokens=3500
+            ).strip()
+            
+            # Generate Mermaid diagrams
+            logger.info("Generating Mermaid diagrams")
+            diagrams = self._generate_diagrams(content, analysis)
+            analysis['diagrams'] = diagrams
+            
+        except Exception as e:
+            logger.error(f"Error in comprehensive Medium analysis: {e}")
+            # Don't fail entirely, return what we have
+        
+        logger.info(f"Comprehensive Medium analysis complete")
+        return analysis
+    
+    def _generate_diagrams(self, content: str, analysis: Dict) -> Dict:
+        """
+        Generate Mermaid diagrams for visualization
+        
+        Args:
+            content: Raw content
+            analysis: Analysis results so far
+            
+        Returns:
+            Dictionary with different diagram types
+        """
+        diagrams = {}
+        
+        # Combine content and analysis for diagram generation
+        full_context = f"{content}\n\n{self._format_analysis(analysis)}"
+        
+        try:
+            # Architecture diagram
+            logger.info("Generating architecture diagram")
+            arch_prompt = get_prompt('diagram_architecture', content=full_context)
+            diagrams['architecture'] = self.client.generate(
+                system_prompt=self.system_prompt,
+                user_prompt=arch_prompt,
+                max_tokens=800
+            ).strip()
+        except Exception as e:
+            logger.warning(f"Failed to generate architecture diagram: {e}")
+            diagrams['architecture'] = ""
+        
+        try:
+            # Flow diagram
+            logger.info("Generating flow diagram")
+            flow_prompt = get_prompt('diagram_flow', content=full_context)
+            diagrams['flow'] = self.client.generate(
+                system_prompt=self.system_prompt,
+                user_prompt=flow_prompt,
+                max_tokens=800
+            ).strip()
+        except Exception as e:
+            logger.warning(f"Failed to generate flow diagram: {e}")
+            diagrams['flow'] = ""
+        
+        try:
+            # Comparison diagram
+            logger.info("Generating comparison diagram")
+            comp_prompt = get_prompt('diagram_comparison', content=full_context)
+            diagrams['comparison'] = self.client.generate(
+                system_prompt=self.system_prompt,
+                user_prompt=comp_prompt,
+                max_tokens=800
+            ).strip()
+        except Exception as e:
+            logger.warning(f"Failed to generate comparison diagram: {e}")
+            diagrams['comparison'] = ""
+        
+        return diagrams

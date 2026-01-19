@@ -125,6 +125,13 @@ formatting:
     bullet_points: 3
     hashtag_count: 4
     emojis: false
+  
+  medium:
+    target_words: 2000
+    tone: "comprehensive"
+    include_references: true
+    include_diagrams: true
+    markdown_flavor: "medium"
     
 # Publishing configuration
 publishing:
@@ -142,6 +149,13 @@ publishing:
     auto_publish: false  # Require manual approval
     output_dir: "data/drafts/linkedin"
     api_version: "v2"
+  
+  medium:
+    enabled: true
+    auto_publish: false  # Require manual approval
+    output_dir: "data/drafts/medium"
+    default_status: "draft"  # Options: 'public', 'draft', 'unlisted'
+    comprehensive_analysis: true  # Use comprehensive analysis with diagrams
     
   approval_workflow:
     enabled: true

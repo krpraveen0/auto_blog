@@ -347,7 +347,7 @@ The 7-stage prompt pipeline is your **moat**. It's what separates thought leader
 
 ### API Keys Needed
 - **Required**: `PERPLEXITY_API_KEY` (get at https://www.perplexity.ai/settings/api)
-- **Optional**: `LINKEDIN_ACCESS_TOKEN`, `GITHUB_TOKEN`
+- **Optional**: `LINKEDIN_ACCESS_TOKEN`, `GH_PAGES_TOKEN`, `MEDIUM_INTEGRATION_TOKEN`
 
 ### Key Files
 - **Config**: `config.yaml`
