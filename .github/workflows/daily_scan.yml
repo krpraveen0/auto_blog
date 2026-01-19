@@ -98,6 +98,66 @@ jobs:
         run: |
           git config --global user.name 'AI Research Publisher'
           git config --global user.email 'bot@airesearch.publisher'
+          git add data/metrics.json 2>/dev/null || true
+          git commit -m "📊 Update metrics $(date -u +'%Y-%m-%d')" 2>/dev/null || true
+          git push 2>/dev/null || true
+
+  publish_linkedin_scheduled:
+    needs: fetch_and_generate
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.publish == 'true')
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Validate environment
+        run: |
+          if [ -z "${{ secrets.LINKEDIN_ACCESS_TOKEN }}" ] || [ -z "${{ secrets.LINKEDIN_USER_ID }}" ]; then
+            echo "❌ Error: LinkedIn credentials not configured in GitHub secrets"
+            echo "Please add LINKEDIN_ACCESS_TOKEN and LINKEDIN_USER_ID to repository secrets"
+            exit 1
+          fi
+          echo "✅ LinkedIn credentials validated"
+      
+      - name: Publish to LinkedIn
+        env:
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_USER_ID: ${{ secrets.LINKEDIN_USER_ID }}
+        run: |
+          set +e  # Don't exit on error, we'll handle it
+          LIMIT="${{ github.event.inputs.batch_size || '2' }}"
+          
+          echo "📱 Publishing up to $LIMIT LinkedIn posts..."
+          python main.py publish --platform linkedin --approve --limit $LIMIT
+          
+          if [ $? -eq 0 ]; then
+            echo "✅ LinkedIn publishing completed successfully"
+          else
+            echo "⚠️ Error during LinkedIn publishing - posts not published"
+            echo "Check logs above for details"
+            exit 1
+          fi
+      
+      - name: Log publishing summary
+        if: always()
+        run: |
+          echo "📋 Publishing Summary:"
+          echo "  - Timestamp: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          echo "  - Platform: LinkedIn"
+          echo "  - Status: Check workflow logs above"
           git add data/metrics.json
           git diff --quiet && git diff --staged --quiet || git commit -m "Update metrics [skip ci]"
           git push

@@ -97,6 +97,39 @@ class GitHubPagesPublisher:
             logger.error(f"Failed to publish to GitHub Pages: {e}")
             return False
     
+    def get_post_url(self, draft_path: Path) -> str:
+        """
+        Get the public URL for a published post
+        
+        Args:
+            draft_path: Path to the draft file
+            
+        Returns:
+            Public URL to the post
+        """
+        if not self.repo:
+            return ""
+        
+        # Generate expected filename
+        date_prefix = datetime.now().strftime('%Y-%m-%d')
+        filename = f"{date_prefix}-{draft_path.stem}.md"
+        
+        # Construct GitHub Pages URL
+        # Format: https://username.github.io/repo-name/year/month/day/post-title.html
+        repo_parts = self.repo.full_name.split('/')
+        username = repo_parts[0]
+        repo_name = repo_parts[1] if len(repo_parts) > 1 else ''
+        
+        # Extract date parts
+        year = datetime.now().strftime('%Y')
+        month = datetime.now().strftime('%m')
+        day = datetime.now().strftime('%d')
+        
+        # Post slug (remove date prefix and extension)
+        slug = draft_path.stem
+        
+        return f"https://{username}.github.io/{repo_name}/{year}/{month}/{day}/{slug}.html"
+    
     def list_published(self) -> list:
         """List all published posts"""
         if not self.repo:
