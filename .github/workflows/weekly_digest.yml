@@ -56,24 +56,19 @@ jobs:
           total_published = sum(m.get('published', 0) for m in recent)
           
           # Create summary
-          summary = f'''# Weekly AI Research Summary
-          
-**Week of {datetime.now().strftime('%B %d, %Y')}**
-
-## Metrics
-- Content Generated: {total_generated}
-- Content Published: {total_published}
-- Days Active: {len(recent)}
-
-## Top Sources
-- arXiv papers
-- Company AI blogs
-- GitHub trending
-- Hacker News
-
----
-*Automated weekly report from AI Research Publisher*
-'''
+          summary = f'# Weekly AI Research Summary\n\n'
+          summary += f'**Week of {datetime.now().strftime(\"%B %d, %Y\")}**\n\n'
+          summary += f'## Metrics\n'
+          summary += f'- Content Generated: {total_generated}\n'
+          summary += f'- Content Published: {total_published}\n'
+          summary += f'- Days Active: {len(recent)}\n\n'
+          summary += f'## Top Sources\n'
+          summary += f'- arXiv papers\n'
+          summary += f'- Company AI blogs\n'
+          summary += f'- GitHub trending\n'
+          summary += f'- Hacker News\n\n'
+          summary += f'---\n'
+          summary += f'*Automated weekly report from AI Research Publisher*\n'
           
           Path('weekly_summary.md').write_text(summary)
           print(summary)
