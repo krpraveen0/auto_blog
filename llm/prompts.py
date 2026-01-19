@@ -165,6 +165,166 @@ Content to review:
 {generated_output}"""
 
 
+# Stage 8: Medium Article Synthesis (Comprehensive Analysis)
+MEDIUM_SYNTHESIS_PROMPT = """Write a comprehensive technical article for Medium analyzing this research paper in detail.
+
+Audience:
+- AI/ML engineers, researchers, and technical practitioners
+- Readers seeking deep understanding, not just summaries
+
+Tone:
+- Analytical, educational, and thorough
+- Balance accessibility with technical depth
+- Use clear explanations for complex concepts
+
+Structure:
+1. Introduction - Why this paper matters now
+2. Background - Context and prior work
+3. Core Innovation - What's fundamentally new
+4. Technical Deep Dive - Key mechanisms and algorithms
+5. Experimental Setup & Results - What was tested and what worked
+6. Limitations & Trade-offs - Honest assessment
+7. Future Directions - What this enables
+8. Practical Takeaways - What engineers should know
+
+Length:
+- 1500-2000 words for comprehensive coverage
+
+Requirements:
+- Break down complex ideas into digestible sections
+- Explain technical terms when first used
+- Connect concepts to real-world scenarios
+- Be precise with technical details
+- Acknowledge uncertainties and limitations
+
+Title: {title}
+URL: {url}
+
+Analysis:
+{analyzed_content}"""
+
+
+# Stage 9: Methodology Extraction (For comprehensive understanding)
+METHODOLOGY_PROMPT = """Extract and explain the methodology from this research in detail.
+
+Focus on:
+1. Research approach - What methods were used and why
+2. Data sources - What data was used, how it was collected/processed
+3. Model architecture - Detailed breakdown of the system design
+4. Training procedure - How the model/system was trained or developed
+5. Evaluation metrics - How success was measured
+6. Experimental setup - Hardware, hyperparameters, configuration
+
+Be specific about:
+- Technical choices and their rationale
+- Any novel techniques or modifications
+- Reproducibility details
+
+Length: 400-600 words
+
+Content:
+{content}"""
+
+
+# Stage 10: Results Analysis (Detailed findings)
+RESULTS_PROMPT = """Analyze the results and findings from this research in detail.
+
+Cover:
+1. Main results - Key findings with specific numbers/metrics
+2. Ablation studies - What components were tested and their impact
+3. Comparisons - Performance vs baselines/prior work
+4. Statistical significance - Are results meaningful
+5. Edge cases - Where the approach works well/poorly
+6. Unexpected findings - Surprises or counterintuitive results
+
+Requirements:
+- Be specific with numbers and comparisons
+- Explain what the metrics mean in practice
+- Discuss both successes and failures
+- Context for the results (are they impressive, expected, etc.)
+
+Length: 400-600 words
+
+Content:
+{content}"""
+
+
+# Stage 11: Mermaid Diagram Generation - Architecture
+DIAGRAM_ARCHITECTURE_PROMPT = """Create a Mermaid diagram showing the system architecture or model structure.
+
+Requirements:
+- Use flowchart or graph syntax
+- Show main components and their relationships
+- Include data flow where relevant
+- Keep it clear and not overly complex
+- Use descriptive labels
+
+Format: Output ONLY the Mermaid code, no explanations
+
+Example format:
+graph TD
+    A[Input Data] --> B[Preprocessing]
+    B --> C[Model]
+    C --> D[Output]
+
+Content to visualize:
+{content}"""
+
+
+# Stage 12: Mermaid Diagram Generation - Process Flow
+DIAGRAM_FLOW_PROMPT = """Create a Mermaid flowchart showing the key process or algorithm flow.
+
+Requirements:
+- Use flowchart syntax with decision points
+- Show the main steps in sequence
+- Include key decision points or branches
+- Use appropriate shapes (rectangles, diamonds, etc.)
+- Keep it focused on the core process
+
+Format: Output ONLY the Mermaid code, no explanations
+
+Example format:
+flowchart TB
+    Start([Start]) --> Input[Receive Input]
+    Input --> Process{Process Type?}
+    Process -->|Type A| PathA[Handle A]
+    Process -->|Type B| PathB[Handle B]
+    PathA --> Output[Generate Output]
+    PathB --> Output
+    Output --> End([End])
+
+Content to visualize:
+{content}"""
+
+
+# Stage 13: Mermaid Diagram Generation - Comparison
+DIAGRAM_COMPARISON_PROMPT = """Create a Mermaid diagram comparing this approach with baselines or prior methods.
+
+Requirements:
+- Use appropriate diagram type (table, bar chart concept, or comparison flow)
+- Clearly show differences between approaches
+- Highlight key advantages/trade-offs
+- Use visual hierarchy to emphasize important differences
+
+Format: Output ONLY the Mermaid code, no explanations
+
+Example format:
+graph LR
+    subgraph "Prior Approach"
+        A[Method A]
+        A --> A1[Limitation 1]
+        A --> A2[Limitation 2]
+    end
+    subgraph "New Approach"
+        B[Method B]
+        B --> B1[Advantage 1]
+        B --> B2[Advantage 2]
+    end
+
+Content to visualize:
+{content}"""
+
+
 def get_system_prompt() -> str:
     """Get the global system prompt"""
     return SYSTEM_PROMPT
@@ -188,7 +348,13 @@ def get_prompt(stage: str, **kwargs) -> str:
         'application_mapping': APPLICATION_MAPPING_PROMPT,
         'blog_synthesis': BLOG_SYNTHESIS_PROMPT,
         'linkedin_formatting': LINKEDIN_POST_PROMPT,
-        'credibility_check': CREDIBILITY_CHECK_PROMPT
+        'credibility_check': CREDIBILITY_CHECK_PROMPT,
+        'medium_synthesis': MEDIUM_SYNTHESIS_PROMPT,
+        'methodology': METHODOLOGY_PROMPT,
+        'results': RESULTS_PROMPT,
+        'diagram_architecture': DIAGRAM_ARCHITECTURE_PROMPT,
+        'diagram_flow': DIAGRAM_FLOW_PROMPT,
+        'diagram_comparison': DIAGRAM_COMPARISON_PROMPT
     }
     
     template = prompts.get(stage)

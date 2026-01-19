@@ -25,8 +25,10 @@ from filters.ranker import ContentRanker
 from llm.analyzer import ContentAnalyzer
 from formatters.blog import BlogFormatter
 from formatters.linkedin import LinkedInFormatter
+from formatters.medium import MediumFormatter
 from publishers.github_pages import GitHubPagesPublisher
 from publishers.linkedin_api import LinkedInPublisher
+from publishers.medium_api import MediumPublisher
 from utils.cache import Cache
 from utils.database import Database
 import yaml
@@ -119,10 +121,10 @@ def fetch(source, cache):
 
 @cli.command()
 @click.option('--count', default=5, help='Number of items to generate content for')
-@click.option('--format', type=click.Choice(['blog', 'linkedin', 'both']), 
+@click.option('--format', type=click.Choice(['blog', 'linkedin', 'medium', 'both', 'all']), 
               default='both', help='Output format')
 def generate(count, format):
-    """Generate blog articles and LinkedIn posts using Perplexity LLM"""
+    """Generate blog articles, LinkedIn posts, and/or Medium articles using Perplexity LLM"""
     logger.info(f"Generating content for top {count} items...")
     
     config = load_config()
@@ -149,6 +151,7 @@ def generate(count, format):
     # Initialize formatters
     blog_formatter = BlogFormatter(config['formatting']['blog'])
     linkedin_formatter = LinkedInFormatter(config['formatting']['linkedin'])
+    medium_formatter = MediumFormatter(config['formatting']['medium'])
     
     # Initialize database
     db = Database()
@@ -159,11 +162,17 @@ def generate(count, format):
         click.echo(f"\n🔄 Processing {i}/{count}: {item['title']}")
         
         try:
-            # Analyze content using 7-stage prompt pipeline
-            analysis = analyzer.analyze(item)
+            # Determine which analysis to use
+            if format in ['medium', 'all']:
+                # Use comprehensive analysis for Medium
+                click.echo(f"  📊 Running comprehensive analysis with diagrams...")
+                analysis = analyzer.analyze_for_medium(item)
+            else:
+                # Use standard analysis
+                analysis = analyzer.analyze(item)
             
             # Generate blog article
-            if format in ['blog', 'both']:
+            if format in ['blog', 'both', 'all']:
                 blog_article = blog_formatter.format(item, analysis)
                 
                 # Save draft to file
@@ -185,7 +194,7 @@ def generate(count, format):
                 click.echo(f"  ✅ Blog article: {blog_path} (DB ID: {content_id})")
             
             # Generate LinkedIn post
-            if format in ['linkedin', 'both']:
+            if format in ['linkedin', 'both', 'all']:
                 linkedin_post = linkedin_formatter.format(item, analysis)
                 
                 # Validate content before saving
@@ -212,6 +221,28 @@ def generate(count, format):
                     
                     click.echo(f"  ✅ LinkedIn post: {linkedin_path} (DB ID: {content_id})")
             
+            # Generate Medium article (comprehensive with diagrams)
+            if format in ['medium', 'all']:
+                medium_article = medium_formatter.format(item, analysis)
+                
+                # Save draft to file
+                medium_path = Path(f"data/drafts/medium/{item['id']}.md")
+                medium_path.parent.mkdir(parents=True, exist_ok=True)
+                
+                with open(medium_path, 'w', encoding='utf-8') as f:
+                    f.write(medium_article)
+                
+                # Save to database with status='drafted'
+                content_id = db.save_generated_content(
+                    paper_id=item['id'],
+                    content_type='medium',
+                    content=medium_article,
+                    analysis=analysis,
+                    file_path=str(medium_path)
+                )
+                
+                click.echo(f"  ✅ Medium article: {medium_path} (DB ID: {content_id})")
+            
             generated_count += 1
             
         except Exception as e:
@@ -229,6 +260,7 @@ def review():
     
     blog_drafts = list(Path('data/drafts/blog').glob('*.md'))
     linkedin_drafts = list(Path('data/drafts/linkedin').glob('*.txt'))
+    medium_drafts = list(Path('data/drafts/medium').glob('*.md'))
     
     click.echo(f"\n📝 Blog Drafts ({len(blog_drafts)}):")
     for draft in blog_drafts:
@@ -238,16 +270,25 @@ def review():
     for draft in linkedin_drafts:
         click.echo(f"  - {draft.name}")
     
-    click.echo(f"\nTo view a draft: cat data/drafts/blog/<filename>")
+    click.echo(f"\n📰 Medium Drafts ({len(medium_drafts)}):")
+    for draft in medium_drafts:
+        click.echo(f"  - {draft.name}")
+    
+    click.echo(f"\nTo view a draft:")
+    click.echo(f"  Blog: cat data/drafts/blog/<filename>")
+    click.echo(f"  LinkedIn: cat data/drafts/linkedin/<filename>")
+    click.echo(f"  Medium: cat data/drafts/medium/<filename>")
 
 
 @cli.command()
-@click.option('--platform', type=click.Choice(['blog', 'linkedin', 'both']), 
+@click.option('--platform', type=click.Choice(['blog', 'linkedin', 'medium', 'both', 'all']), 
               default='both', help='Publishing platform')
 @click.option('--approve', is_flag=True, help='Skip approval prompts')
-@click.option('--batch-delay', default=300, help='Delay between LinkedIn posts (seconds, default: 5 min)')
+@click.option('--batch-delay', default=300, help='Delay between posts (seconds, default: 5 min)')
 @click.option('--limit', default=None, type=int, help='Limit number of posts to publish')
-def publish(platform, approve, batch_delay, limit):
+@click.option('--medium-status', type=click.Choice(['public', 'draft', 'unlisted']), 
+              default='draft', help='Medium publish status')
+def publish(platform, approve, batch_delay, limit, medium_status):
     """Publish approved content with database status tracking"""
     import time
     from datetime import datetime
@@ -259,12 +300,16 @@ def publish(platform, approve, batch_delay, limit):
     # Initialize publishers only for selected platform
     github_publisher = None
     linkedin_publisher = None
+    medium_publisher = None
     
-    if platform in ['blog', 'both']:
+    if platform in ['blog', 'both', 'all']:
         github_publisher = GitHubPagesPublisher(config['publishing']['blog'])
     
-    if platform in ['linkedin', 'both']:
+    if platform in ['linkedin', 'both', 'all']:
         linkedin_publisher = LinkedInPublisher(config['publishing']['linkedin'])
+    
+    if platform in ['medium', 'all']:
+        medium_publisher = MediumPublisher(config['publishing']['medium'])
     
     # Initialize database
     db = Database()
@@ -422,6 +467,88 @@ def publish(platform, approve, batch_delay, limit):
                 logger.error(f"Failed to publish {draft.name}: {e}")
                 click.echo(f"  ❌ Error: {e}")
     
+    # Publish Medium articles
+    if platform in ['medium', 'all']:
+        # Check Medium credentials
+        if medium_publisher and not medium_publisher.integration_token:
+            click.echo("\n❌ Medium credentials not configured!")
+            click.echo("\n📋 Setup Instructions:")
+            click.echo("1. Go to: https://medium.com/me/settings")
+            click.echo("2. Scroll to 'Integration tokens' section")
+            click.echo("3. Enter description (e.g., 'Auto Blog Publisher') and click 'Get integration token'")
+            click.echo("4. Copy the token (it will only be shown once)")
+            click.echo("\n5. Set environment variable:")
+            click.echo("   export MEDIUM_INTEGRATION_TOKEN='your_token_here'")
+            click.echo("\n   Or add to .env file:")
+            click.echo("   MEDIUM_INTEGRATION_TOKEN=your_token_here")
+            click.echo("\n⚠️  Note: Integration tokens don't expire but have rate limits")
+            return
+        
+        medium_drafts = list(Path('data/drafts/medium').glob('*.md'))
+        
+        if limit:
+            medium_drafts = medium_drafts[:limit]
+        
+        total_medium = len(medium_drafts)
+        
+        for idx, draft in enumerate(medium_drafts, 1):
+            if not approve:
+                click.echo(f"\n📰 Review [{idx}/{total_medium}]: {draft.name}")
+                with open(draft, 'r', encoding='utf-8') as f:
+                    preview = f.read()[:800]
+                    click.echo(preview + "...\n")
+                
+                if not click.confirm("Publish this article to Medium?"):
+                    continue
+            
+            try:
+                # Publish to Medium
+                result = medium_publisher.publish(draft, publish_status=medium_status)
+                
+                if result and result.get('success'):
+                    post_url = result.get('post_url', '')
+                    click.echo(f"  ✅ Published: {draft.name}")
+                    if post_url:
+                        click.echo(f"  🔗 URL: {post_url}")
+                    click.echo(f"  📌 Status: {medium_status}")
+                    
+                    # Update database status
+                    try:
+                        content_record = db.get_content_by_file_path(str(draft))
+                        if content_record:
+                            db.update_content_status(
+                                content_record['id'], 
+                                'published',
+                                published_url=post_url
+                            )
+                            click.echo(f"  📊 Database updated: ID {content_record['id']}")
+                        else:
+                            click.echo(f"  ⚠️  Draft not in database (created before tracking)")
+                    except Exception as db_error:
+                        logger.error(f"Database update failed: {db_error}")
+                        click.echo(f"  ⚠️  Database update failed: {db_error}")
+                        click.echo(f"      Post was published successfully")
+                    
+                    # Move to published
+                    published_path = Path(f"data/published/medium/{draft.name}")
+                    published_path.parent.mkdir(parents=True, exist_ok=True)
+                    draft.rename(published_path)
+                    
+                    published_count += 1
+                    
+                    # Add delay between posts if needed
+                    if idx < total_medium and batch_delay > 0:
+                        click.echo(f"  ⏳ Waiting {batch_delay}s before next post...")
+                        time.sleep(batch_delay)
+                else:
+                    click.echo(f"  ❌ Failed to publish: {draft.name}")
+                    if result and 'error' in result:
+                        click.echo(f"  ℹ️  {result['error']}")
+                
+            except Exception as e:
+                logger.error(f"Failed to publish {draft.name}: {e}")
+                click.echo(f"  ❌ Error: {e}")
+    
     click.echo(f"\n✨ Published {published_count} items")
     
     # Show database summary
@@ -479,8 +606,10 @@ def init():
         'data/fetched',
         'data/drafts/blog',
         'data/drafts/linkedin',
+        'data/drafts/medium',
         'data/published/blog',
         'data/published/linkedin',
+        'data/published/medium',
         'logs'
     ]
     
