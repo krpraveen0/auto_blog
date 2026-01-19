@@ -461,11 +461,19 @@ class ContentAnalyzer:
         
         eli5_system_prompt = get_github_eli5_system_prompt()
         
+        # Mapping of analysis keys to section titles
+        section_titles = {
+            'eli5_what': 'What Does It Do',
+            'eli5_how': 'How Does It Work',
+            'eli5_why': 'Why Does It Matter',
+            'eli5_getting_started': 'Getting Started'
+        }
+        
         # Format analysis for blog generation
         analyzed_content = []
-        for key in ['eli5_what', 'eli5_how', 'eli5_why', 'eli5_getting_started']:
+        for key, title in section_titles.items():
             if key in analysis and analysis[key]:
-                analyzed_content.append(f"## {key.replace('eli5_', '').replace('_', ' ').title()}")
+                analyzed_content.append(f"## {title}")
                 analyzed_content.append(analysis[key])
                 analyzed_content.append("")
         

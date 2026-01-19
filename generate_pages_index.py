@@ -295,7 +295,7 @@ def generate_index_html():
         if isinstance(topics, str):
             try:
                 topics = json.loads(topics)
-            except:
+            except (json.JSONDecodeError, TypeError):
                 topics = []
         
         topics_html = ' '.join([f'<span class="badge badge-language">#{topic}</span>' for topic in topics[:3]])

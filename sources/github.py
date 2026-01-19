@@ -4,6 +4,7 @@ Enhanced to fetch comprehensive repository statistics and trending metrics
 """
 
 import requests
+import re
 from datetime import datetime, timedelta
 from typing import List, Dict, Optional
 from utils.logger import setup_logger
@@ -63,19 +64,19 @@ class GitHubFetcher:
             )
             contributors_count = 0
             if contributors_response.status_code == 200:
+                contributors_data = contributors_response.json()
                 # Try to get count from Link header if available
                 link_header = contributors_response.headers.get('Link', '')
                 if 'last' in link_header:
                     try:
                         # Parse the last page number from Link header
-                        import re
                         match = re.search(r'page=(\d+)>; rel="last"', link_header)
                         if match:
                             contributors_count = int(match.group(1))
-                    except:
-                        contributors_count = len(contributors_response.json())
+                    except Exception:
+                        contributors_count = len(contributors_data)
                 else:
-                    contributors_count = len(contributors_response.json()) if contributors_response.json() else 0
+                    contributors_count = len(contributors_data) if contributors_data else 0
             
             return {
                 'watchers': repo_data.get('watchers_count', 0),

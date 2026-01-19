@@ -188,6 +188,7 @@ class Database:
             except Exception as e:
                 logger.error(f"Failed to save paper {paper.get('id')}: {e}")
                 logger.error(f"Paper data: {paper.get('title', 'Unknown')}")
+                logger.debug(f"Exception details: {type(e).__name__}: {str(e)}")
         
         conn.commit()
         conn.close()

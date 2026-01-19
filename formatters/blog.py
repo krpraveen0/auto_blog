@@ -31,8 +31,11 @@ class BlogFormatter:
         """
         logger.info(f"Formatting blog article: {item.get('title')}")
         
-        # Check if this is a GitHub repository - use ELI5 approach
-        if item.get('source') == 'github' and 'eli5_what' in analysis:
+        # Check if this is a GitHub repository and ELI5 analysis is available
+        is_github = item.get('source') == 'github'
+        has_eli5_analysis = 'eli5_what' in analysis
+        
+        if is_github and has_eli5_analysis:
             logger.info("Using ELI5 format for GitHub repository")
             from llm.analyzer import ContentAnalyzer
             analyzer = ContentAnalyzer(self.config)
