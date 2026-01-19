@@ -95,9 +95,12 @@ class MediumFormatter:
         # Extract tags from item
         tags = self._extract_tags(item)
         
+        # Escape title for YAML (replace double quotes with single quotes)
+        safe_title = title.replace('"', "'")
+        
         # Build YAML frontmatter
         frontmatter = f"""---
-title: "{title}"
+title: "{safe_title}"
 date: {datetime.now().isoformat()}
 tags: {tags}
 source: {source}

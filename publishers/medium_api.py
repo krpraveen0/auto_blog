@@ -6,6 +6,7 @@ Creates interactive blog posts with diagrams and comprehensive paper analysis
 import os
 import requests
 import json
+import yaml
 from pathlib import Path
 from typing import Dict, Optional
 from utils.logger import setup_logger
@@ -114,7 +115,6 @@ class MediumPublisher:
                 # Split frontmatter from content
                 parts = content.split('---', 2)
                 if len(parts) >= 3:
-                    import yaml
                     frontmatter = yaml.safe_load(parts[1])
                     
                     if frontmatter:

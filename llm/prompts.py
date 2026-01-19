@@ -271,7 +271,7 @@ Content to visualize:
 {content}"""
 
 
-# Stage 12: Mermaid Diagram Generation - Process Flow
+# Stage 12: Mermaid Diagram Generation - Process Flow  
 DIAGRAM_FLOW_PROMPT = """Create a Mermaid flowchart showing the key process or algorithm flow.
 
 Requirements:

@@ -122,9 +122,17 @@ def fetch(source, cache):
 @cli.command()
 @click.option('--count', default=5, help='Number of items to generate content for')
 @click.option('--format', type=click.Choice(['blog', 'linkedin', 'medium', 'both', 'all']), 
-              default='both', help='Output format')
+              default='both', help='Output format (both=blog+linkedin, all=blog+linkedin+medium)')
 def generate(count, format):
-    """Generate blog articles, LinkedIn posts, and/or Medium articles using Perplexity LLM"""
+    """Generate blog articles, LinkedIn posts, and/or Medium articles using Perplexity LLM
+    
+    Format options:
+    - blog: Generate blog articles only
+    - linkedin: Generate LinkedIn posts only  
+    - medium: Generate comprehensive Medium articles with diagrams
+    - both: Generate blog + LinkedIn (default)
+    - all: Generate blog + LinkedIn + Medium
+    """
     logger.info(f"Generating content for top {count} items...")
     
     config = load_config()

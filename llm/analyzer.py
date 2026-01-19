@@ -271,8 +271,8 @@ class ContentAnalyzer:
             analyzed_content = self._format_analysis(analysis)
             medium_prompt = get_prompt(
                 'medium_synthesis',
-                title=analysis.get('title', ''),
-                url=analysis.get('url', ''),
+                title=item.get('title', ''),
+                url=item.get('url', ''),
                 analyzed_content=analyzed_content
             )
             analysis['medium_synthesis'] = self.client.generate(
