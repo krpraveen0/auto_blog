@@ -325,9 +325,143 @@ Content to visualize:
 {content}"""
 
 
+# ELI5 (Explain Like I'm 5) Prompts for GitHub Repositories
+# These prompts are designed to make complex technical projects accessible
+
+# System prompt for GitHub repository analysis
+GITHUB_ELI5_SYSTEM_PROMPT = """You are a friendly technical educator who excels at explaining complex software projects in simple, accessible terms.
+Your goal is to help people understand what a GitHub repository does, how it works, and why it matters - using clear language, real-world analogies, and practical examples.
+
+Rules:
+- Use simple, everyday language
+- Explain technical concepts with analogies
+- Break down complex ideas into smaller, digestible parts
+- Focus on practical applications and real-world use cases
+- Use examples and scenarios that anyone can understand
+- Avoid jargon, or explain it when necessary
+- Make it engaging and interesting
+- Be accurate but accessible"""
+
+
+# Stage 1: ELI5 What It Does
+GITHUB_ELI5_WHAT_PROMPT = """Explain what this GitHub repository/project does in simple terms that anyone can understand.
+
+Use the "explain like I'm 5" approach:
+- Start with a simple, relatable analogy
+- Explain the core purpose in 2-3 sentences
+- Use everyday examples
+- No technical jargon unless you explain it immediately
+
+Repository: {title}
+Description: {summary}
+Topics: {topics}
+Language: {language}
+
+Write 2-3 paragraphs explaining what this project does."""
+
+
+# Stage 2: ELI5 How It Works
+GITHUB_ELI5_HOW_PROMPT = """Explain how this software/project works using simple language and analogies.
+
+Approach:
+- Use a real-world analogy (like explaining a kitchen, factory, library, etc.)
+- Break down the main components and what each one does
+- Explain the flow: Input → Processing → Output
+- Use visual language ("imagine...", "think of it like...")
+- Keep technical terms minimal, explain when used
+
+Repository: {title}
+Description: {summary}
+Language: {language}
+Key Technologies: {topics}
+
+Write 3-4 paragraphs explaining how this project works."""
+
+
+# Stage 3: ELI5 Why It Matters
+GITHUB_ELI5_WHY_PROMPT = """Explain why this project matters and what problems it solves in everyday terms.
+
+Focus on:
+- What problem does it solve? (in relatable terms)
+- Who benefits from this?
+- What can people do with it that they couldn't before?
+- Real-world impact and applications
+- Use concrete examples
+
+Repository: {title}
+Description: {summary}
+Stats: {stars} stars, {forks} forks, {contributors} contributors
+
+Write 2-3 paragraphs explaining why this project matters."""
+
+
+# Stage 4: ELI5 Getting Started
+GITHUB_ELI5_GETTING_STARTED_PROMPT = """Explain how someone would get started with this project in simple, actionable steps.
+
+Include:
+- What you need before starting (prerequisites in simple terms)
+- Step-by-step getting started guide (very basic)
+- What you can do once it's set up
+- Common use cases or examples
+- Keep it beginner-friendly
+
+Repository: {title}
+URL: {url}
+Language: {language}
+
+Write 2-3 paragraphs as a beginner-friendly getting started guide."""
+
+
+# Stage 5: ELI5 Blog Synthesis for GitHub Repositories
+GITHUB_ELI5_BLOG_PROMPT = """Write an engaging, accessible blog article about this GitHub repository that anyone can understand.
+
+Audience:
+- Developers interested in learning about new tools/projects
+- Non-technical people curious about technology
+- People looking for solutions to problems
+
+Tone:
+- Friendly and approachable
+- Educational but not condescending
+- Enthusiastic but honest
+- Use analogies and examples
+
+Structure:
+1. **Catchy Introduction** - Hook with a relatable problem or scenario (2-3 sentences)
+2. **What Is It?** - Simple explanation with an analogy (2-3 paragraphs)
+3. **How Does It Work?** - Break down the key components with examples (3-4 paragraphs)
+4. **Why Should You Care?** - Real-world applications and benefits (2-3 paragraphs)
+5. **Cool Features** - Highlight 3-4 interesting capabilities (bullet points with brief explanations)
+6. **Getting Started** - Simple guide for beginners (2-3 paragraphs)
+7. **Who's Using It?** - Community and adoption stats in context (1-2 paragraphs)
+8. **Conclusion** - Thoughtful takeaway and encouragement (2-3 sentences)
+
+Repository Stats:
+- Title: {title}
+- URL: {url}
+- Stars: {stars} | Forks: {forks} | Contributors: {contributors}
+- Primary Language: {language}
+- Topics: {topics}
+- License: {license}
+- Activity: {stars_per_day} stars/day, {is_active} recently active
+
+Repository Description: {summary}
+
+Additional Context:
+{analyzed_content}
+
+Length: 800-1000 words
+Style: Explain Like I'm 5, but comprehensive"""
+
+
 def get_system_prompt() -> str:
     """Get the global system prompt"""
     return SYSTEM_PROMPT
+
+
+def get_github_eli5_system_prompt() -> str:
+    """Get the ELI5 system prompt for GitHub repositories"""
+    return GITHUB_ELI5_SYSTEM_PROMPT
 
 
 def get_prompt(stage: str, **kwargs) -> str:
@@ -354,7 +488,13 @@ def get_prompt(stage: str, **kwargs) -> str:
         'results': RESULTS_PROMPT,
         'diagram_architecture': DIAGRAM_ARCHITECTURE_PROMPT,
         'diagram_flow': DIAGRAM_FLOW_PROMPT,
-        'diagram_comparison': DIAGRAM_COMPARISON_PROMPT
+        'diagram_comparison': DIAGRAM_COMPARISON_PROMPT,
+        # ELI5 prompts for GitHub repositories
+        'github_eli5_what': GITHUB_ELI5_WHAT_PROMPT,
+        'github_eli5_how': GITHUB_ELI5_HOW_PROMPT,
+        'github_eli5_why': GITHUB_ELI5_WHY_PROMPT,
+        'github_eli5_getting_started': GITHUB_ELI5_GETTING_STARTED_PROMPT,
+        'github_eli5_blog': GITHUB_ELI5_BLOG_PROMPT,
     }
     
     template = prompts.get(stage)

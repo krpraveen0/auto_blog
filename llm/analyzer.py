@@ -349,3 +349,147 @@ class ContentAnalyzer:
             diagrams['comparison'] = ""
         
         return diagrams
+    
+    def analyze_github_eli5(self, item: Dict) -> Dict:
+        """
+        Run ELI5 (Explain Like I'm 5) analysis pipeline for GitHub repositories
+        
+        Args:
+            item: GitHub repository item dictionary
+            
+        Returns:
+            Analysis dictionary with ELI5 explanations
+        """
+        from llm.prompts import get_github_eli5_system_prompt, get_prompt
+        
+        logger.info(f"Running ELI5 GitHub analysis for: {item.get('title', 'Unknown')}")
+        
+        # Use ELI5 system prompt for GitHub
+        eli5_system_prompt = get_github_eli5_system_prompt()
+        
+        # Prepare repository metadata
+        repo_info = {
+            'title': item.get('title', ''),
+            'summary': item.get('summary', 'No description available'),
+            'url': item.get('url', ''),
+            'language': item.get('language', 'Unknown'),
+            'topics': ', '.join(item.get('topics', [])) if item.get('topics') else 'Not specified',
+            'stars': item.get('stars', 0),
+            'forks': item.get('forks', 0),
+            'contributors': item.get('contributors_count', 0),
+            'license': item.get('license', 'Not specified'),
+            'stars_per_day': item.get('stars_per_day', 0),
+            'is_active': 'Yes' if item.get('is_recently_active') else 'No'
+        }
+        
+        analysis = {
+            'item_id': item.get('id'),
+            'title': item.get('title'),
+            'url': item.get('url'),
+            'source': 'github'
+        }
+        
+        # Stage 1: What does it do?
+        try:
+            logger.info("ELI5 Stage 1: What does it do?")
+            what_prompt = get_prompt('github_eli5_what', **repo_info)
+            analysis['eli5_what'] = self.client.generate(
+                system_prompt=eli5_system_prompt,
+                user_prompt=what_prompt,
+                max_tokens=500
+            ).strip()
+        except Exception as e:
+            logger.error(f"Failed ELI5 'what' stage: {e}")
+            analysis['eli5_what'] = "Failed to generate explanation"
+        
+        # Stage 2: How does it work?
+        try:
+            logger.info("ELI5 Stage 2: How does it work?")
+            how_prompt = get_prompt('github_eli5_how', **repo_info)
+            analysis['eli5_how'] = self.client.generate(
+                system_prompt=eli5_system_prompt,
+                user_prompt=how_prompt,
+                max_tokens=600
+            ).strip()
+        except Exception as e:
+            logger.error(f"Failed ELI5 'how' stage: {e}")
+            analysis['eli5_how'] = "Failed to generate explanation"
+        
+        # Stage 3: Why does it matter?
+        try:
+            logger.info("ELI5 Stage 3: Why does it matter?")
+            why_prompt = get_prompt('github_eli5_why', **repo_info)
+            analysis['eli5_why'] = self.client.generate(
+                system_prompt=eli5_system_prompt,
+                user_prompt=why_prompt,
+                max_tokens=500
+            ).strip()
+        except Exception as e:
+            logger.error(f"Failed ELI5 'why' stage: {e}")
+            analysis['eli5_why'] = "Failed to generate explanation"
+        
+        # Stage 4: Getting started
+        try:
+            logger.info("ELI5 Stage 4: Getting started")
+            started_prompt = get_prompt('github_eli5_getting_started', **repo_info)
+            analysis['eli5_getting_started'] = self.client.generate(
+                system_prompt=eli5_system_prompt,
+                user_prompt=started_prompt,
+                max_tokens=500
+            ).strip()
+        except Exception as e:
+            logger.error(f"Failed ELI5 'getting started' stage: {e}")
+            analysis['eli5_getting_started'] = "Failed to generate explanation"
+        
+        logger.info(f"ELI5 GitHub analysis complete for: {item.get('title')}")
+        return analysis
+    
+    def generate_github_eli5_blog(self, item: Dict, analysis: Dict) -> str:
+        """
+        Generate an ELI5 blog article for GitHub repository
+        
+        Args:
+            item: GitHub repository item
+            analysis: ELI5 analysis results
+            
+        Returns:
+            Blog article content
+        """
+        from llm.prompts import get_github_eli5_system_prompt, get_prompt
+        
+        logger.info("Generating ELI5 GitHub blog article")
+        
+        eli5_system_prompt = get_github_eli5_system_prompt()
+        
+        # Format analysis for blog generation
+        analyzed_content = []
+        for key in ['eli5_what', 'eli5_how', 'eli5_why', 'eli5_getting_started']:
+            if key in analysis and analysis[key]:
+                analyzed_content.append(f"## {key.replace('eli5_', '').replace('_', ' ').title()}")
+                analyzed_content.append(analysis[key])
+                analyzed_content.append("")
+        
+        repo_info = {
+            'title': item.get('title', ''),
+            'summary': item.get('summary', ''),
+            'url': item.get('url', ''),
+            'language': item.get('language', 'Unknown'),
+            'topics': ', '.join(item.get('topics', [])) if item.get('topics') else 'Not specified',
+            'stars': item.get('stars', 0),
+            'forks': item.get('forks', 0),
+            'contributors': item.get('contributors_count', 0),
+            'license': item.get('license', 'Not specified'),
+            'stars_per_day': item.get('stars_per_day', 0),
+            'is_active': 'Yes' if item.get('is_recently_active') else 'No',
+            'analyzed_content': '\n'.join(analyzed_content)
+        }
+        
+        blog_prompt = get_prompt('github_eli5_blog', **repo_info)
+        
+        blog_content = self.client.generate(
+            system_prompt=eli5_system_prompt,
+            user_prompt=blog_prompt,
+            max_tokens=3000
+        )
+        
+        return blog_content.strip()

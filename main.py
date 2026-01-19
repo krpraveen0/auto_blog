@@ -170,13 +170,17 @@ def generate(count, format):
         click.echo(f"\n🔄 Processing {i}/{count}: {item['title']}")
         
         try:
-            # Determine which analysis to use
+            # Determine which analysis to use based on source and format
             if format in ['medium', 'all']:
                 # Use comprehensive analysis for Medium
                 click.echo(f"  📊 Running comprehensive analysis with diagrams...")
                 analysis = analyzer.analyze_for_medium(item)
+            elif item.get('source') == 'github':
+                # Use ELI5 analysis for GitHub repositories
+                click.echo(f"  🎓 Running ELI5 (Explain Like I'm 5) analysis for GitHub repository...")
+                analysis = analyzer.analyze_github_eli5(item)
             else:
-                # Use standard analysis
+                # Use standard analysis for other sources
                 analysis = analyzer.analyze(item)
             
             # Generate blog article
@@ -638,6 +642,64 @@ def init():
         click.echo(f"   cp .env.example .env")
     
     click.echo("\n✨ Initialization complete!")
+
+
+@cli.command()
+def generate_index():
+    """Generate GitHub Pages index from published blogs in database"""
+    logger.info("Generating GitHub Pages index...")
+    
+    from generate_pages_index import generate_index_json, generate_index_html
+    
+    try:
+        # Generate JSON and HTML
+        blog_count = generate_index_json()
+        generate_index_html()
+        
+        click.echo(f"\n✅ Generated GitHub Pages index with {blog_count} blogs")
+        click.echo(f"📁 Files created in docs/ directory:")
+        click.echo(f"   - index.html (GitHub Pages site)")
+        click.echo(f"   - blogs.json (API data)")
+        click.echo(f"   - stats.json (Statistics)")
+        click.echo(f"\n💡 To enable GitHub Pages:")
+        click.echo(f"   1. Go to Settings > Pages in your GitHub repository")
+        click.echo(f"   2. Set Source to 'Deploy from a branch'")
+        click.echo(f"   3. Select branch and /docs folder")
+        click.echo(f"   4. Your site will be available at https://USERNAME.github.io/REPO-NAME/")
+        
+    except Exception as e:
+        logger.error(f"Failed to generate index: {e}")
+        click.echo(f"❌ Error: {e}")
+
+
+@cli.command()
+def db_stats():
+    """Show database statistics"""
+    logger.info("Fetching database statistics...")
+    
+    db = Database()
+    stats = db.get_blog_statistics()
+    
+    click.echo("\n📊 Database Statistics:")
+    click.echo(f"\n📄 Papers:")
+    click.echo(f"   Total Papers: {stats.get('total_papers', 0)}")
+    click.echo(f"   GitHub Repos: {stats.get('github_repos', 0)}")
+    
+    click.echo(f"\n📝 Content:")
+    content_by_type = stats.get('content_by_type', {})
+    for content_type, count in content_by_type.items():
+        click.echo(f"   {content_type.title()}: {count}")
+    
+    click.echo(f"\n📌 Status:")
+    content_by_status = stats.get('content_by_status', {})
+    for status, count in content_by_status.items():
+        click.echo(f"   {status.title()}: {count}")
+    
+    click.echo(f"\n💻 Top Languages:")
+    top_languages = stats.get('top_languages', {})
+    for language, count in list(top_languages.items())[:5]:
+        click.echo(f"   {language}: {count}")
+
 
 
 if __name__ == '__main__':
