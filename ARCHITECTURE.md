@@ -288,7 +288,8 @@ Sources → Fetch → Filter → Analyze → Format → Review → Publish
 ```
 PERPLEXITY_API_KEY  → llm/client.py
 LINKEDIN_TOKEN      → publishers/linkedin_api.py
-GITHUB_TOKEN        → publishers/github_pages.py
+GH_PAGES_TOKEN        → publishers/github_pages.py
+MEDIUM_INTEGRATION_TOKEN → publishers/medium_api.py
 ```
 
 ### GitHub Actions (Secrets)

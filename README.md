@@ -177,7 +177,11 @@ PERPLEXITY_API_KEY=your_api_key_here
 LINKEDIN_ACCESS_TOKEN=your_token_here
 
 # GitHub (for publishing)
-GITHUB_TOKEN=your_github_token_here
+# Note: Use GH_PAGES_TOKEN instead of GITHUB_TOKEN (reserved by GitHub Actions)
+GH_PAGES_TOKEN=your_github_token_here
+
+# Medium (optional - for Medium publishing)
+MEDIUM_INTEGRATION_TOKEN=your_medium_token_here
 ```
 
 ## 📊 Credibility Approach

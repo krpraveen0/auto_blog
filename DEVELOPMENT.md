@@ -227,7 +227,8 @@ LINKEDIN_USER_ID=... (optional)
 ### GitHub Pages (Blog)
 
 1. Create a `gh-pages` branch
-2. Add `GITHUB_TOKEN` secret (auto-created)
+2. Add `GH_PAGES_TOKEN` secret (create personal access token at https://github.com/settings/tokens)
+   - Note: Cannot use GITHUB_TOKEN as it's reserved by GitHub Actions
 3. Set `GITHUB_REPO` in `.env` or as secret
 
 Posts will be committed to `_posts/` folder in Jekyll format.

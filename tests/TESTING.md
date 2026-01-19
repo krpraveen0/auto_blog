@@ -46,7 +46,7 @@ pytest tests/test_basic.py::test_config_exists -v
 Set environment variables:
 ```bash
 export PERPLEXITY_API_KEY=pplx-your-key
-export GITHUB_TOKEN=ghp-your-token
+export GH_PAGES_TOKEN=ghp-your-token  # Use GH_PAGES_TOKEN instead of GITHUB_TOKEN
 export LINKEDIN_ACCESS_TOKEN=your-token
 ```
 

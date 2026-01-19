@@ -202,7 +202,7 @@ jobs:
       
       - name: Publish to GitHub Pages
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_PAGES_TOKEN: ${{ secrets.GH_PAGES_TOKEN }}
           GITHUB_REPO: ${{ github.repository }}
         run: |
           python main.py publish --platform blog --approve
