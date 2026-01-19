@@ -7,8 +7,8 @@
 - **Scans** trusted AI/ML/LLM sources (arXiv, company blogs, Hacker News, GitHub)
 - **Filters** using relevance heuristics and deduplication
 - **Analyzes** using Perplexity AI (sonar-pro model) for credible insights
-- **Generates** blog articles (800-1000 words) and LinkedIn posts (120 words)
-- **Publishes** to GitHub Pages and LinkedIn (with approval flow)
+- **Generates** blog articles (800-1000 words), LinkedIn posts (120 words), and comprehensive Medium articles (2000+ words with Mermaid diagrams)
+- **Publishes** to GitHub Pages, LinkedIn, and Medium (with approval flow)
 - **Automates** via GitHub Actions (daily/weekly)
 
 ## 🏗️ Architecture
@@ -24,7 +24,7 @@
    ↓
 [ Content Formatter ]
    ↓
-[ Blog + LinkedIn Publisher ]
+[ Blog + LinkedIn + Medium Publisher ]
 ```
 
 ## 📁 Project Structure
@@ -54,12 +54,14 @@ ai-research-publisher/
 ├── formatters/           # Output formatters
 │   ├── __init__.py
 │   ├── blog.py          # Long-form blog articles
-│   └── linkedin.py      # Short-form LinkedIn posts
+│   ├── linkedin.py      # Short-form LinkedIn posts
+│   └── medium.py        # Comprehensive Medium articles with diagrams
 │
 ├── publishers/           # Publishing modules
 │   ├── __init__.py
 │   ├── github_pages.py  # Markdown to GitHub Pages
-│   └── linkedin_api.py  # LinkedIn UGC API
+│   ├── linkedin_api.py  # LinkedIn UGC API
+│   └── medium_api.py    # Medium Integration Token API
 │
 ├── workflows/            # GitHub Actions
 │   └── daily_scan.yml   # Automated daily workflow
@@ -137,14 +139,15 @@ publishing:
 # Fetch and analyze
 python main.py fetch
 
-# Generate content
-python main.py generate
+# Generate content (choose format: blog, linkedin, medium, or all)
+python main.py generate --format medium --count 1  # Comprehensive Medium article with diagrams
+python main.py generate --format all --count 2     # Generate all formats
 
 # Review drafts
 python main.py review
 
 # Publish (with approval)
-python main.py publish
+python main.py publish --platform medium --medium-status draft
 ```
 
 ## 🧪 Development Phases
@@ -186,8 +189,9 @@ MEDIUM_INTEGRATION_TOKEN=your_medium_token_here
 
 ## 📊 Credibility Approach
 
-This system uses **7-stage prompt engineering** to ensure factual, non-hype content:
+This system uses **comprehensive multi-stage prompt engineering** to ensure factual, non-hype content:
 
+### Standard Analysis (7 stages for blog & LinkedIn):
 1. **Fact extraction** - Ground truth only
 2. **Engineer summary** - Technical, no fluff
 3. **Impact analysis** - Evidence-based
@@ -196,6 +200,15 @@ This system uses **7-stage prompt engineering** to ensure factual, non-hype cont
 6. **LinkedIn formatting** - Credible short-form
 7. **Self-audit** - Credibility check
 
+### Comprehensive Analysis (13 stages for Medium):
+All 7 standard stages PLUS:
+8. **Medium synthesis** - Deep-dive article (2000+ words)
+9. **Methodology extraction** - Detailed research approach
+10. **Results analysis** - In-depth findings breakdown
+11. **Architecture diagram** - Visual system structure (Mermaid)
+12. **Flow diagram** - Process visualization (Mermaid)
+13. **Comparison diagram** - vs baseline/prior work (Mermaid)
+
 ## 🎯 Competitive Advantage
 
 **Most people:** Repost + hype + zero insight
@@ -203,6 +216,104 @@ This system uses **7-stage prompt engineering** to ensure factual, non-hype cont
 **This system:** Curate + explain + connect research to real systems
 
 → Positions you as a **thinking engineer**, not a content farmer
+
+## 🚀 Medium Integration (NEW!)
+
+### What's Special About Medium Articles
+
+This system generates **comprehensive research analysis** specifically designed for Medium:
+
+**Content Features:**
+- 2000+ words of detailed analysis
+- Complete paper breakdown from introduction to conclusion
+- **Mermaid diagrams** embedded directly in articles:
+  - System architecture visualization
+  - Process flow diagrams
+  - Comparison with baseline methods
+- Methodology deep-dive
+- Results analysis with specific metrics
+- Real-world applications
+- Future implications
+
+**Medium-Specific Formatting:**
+- Clean Markdown that Medium renders beautifully
+- Proper heading hierarchy
+- Code blocks for diagrams
+- Rich metadata (tags, canonical URLs)
+
+### Setup Medium Publishing
+
+1. **Get Integration Token:**
+   ```bash
+   # Visit: https://medium.com/me/settings
+   # Scroll to "Integration tokens" section
+   # Enter description: "Auto Blog Publisher"
+   # Click "Get integration token"
+   # Copy the token (shown only once!)
+   ```
+
+2. **Add to Environment:**
+   ```bash
+   # Add to .env file
+   MEDIUM_INTEGRATION_TOKEN=your_token_here
+   
+   # Or export directly
+   export MEDIUM_INTEGRATION_TOKEN=your_token_here
+   ```
+
+3. **Generate and Publish:**
+   ```bash
+   # Generate comprehensive Medium article with diagrams
+   python main.py generate --format medium --count 1
+   
+   # Review the generated content
+   cat data/drafts/medium/*.md
+   
+   # Publish as draft (review on Medium before making public)
+   python main.py publish --platform medium --medium-status draft
+   
+   # Or publish directly as public
+   python main.py publish --platform medium --medium-status public
+   ```
+
+### Automated Medium Publishing
+
+Use GitHub Actions for scheduled publishing:
+
+1. **Add Secrets:**
+   - Go to Settings > Secrets and variables > Actions
+   - Add `MEDIUM_INTEGRATION_TOKEN`
+   - Add `PERPLEXITY_API_KEY` (if not already added)
+
+2. **Workflows Available:**
+   - `publish_medium_manual.yml` - On-demand publishing with topic
+   - `publish_medium_scheduled.yml` - Weekly automatic publishing
+
+3. **Manual Trigger:**
+   - Go to Actions tab
+   - Select "Publish Medium - Manual"
+   - Click "Run workflow"
+   - Choose options:
+     - Generate new content or use existing drafts
+     - Set publish status (draft/public/unlisted)
+     - Number of articles to publish
+
+### Why Use Medium?
+
+**Advantages:**
+- Built-in audience and discovery
+- Professional reading experience
+- SEO benefits
+- Easy sharing and curation
+- No hosting required
+- Monetization options
+
+**Best Practices:**
+- Publish as `draft` first to review on Medium's interface
+- Use meaningful tags (max 5)
+- Add a compelling title and subtitle
+- Review diagrams render correctly
+- Check formatting before making public
 
 ## 📝 License
 
