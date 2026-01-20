@@ -2,7 +2,7 @@
 LinkedIn post formatter - converts analysis to short-form posts
 """
 
-from typing import Dict
+from typing import Dict, Optional
 from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -18,22 +18,24 @@ class LinkedInFormatter:
         self.hashtag_count = config.get('hashtag_count', 4)
         self.use_emojis = config.get('emojis', False)
     
-    def format(self, item: Dict, analysis: Dict) -> str:
+    def format(self, item: Dict, analysis: Dict, analyzer: Optional['ContentAnalyzer'] = None) -> str:
         """
         Format item and analysis as a LinkedIn post
         
         Args:
             item: Original content item
             analysis: Analysis results from ContentAnalyzer
+            analyzer: Optional pre-initialized ContentAnalyzer (for performance)
             
         Returns:
             Formatted LinkedIn post text
         """
         logger.info(f"Formatting LinkedIn post: {item.get('title')}")
         
-        # Generate LinkedIn content from analysis using enhanced engaging format
-        from llm.analyzer import ContentAnalyzer
-        analyzer = ContentAnalyzer(self.config)
+        # Use provided analyzer or create new one
+        if analyzer is None:
+            from llm.analyzer import ContentAnalyzer
+            analyzer = ContentAnalyzer(self.config)
         
         # Use engaging format by default (can be configured)
         use_engaging = self.config.get('use_engaging_format', True)

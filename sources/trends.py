@@ -166,8 +166,13 @@ class TrendDiscovery:
         Returns:
             Content item dictionary compatible with existing pipeline
         """
+        # Sanitize topic for ID - remove special chars, limit length
+        import re
+        topic_safe = re.sub(r'[^a-zA-Z0-9_]', '_', trend.get('topic', 'unknown'))[:50]
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        
         item = {
-            'id': f"trend_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{trend.get('topic', 'unknown').replace(' ', '_')}",
+            'id': f"trend_{timestamp}_{topic_safe}",
             'title': self._generate_trend_title(trend),
             'url': '#',  # Trends don't have a single URL
             'summary': trend.get('description', ''),

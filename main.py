@@ -19,6 +19,7 @@ from sources.arxiv import ArxivFetcher
 from sources.blogs import BlogFetcher
 from sources.hackernews import HackerNewsFetcher
 from sources.github import GitHubFetcher
+from sources.trends import TrendDiscovery
 from filters.relevance import RelevanceFilter
 from filters.dedup import Deduplicator
 from filters.ranker import ContentRanker
@@ -753,7 +754,6 @@ def discover_trends(max_trends, generate_content):
     click.echo(f"📊 Analyzing {len(all_content)} recent items for trends...")
     
     # Initialize trend discovery
-    from sources.trends import TrendDiscovery
     trend_engine = TrendDiscovery(config)
     
     # Discover trends

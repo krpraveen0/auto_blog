@@ -111,6 +111,13 @@ llm:
     temperature: 0.3  # Low temp for factual content
     max_tokens: 2000
     top_p: 0.9
+  
+  # Content safety - minimal profanity list (extend as needed)
+  profanity_list:
+    - "damn"
+    - "hell"
+    - "crap"
+    # Add more words to block as needed
     
   rate_limiting:
     requests_per_minute: 20

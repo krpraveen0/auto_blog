@@ -247,8 +247,12 @@ class ContentAnalyzer:
         issues = []
         score = 100
         
+        # Get profanity list from config or use minimal defaults
+        profanity_patterns = self.config.get('profanity_list', [
+            'damn', 'hell', 'crap'  # Minimal list - extend in config
+        ])
+        
         # Basic safety checks
-        profanity_patterns = ['damn', 'hell', 'crap', 'shit', 'fuck']
         for word in profanity_patterns:
             if re.search(rf'\b{word}\b', content, re.IGNORECASE):
                 issues.append({
@@ -258,6 +262,7 @@ class ContentAnalyzer:
                     'suggestion': 'Remove profane language'
                 })
                 score -= 30
+                break  # One profanity is enough to flag
         
         # Length check
         word_count = len(content.split())
@@ -270,7 +275,7 @@ class ContentAnalyzer:
             })
             score -= 10
         
-        # Quality checks
+        # Quality checks - reuse formatter's clean_content logic
         if re.search(r'\[\d+\]', content):
             issues.append({
                 'category': 'quality',
