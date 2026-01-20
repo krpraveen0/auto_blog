@@ -10,6 +10,18 @@ sources:
       - "cs.CL"      # Computation and Language
       - "cs.CV"      # Computer Vision
     max_results: 20
+  
+  # NEW: Trend Discovery Engine
+  trends:
+    enabled: true
+    interval_hours: 24  # Run discovery every 24 hours
+    max_trends_per_run: 5
+    focus_areas:
+      - "agentic-ai"          # Agentic AI frameworks and patterns
+      - "ai-patterns"         # Design patterns and best practices
+      - "production-ai"       # MLOps, deployment, monitoring
+      - "research-breakthroughs"  # Novel architectures and methods
+      - "industry-applications"   # Real-world use cases
     
   blogs:
     enabled: true
@@ -99,6 +111,13 @@ llm:
     temperature: 0.3  # Low temp for factual content
     max_tokens: 2000
     top_p: 0.9
+  
+  # Content safety - minimal profanity list (extend as needed)
+  profanity_list:
+    - "damn"
+    - "hell"
+    - "crap"
+    # Add more words to block as needed
     
   rate_limiting:
     requests_per_minute: 20
@@ -121,10 +140,12 @@ formatting:
     markdown_flavor: "github"
     
   linkedin:
-    max_words: 120
+    max_words: 150  # Increased for engaging format
     bullet_points: 3
     hashtag_count: 4
     emojis: false
+    use_engaging_format: true  # Use enhanced engagement-focused prompts
+    safety_validation: true     # Run comprehensive safety checks
   
   medium:
     target_words: 2000

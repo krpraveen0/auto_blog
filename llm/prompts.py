@@ -165,6 +165,255 @@ Content to review:
 {generated_output}"""
 
 
+# ============================================================================
+# ENHANCED LINKEDIN ENGAGEMENT PROMPTS
+# Designed for maximum engagement while maintaining professionalism
+# ============================================================================
+
+# LinkedIn Engagement - Viral Pattern Analysis
+LINKEDIN_VIRAL_PATTERNS = """
+TOP LINKEDIN ENGAGEMENT PATTERNS FROM SUCCESSFUL INFLUENCERS:
+
+1. **Pattern: Problem → Insight → Action**
+   Example: "Most teams struggle with X. Here's what top performers do differently..."
+   Why it works: Creates curiosity gap and provides value
+
+2. **Pattern: Contrarian Take**
+   Example: "Everyone says X. But after analyzing Y, the data shows Z..."
+   Why it works: Challenges conventional wisdom, sparks discussion
+
+3. **Pattern: Personal Story → Universal Lesson**
+   Example: "Last week, I made a mistake that cost us $X. Here's what I learned..."
+   Why it works: Vulnerability builds trust, lessons are actionable
+
+4. **Pattern: Data-Driven Insight**
+   Example: "We analyzed 10,000 code reviews. The #1 factor for quality? Not what you think..."
+   Why it works: Specificity and surprise drive engagement
+
+5. **Pattern: Framework/System**
+   Example: "Here's our 3-step framework for X that improved Y by Z%..."
+   Why it works: Actionable, shareable, saves time
+
+6. **Pattern: Before/After Transformation**
+   Example: "6 months ago: struggling with X. Today: achieved Y. The turning point..."
+   Why it works: Shows concrete results, inspires action
+
+ENGAGEMENT BOOSTERS:
+- Start with a hook (question, surprising fact, bold statement)
+- Use short paragraphs (1-2 sentences max)
+- Include specific numbers/metrics when possible
+- End with a question or call to action
+- Make it scannable with line breaks
+- Focus on ONE clear takeaway
+"""
+
+# Enhanced LinkedIn Post Generation with Engagement Focus
+LINKEDIN_ENGAGING_POST_PROMPT = """Write a highly engaging LinkedIn post about this research/technology.
+
+AUDIENCE: AI/ML engineers, tech leaders, data scientists seeking cutting-edge insights
+
+ENGAGEMENT FRAMEWORK:
+1. Hook (First line) - Create immediate interest:
+   - Ask a provocative question
+   - Share a surprising stat
+   - Make a bold (but accurate) statement
+   - Highlight a common problem
+
+2. Value Delivery (Middle) - Core insights:
+   - 2-3 bullet points with concrete details
+   - Use numbers/metrics where available
+   - Keep bullets scannable (short, punchy)
+   - Focus on practical implications
+
+3. Takeaway (End) - Clear action/insight:
+   - One memorable lesson
+   - Practical application
+   - Future implication
+   - End with engagement prompt (optional)
+
+STYLE GUIDELINES:
+✅ DO:
+- Start strong with a compelling hook
+- Use specific numbers and data
+- Write in active voice
+- Break into short paragraphs (1-2 sentences)
+- Focus on "so what?" - why it matters
+- Use accessible language
+- Include real-world applications
+- End with a clear takeaway
+
+❌ DON'T:
+- Use jargon without explanation
+- Write long blocks of text
+- Include hashtags (added separately)
+- Use citation markers [1], [2]
+- Use markdown formatting
+- Add filler words ("interesting", "exciting")
+- Hype or exaggerate claims
+- Use emojis excessively
+
+LENGTH: 100-150 words (optimal for LinkedIn algorithm)
+
+TONE: Professional yet conversational, authoritative but accessible
+
+Title: {title}
+URL: {url}
+
+Analysis:
+{analyzed_content}
+
+Write the post following this engagement framework:"""
+
+
+# Content Safety & Quality Guardrails
+LINKEDIN_CONTENT_VALIDATION_PROMPT = """Validate this LinkedIn post for safety, quality, and professionalism.
+
+POST TO VALIDATE:
+{content}
+
+VALIDATION CHECKLIST:
+
+1. SAFETY & APPROPRIATENESS:
+   ❌ Flag if contains:
+   - Profanity or vulgar language
+   - Offensive or discriminatory content
+   - Personal attacks or controversial political statements
+   - Misleading or false claims
+   - Spam or promotional language
+   - Unethical practices or harmful advice
+
+2. PROFESSIONAL STANDARDS:
+   ❌ Flag if:
+   - Too casual or unprofessional tone
+   - Contains excessive self-promotion
+   - Uses clickbait without substance
+   - Makes unsubstantiated claims
+   - Violates intellectual property
+   - Contains sensitive company information
+
+3. LINKEDIN PLATFORM COMPLIANCE:
+   ❌ Flag if:
+   - Exceeds recommended length (>300 words)
+   - Contains broken/suspicious links
+   - Uses banned keywords or practices
+   - Violates LinkedIn community guidelines
+   - Contains excessive hashtags in text
+
+4. QUALITY STANDARDS:
+   ❌ Flag if:
+   - Poor grammar or spelling errors
+   - Unclear or confusing message
+   - Lacks clear value proposition
+   - Too technical without explanation
+   - Missing key context
+   - Contradicts itself
+
+5. REPUTATION RISK:
+   ❌ Flag if:
+   - Could damage professional reputation
+   - Makes promises that can't be kept
+   - Oversimplifies complex topics dangerously
+   - Could be misinterpreted negatively
+   - Lacks necessary disclaimers
+
+OUTPUT FORMAT:
+{{
+  "is_valid": true/false,
+  "validation_score": 0-100,
+  "issues": [
+    {{
+      "category": "safety/professional/compliance/quality/reputation",
+      "severity": "critical/high/medium/low",
+      "issue": "description of the issue",
+      "suggestion": "how to fix it"
+    }}
+  ],
+  "approved": true/false,
+  "summary": "brief explanation of validation decision"
+}}
+
+GUIDELINES:
+- Critical issues = immediate rejection
+- High severity = requires fixes
+- Medium/Low = warnings only
+- Score below 70 = not approved
+- Be strict but fair - prioritize user reputation"""
+
+
+# Trend Detection and Topic Discovery
+TREND_DISCOVERY_PROMPT = """Analyze the current AI/ML landscape to identify emerging trends worth covering.
+
+FOCUS AREAS:
+1. **Agentic AI Frameworks**
+   - New agent architectures
+   - Multi-agent systems
+   - Agent reasoning capabilities
+   - Tool-using agents
+
+2. **AI Design Patterns**
+   - Novel architectural patterns
+   - Prompt engineering techniques
+   - RAG improvements
+   - Fine-tuning strategies
+
+3. **Production AI**
+   - MLOps innovations
+   - Deployment patterns
+   - Monitoring & observability
+   - Cost optimization
+
+4. **Research Breakthroughs**
+   - New model architectures
+   - Training techniques
+   - Evaluation methods
+   - Benchmark improvements
+
+5. **Industry Applications**
+   - Real-world implementations
+   - Case studies
+   - ROI demonstrations
+   - Adoption patterns
+
+TREND EVALUATION CRITERIA:
+- Novelty: Is this genuinely new or just repackaged?
+- Impact: Will this change how people work?
+- Timeliness: Is this trending now?
+- Audience Relevance: Will our followers care?
+- Content Potential: Can we create engaging content?
+
+SOURCES TO CONSIDER:
+- Recent arXiv papers (last 7 days)
+- Tech company blog posts
+- GitHub trending repositories
+- Hacker News discussions
+- Conference proceedings
+
+OUTPUT FORMAT:
+{{
+  "trends": [
+    {{
+      "topic": "clear topic name",
+      "category": "agentic-ai/patterns/production/research/application",
+      "trend_score": 0-100,
+      "novelty": 0-100,
+      "impact": 0-100,
+      "timeliness": 0-100,
+      "engagement_potential": 0-100,
+      "description": "2-3 sentence explanation",
+      "why_now": "why this matters right now",
+      "content_angle": "how to present this for maximum engagement",
+      "sources": ["list of relevant sources"]
+    }}
+  ],
+  "recommendation": "which trend to cover first and why"
+}}
+
+Current date: {current_date}
+Recent papers: {recent_content}
+
+Analyze and recommend top 3-5 trends worth creating content about:"""
+
+
 # Stage 8: Medium Article Synthesis (Comprehensive Analysis)
 MEDIUM_SYNTHESIS_PROMPT = """Write a comprehensive technical article for Medium analyzing this research paper in detail.
 
@@ -495,6 +744,10 @@ def get_prompt(stage: str, **kwargs) -> str:
         'github_eli5_why': GITHUB_ELI5_WHY_PROMPT,
         'github_eli5_getting_started': GITHUB_ELI5_GETTING_STARTED_PROMPT,
         'github_eli5_blog': GITHUB_ELI5_BLOG_PROMPT,
+        # Enhanced LinkedIn engagement prompts
+        'linkedin_engaging': LINKEDIN_ENGAGING_POST_PROMPT,
+        'linkedin_validation': LINKEDIN_CONTENT_VALIDATION_PROMPT,
+        'trend_discovery': TREND_DISCOVERY_PROMPT,
     }
     
     template = prompts.get(stage)

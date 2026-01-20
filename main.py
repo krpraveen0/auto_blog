@@ -19,6 +19,7 @@ from sources.arxiv import ArxivFetcher
 from sources.blogs import BlogFetcher
 from sources.hackernews import HackerNewsFetcher
 from sources.github import GitHubFetcher
+from sources.trends import TrendDiscovery
 from filters.relevance import RelevanceFilter
 from filters.dedup import Deduplicator
 from filters.ranker import ContentRanker
@@ -700,6 +701,131 @@ def db_stats():
     for language, count in list(top_languages.items())[:5]:
         click.echo(f"   {language}: {count}")
 
+
+
+@cli.command()
+@click.option('--max-trends', default=5, help='Maximum number of trends to discover')
+@click.option('--generate-content', is_flag=True, help='Generate content for discovered trends')
+def discover_trends(max_trends, generate_content):
+    """Discover trending AI/ML topics and optionally generate content"""
+    logger.info(f"Discovering up to {max_trends} trending topics...")
+    
+    config = load_config()
+    
+    # Check if trends source is enabled
+    if not config.get('sources', {}).get('trends', {}).get('enabled', False):
+        click.echo("❌ Trend discovery is not enabled in config.yaml")
+        click.echo("   Set sources.trends.enabled: true to enable")
+        return
+    
+    # Load recent content for analysis
+    json_path = Path('data/fetched/latest.json')
+    if not json_path.exists():
+        click.echo("⚠️  No fetched content found. Running fetch first...")
+        # Fetch content
+        from sources.arxiv import ArxivFetcher
+        from sources.blogs import BlogFetcher
+        from sources.hackernews import HackerNewsFetcher
+        from sources.github import GitHubFetcher
+        
+        fetchers = {
+            'arxiv': ArxivFetcher(config['sources']['arxiv']),
+            'blogs': BlogFetcher(config['sources']['blogs']),
+            'hackernews': HackerNewsFetcher(config['sources']['hackernews']),
+            'github': GitHubFetcher(config['sources']['github'])
+        }
+        
+        all_content = []
+        for name, fetcher in fetchers.items():
+            if config['sources'][name].get('enabled', True):
+                content = fetcher.fetch()
+                all_content.extend(content)
+        
+        # Save for trend analysis
+        import json
+        with open(json_path, 'w') as f:
+            json.dump(all_content, f, indent=2, default=str)
+    else:
+        # Load existing content
+        import json
+        with open(json_path, 'r') as f:
+            all_content = json.load(f)
+    
+    click.echo(f"📊 Analyzing {len(all_content)} recent items for trends...")
+    
+    # Initialize trend discovery
+    trend_engine = TrendDiscovery(config)
+    
+    # Discover trends
+    trends = trend_engine.discover_trends(all_content, max_trends=max_trends)
+    
+    if not trends:
+        click.echo("❌ No trends discovered. Try again later or check LLM configuration.")
+        return
+    
+    # Display discovered trends
+    click.echo(f"\n🔥 Discovered {len(trends)} Trending Topics:\n")
+    
+    for i, trend in enumerate(trends, 1):
+        click.echo(f"{i}. {trend.get('topic', 'Unknown')}")
+        click.echo(f"   Category: {trend.get('category', 'N/A')}")
+        click.echo(f"   Score: {trend.get('composite_score', 0):.1f}/100")
+        click.echo(f"   Why now: {trend.get('why_now', 'N/A')[:80]}...")
+        click.echo(f"   Engagement: {trend.get('engagement_potential', 0)}/100")
+        click.echo()
+    
+    # Save trends to file
+    trends_path = Path('data/trends/latest_trends.json')
+    trends_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    import json
+    from datetime import datetime
+    with open(trends_path, 'w') as f:
+        json.dump({
+            'discovered_at': datetime.now().isoformat(),
+            'trends': trends
+        }, f, indent=2)
+    
+    click.echo(f"💾 Saved trends to: {trends_path}")
+    
+    # Optionally generate content for trends
+    if generate_content:
+        click.echo(f"\n📝 Generating content for top trend...")
+        
+        # Convert top trend to content item
+        top_trend = trends[0]
+        trend_item = trend_engine.generate_trend_content_item(top_trend)
+        
+        # Generate content
+        from llm.analyzer import ContentAnalyzer
+        from formatters.linkedin import LinkedInFormatter
+        
+        analyzer = ContentAnalyzer(config['llm'])
+        linkedin_formatter = LinkedInFormatter(config['formatting']['linkedin'])
+        
+        try:
+            # Analyze trend
+            analysis = analyzer.analyze(trend_item)
+            
+            # Generate LinkedIn post
+            linkedin_post = linkedin_formatter.format(trend_item, analysis)
+            
+            # Save draft
+            linkedin_path = Path(f"data/drafts/linkedin/{trend_item['id']}.txt")
+            linkedin_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            with open(linkedin_path, 'w') as f:
+                f.write(linkedin_post)
+            
+            click.echo(f"✅ Generated LinkedIn post: {linkedin_path}")
+            click.echo(f"\nPreview:")
+            click.echo("─" * 60)
+            click.echo(linkedin_post[:500])
+            click.echo("─" * 60)
+            
+        except Exception as e:
+            logger.error(f"Failed to generate content: {e}")
+            click.echo(f"❌ Error: {e}")
 
 
 if __name__ == '__main__':
