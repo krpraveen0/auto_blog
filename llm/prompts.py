@@ -317,20 +317,20 @@ VALIDATION CHECKLIST:
    - Lacks necessary disclaimers
 
 OUTPUT FORMAT:
-{
+{{
   "is_valid": true/false,
   "validation_score": 0-100,
   "issues": [
-    {
+    {{
       "category": "safety/professional/compliance/quality/reputation",
       "severity": "critical/high/medium/low",
       "issue": "description of the issue",
       "suggestion": "how to fix it"
-    }
+    }}
   ],
   "approved": true/false,
   "summary": "brief explanation of validation decision"
-}
+}}
 
 GUIDELINES:
 - Critical issues = immediate rejection
@@ -389,9 +389,9 @@ SOURCES TO CONSIDER:
 - Conference proceedings
 
 OUTPUT FORMAT:
-{
+{{
   "trends": [
-    {
+    {{
       "topic": "clear topic name",
       "category": "agentic-ai/patterns/production/research/application",
       "trend_score": 0-100,
@@ -403,10 +403,10 @@ OUTPUT FORMAT:
       "why_now": "why this matters right now",
       "content_angle": "how to present this for maximum engagement",
       "sources": ["list of relevant sources"]
-    }
+    }}
   ],
   "recommendation": "which trend to cover first and why"
-}
+}}
 
 Current date: {current_date}
 Recent papers: {recent_content}
