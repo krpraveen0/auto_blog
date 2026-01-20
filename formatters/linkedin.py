@@ -31,12 +31,29 @@ class LinkedInFormatter:
         """
         logger.info(f"Formatting LinkedIn post: {item.get('title')}")
         
-        # Generate LinkedIn content from analysis
+        # Generate LinkedIn content from analysis using enhanced engaging format
         from llm.analyzer import ContentAnalyzer
         analyzer = ContentAnalyzer(self.config)
-        linkedin_content = analyzer.generate_linkedin(analysis)
         
-        # Add source link
+        # Use engaging format by default (can be configured)
+        use_engaging = self.config.get('use_engaging_format', True)
+        linkedin_content = analyzer.generate_linkedin(analysis, use_engaging_format=use_engaging)
+        
+        # Run safety validation
+        validation_result = analyzer.validate_linkedin_safety(linkedin_content)
+        
+        # If validation fails with critical issues, log warning
+        if not validation_result.get('approved', True):
+            critical_issues = [
+                issue for issue in validation_result.get('issues', [])
+                if issue.get('severity') == 'critical'
+            ]
+            if critical_issues:
+                logger.warning(f"LinkedIn post has {len(critical_issues)} critical safety issues")
+                for issue in critical_issues:
+                    logger.warning(f"  - {issue.get('issue', 'Unknown issue')}")
+        
+        # Build complete post
         post = self._build_post(item, linkedin_content)
         
         return post
@@ -100,9 +117,8 @@ class LinkedInFormatter:
     def _generate_source_link(self, item: Dict) -> str:
         """Generate source attribution link"""
         url = item.get('url', '')
-        source = item.get('source_name', item.get('source', 'Source'))
         
-        return f"📎 Read more: {url}\nvia {source}"
+        return f"📎 Read more: {url}"
     
     def _generate_hashtags(self, item: Dict) -> str:
         """Generate relevant hashtags"""

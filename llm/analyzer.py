@@ -150,17 +150,37 @@ class ContentAnalyzer:
         
         return blog_content.strip()
     
-    def generate_linkedin(self, analysis: Dict) -> str:
-        """Generate LinkedIn post from analysis"""
-        logger.info("Generating LinkedIn post")
+    def generate_linkedin(self, analysis: Dict, use_engaging_format: bool = True) -> str:
+        """
+        Generate LinkedIn post from analysis
+        
+        Args:
+            analysis: Content analysis dictionary
+            use_engaging_format: If True, use enhanced engagement-focused format
+            
+        Returns:
+            LinkedIn post content
+        """
+        logger.info(f"Generating LinkedIn post (engaging={use_engaging_format})")
         
         analyzed_content = self._format_analysis(analysis)
-        prompt = get_prompt(
-            'linkedin_formatting',
-            title=analysis.get('title', ''),
-            url=analysis.get('url', ''),
-            analyzed_content=analyzed_content
-        )
+        
+        # Use enhanced engaging format if enabled
+        if use_engaging_format:
+            prompt = get_prompt(
+                'linkedin_engaging',
+                title=analysis.get('title', ''),
+                url=analysis.get('url', ''),
+                analyzed_content=analyzed_content
+            )
+        else:
+            # Fall back to standard format
+            prompt = get_prompt(
+                'linkedin_formatting',
+                title=analysis.get('title', ''),
+                url=analysis.get('url', ''),
+                analyzed_content=analyzed_content
+            )
         
         linkedin_content = self.client.generate(
             system_prompt=self.system_prompt,
@@ -169,6 +189,106 @@ class ContentAnalyzer:
         )
         
         return linkedin_content.strip()
+    
+    def validate_linkedin_safety(self, content: str) -> Dict:
+        """
+        Comprehensive safety and quality validation for LinkedIn content
+        
+        Args:
+            content: LinkedIn post content to validate
+            
+        Returns:
+            Validation result dictionary with is_valid, score, issues, etc.
+        """
+        logger.info("Running comprehensive LinkedIn safety validation")
+        
+        try:
+            # Get LLM validation
+            prompt = get_prompt('linkedin_validation', content=content)
+            
+            response = self.client.generate(
+                system_prompt="""You are a content safety expert specializing in 
+                professional social media. Your role is to ensure content meets 
+                platform guidelines, professional standards, and protects user reputation.""",
+                user_prompt=prompt,
+                temperature=0.2,  # Low temp for consistent validation
+                max_tokens=1000
+            )
+            
+            # Parse JSON response
+            import json
+            
+            # Extract JSON from response
+            json_start = response.find('{')
+            json_end = response.rfind('}') + 1
+            
+            if json_start >= 0 and json_end > json_start:
+                json_str = response[json_start:json_end]
+                validation_result = json.loads(json_str)
+                
+                logger.info(f"Safety validation: {'APPROVED' if validation_result.get('approved', False) else 'REJECTED'}")
+                logger.info(f"Validation score: {validation_result.get('validation_score', 0)}/100")
+                
+                return validation_result
+            else:
+                logger.error("Could not parse validation response")
+                # Fallback to basic validation
+                return self._basic_validation(content)
+                
+        except Exception as e:
+            logger.error(f"Safety validation failed: {e}")
+            # Fallback to basic validation
+            return self._basic_validation(content)
+    
+    def _basic_validation(self, content: str) -> Dict:
+        """Fallback basic validation if LLM validation fails"""
+        import re
+        
+        issues = []
+        score = 100
+        
+        # Basic safety checks
+        profanity_patterns = ['damn', 'hell', 'crap', 'shit', 'fuck']
+        for word in profanity_patterns:
+            if re.search(rf'\b{word}\b', content, re.IGNORECASE):
+                issues.append({
+                    'category': 'safety',
+                    'severity': 'critical',
+                    'issue': f'Contains profanity: {word}',
+                    'suggestion': 'Remove profane language'
+                })
+                score -= 30
+        
+        # Length check
+        word_count = len(content.split())
+        if word_count > 300:
+            issues.append({
+                'category': 'quality',
+                'severity': 'medium',
+                'issue': f'Too long: {word_count} words',
+                'suggestion': 'Shorten to under 300 words'
+            })
+            score -= 10
+        
+        # Quality checks
+        if re.search(r'\[\d+\]', content):
+            issues.append({
+                'category': 'quality',
+                'severity': 'low',
+                'issue': 'Contains citation markers',
+                'suggestion': 'Remove [1], [2] style citations'
+            })
+            score -= 5
+        
+        is_valid = score >= 70
+        
+        return {
+            'is_valid': is_valid,
+            'validation_score': max(0, score),
+            'issues': issues,
+            'approved': is_valid,
+            'summary': f"Basic validation: {len(issues)} issues found"
+        }
     
     def credibility_check(self, generated_content: str) -> str:
         """Run credibility check on generated content"""
