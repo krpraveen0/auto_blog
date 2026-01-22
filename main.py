@@ -828,5 +828,37 @@ def discover_trends(max_trends, generate_content):
             click.echo(f"❌ Error: {e}")
 
 
+@cli.command()
+@click.option('--output-dir', default='docs/admin', help='Output directory for JSON exports')
+def export_admin(output_dir):
+    """Export database to JSON for admin panel"""
+    logger.info(f"Exporting database to {output_dir}...")
+    
+    from export_db_json import export_database_to_json
+    
+    try:
+        result = export_database_to_json(output_dir=output_dir)
+        
+        click.echo("\n✅ Database export completed!")
+        click.echo(f"   Papers exported: {result['papers_count']}")
+        click.echo(f"   Content exported: {result['content_count']}")
+        click.echo(f"   Output directory: {output_dir}")
+        click.echo(f"\n📊 Statistics:")
+        stats = result['stats']
+        click.echo(f"   Total papers: {stats['total_papers']}")
+        click.echo(f"   Total content: {stats['total_content']}")
+        click.echo(f"   GitHub repos: {stats.get('github_repos', 0)}")
+        
+        click.echo(f"\n🌐 Admin panel available at:")
+        click.echo(f"   Local: file://{Path(output_dir).absolute()}/index.html")
+        click.echo(f"   After deployment: https://YOUR_USERNAME.github.io/YOUR_REPO/admin/")
+        
+        click.echo(f"\n📚 See {output_dir}/README.md for setup instructions")
+        
+    except Exception as e:
+        logger.error(f"Export failed: {e}")
+        click.echo(f"❌ Export failed: {e}")
+
+
 if __name__ == '__main__':
     cli()

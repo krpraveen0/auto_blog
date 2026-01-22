@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - AI Research Blog</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        .login-box h1 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .login-box p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .github-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            background: #24292e;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.3s;
+        }
+        
+        .github-btn:hover {
+            background: #444d56;
+        }
+        
+        .github-icon {
+            width: 24px;
+            height: 24px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        header .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        header h1 {
+            font-size: 1.8em;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+        
+        .logout-btn {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            color: #666;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .tab:hover {
+            color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            font-size: 2.5em;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card p {
+            color: #666;
+            font-size: 1em;
+        }
+        
+        .query-panel {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .query-panel h2 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .filter-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-group label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .filter-group input,
+        .filter-group select {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+        
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+        
+        .data-table {
+            width: 100%;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .table-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .export-btn {
+            padding: 8px 16px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .export-btn:hover {
+            background: #45a049;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+        
+        .badge-github {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+        
+        .badge-arxiv {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .badge-blog {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+        
+        .badge-hackernews {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .badge-drafted {
+            background: #fff9c4;
+            color: #f57f17;
+        }
+        
+        .badge-published {
+            background: #c8e6c9;
+            color: #388e3c;
+        }
+        
+        .text-truncate {
+            max-width: 300px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 20px;
+        }
+        
+        .page-btn {
+            padding: 8px 16px;
+            border: 1px solid #e0e0e0;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .page-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .link {
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .link:hover {
+            text-decoration: underline;
+        }
+        
+        .sql-editor {
+            margin-bottom: 20px;
+        }
+        
+        .sql-editor textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+        
+        .sql-presets {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .preset-btn {
+            padding: 8px 16px;
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        
+        .preset-btn:hover {
+            background: #e9ecef;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-container">
+        <div class="login-box">
+            <h1>🔐 Admin Panel</h1>
+            <p>Sign in with GitHub to access the admin panel</p>
+            <button id="githubLoginBtn" class="github-btn">
+                <svg class="github-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                </svg>
+                Sign in with GitHub
+            </button>
+            <p style="margin-top: 20px; font-size: 0.9em; color: #999;">
+                Note: GitHub OAuth needs to be configured for authentication to work.
+                <br>See <a href="https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app" target="_blank" style="color: #667eea;">GitHub OAuth Setup</a>
+            </p>
+        </div>
+    </div>
+    
+    <!-- Admin Panel -->
+    <div id="adminPanel" style="display: none;">
+        <header>
+            <div class="header-content">
+                <h1>🛠️ Admin Panel</h1>
+                <div class="user-info">
+                    <img id="userAvatar" class="user-avatar" src="" alt="User">
+                    <span id="userName">User</span>
+                    <button id="logoutBtn" class="logout-btn">Logout</button>
+                </div>
+            </div>
+        </header>
+        
+        <div class="container">
+            <!-- Statistics Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3 id="statTotalPapers">0</h3>
+                    <p>Total Papers</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="statTotalContent">0</h3>
+                    <p>Generated Content</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="statPublished">0</h3>
+                    <p>Published</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="statDrafted">0</h3>
+                    <p>Drafts</p>
+                </div>
+            </div>
+            
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" data-tab="overview">Overview</button>
+                <button class="tab" data-tab="papers">Papers</button>
+                <button class="tab" data-tab="content">Generated Content</button>
+                <button class="tab" data-tab="query">Query Builder</button>
+            </div>
+            
+            <!-- Overview Tab -->
+            <div id="overview" class="tab-content active">
+                <div class="chart-grid">
+                    <div class="chart-container">
+                        <h3>Papers by Source</h3>
+                        <canvas id="sourceChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Top Programming Languages</h3>
+                        <canvas id="languageChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Content by Type</h3>
+                        <canvas id="contentTypeChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Content by Status</h3>
+                        <canvas id="contentStatusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Papers Tab -->
+            <div id="papers" class="tab-content">
+                <div class="query-panel">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label>Source</label>
+                            <select id="filterSource">
+                                <option value="">All Sources</option>
+                                <option value="github">GitHub</option>
+                                <option value="arxiv">arXiv</option>
+                                <option value="blogs">Blogs</option>
+                                <option value="hackernews">Hacker News</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Language</label>
+                            <select id="filterLanguage">
+                                <option value="">All Languages</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Min Stars</label>
+                            <input type="number" id="filterStars" placeholder="e.g., 100">
+                        </div>
+                    </div>
+                    <input type="text" id="searchPapers" class="search-input" placeholder="🔍 Search by title, summary, or keywords...">
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="applyFilters()">Apply Filters</button>
+                        <button class="btn btn-secondary" onclick="resetFilters()">Reset</button>
+                    </div>
+                </div>
+                
+                <div class="data-table">
+                    <div class="table-header">
+                        <span class="table-title">Papers (<span id="papersCount">0</span>)</span>
+                        <button class="export-btn" onclick="exportData('papers')">Export CSV</button>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Source</th>
+                                    <th>Language</th>
+                                    <th>Stars</th>
+                                    <th>Published</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="papersTableBody">
+                                <tr>
+                                    <td colspan="6" class="loading">Loading data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="papersPagination"></div>
+                </div>
+            </div>
+            
+            <!-- Content Tab -->
+            <div id="content" class="tab-content">
+                <div class="query-panel">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label>Content Type</label>
+                            <select id="filterContentType">
+                                <option value="">All Types</option>
+                                <option value="blog">Blog</option>
+                                <option value="linkedin">LinkedIn</option>
+                                <option value="medium">Medium</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Status</label>
+                            <select id="filterStatus">
+                                <option value="">All Status</option>
+                                <option value="drafted">Drafted</option>
+                                <option value="published">Published</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Paper Source</label>
+                            <select id="filterPaperSource">
+                                <option value="">All Sources</option>
+                                <option value="github">GitHub</option>
+                                <option value="arxiv">arXiv</option>
+                                <option value="blogs">Blogs</option>
+                            </select>
+                        </div>
+                    </div>
+                    <input type="text" id="searchContent" class="search-input" placeholder="🔍 Search content...">
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="applyContentFilters()">Apply Filters</button>
+                        <button class="btn btn-secondary" onclick="resetContentFilters()">Reset</button>
+                    </div>
+                </div>
+                
+                <div class="data-table">
+                    <div class="table-header">
+                        <span class="table-title">Generated Content (<span id="contentCount">0</span>)</span>
+                        <button class="export-btn" onclick="exportData('content')">Export CSV</button>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Paper</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Source</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="contentTableBody">
+                                <tr>
+                                    <td colspan="6" class="loading">Loading data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination" id="contentPagination"></div>
+                </div>
+            </div>
+            
+            <!-- Query Builder Tab -->
+            <div id="query" class="tab-content">
+                <div class="query-panel">
+                    <h2>Advanced Query Builder</h2>
+                    <p style="color: #666; margin-bottom: 20px;">
+                        Build custom queries to filter and analyze your data. This uses client-side JavaScript filtering on the exported JSON data.
+                    </p>
+                    
+                    <div class="sql-presets">
+                        <button class="preset-btn" onclick="loadPreset('recent-papers')">Recent Papers (Last 7 days)</button>
+                        <button class="preset-btn" onclick="loadPreset('top-starred')">Top Starred GitHub Repos</button>
+                        <button class="preset-btn" onclick="loadPreset('drafted-content')">All Drafted Content</button>
+                        <button class="preset-btn" onclick="loadPreset('published-blogs')">Published Blogs</button>
+                    </div>
+                    
+                    <div class="sql-editor">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Query Description:</label>
+                        <textarea id="queryInput" placeholder="Describe what you want to query, e.g., 'Show all GitHub repos with more than 1000 stars' or 'Show drafted blog content from last week'"></textarea>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" onclick="executeQuery()">Execute Query</button>
+                        <button class="btn btn-secondary" onclick="clearQuery()">Clear</button>
+                    </div>
+                </div>
+                
+                <div class="data-table" id="queryResults" style="display: none;">
+                    <div class="table-header">
+                        <span class="table-title">Query Results (<span id="queryResultCount">0</span>)</span>
+                        <button class="export-btn" onclick="exportQueryResults()">Export CSV</button>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead id="queryResultsHead"></thead>
+                            <tbody id="queryResultsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Configuration - Update with your GitHub OAuth App credentials
+        // SECURITY NOTE: This is a simplified OAuth implementation for static sites.
+        // For production use, implement a backend service to handle token exchange
+        // securely with the client secret. Never expose client secrets in client-side code.
+        // See docs/admin/README.md for security best practices.
+        const GITHUB_CLIENT_ID = 'YOUR_GITHUB_CLIENT_ID'; // Replace with your GitHub OAuth App Client ID
+        const GITHUB_REDIRECT_URI = window.location.origin + window.location.pathname;
+        
+        // State management
+        let userData = null;
+        let databaseData = null;
+        let filteredPapers = [];
+        let filteredContent = [];
+        let currentPage = 1;
+        const itemsPerPage = 20;
+        
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            setupEventListeners();
+        });
+        
+        function setupEventListeners() {
+            // Tab switching
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+            });
+            
+            // Login button
+            document.getElementById('githubLoginBtn').addEventListener('click', loginWithGitHub);
+            
+            // Logout button
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+        }
+        
+        function checkAuth() {
+            // Check if we have an access token from OAuth callback
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            
+            if (code) {
+                // Exchange code for token (Note: In production, this should be done server-side)
+                // For GitHub Pages, we'll use a simplified approach
+                alert('GitHub OAuth received. In production, this would exchange the code for an access token via a backend service.');
+                // For demo purposes, let's just skip to loading data
+                loadAdminPanel();
+                return;
+            }
+            
+            // Check for stored token (in a real app, use secure storage)
+            const token = localStorage.getItem('github_token');
+            if (token) {
+                loadAdminPanel();
+            } else {
+                // Check if user chose to skip auth (for demo/testing)
+                const skipAuth = localStorage.getItem('skip_auth');
+                if (skipAuth === 'true') {
+                    loadAdminPanel();
+                }
+            }
+        }
+        
+        function loginWithGitHub() {
+            if (GITHUB_CLIENT_ID === 'YOUR_GITHUB_CLIENT_ID') {
+                // For demo purposes without OAuth configured
+                if (confirm('GitHub OAuth is not configured. Would you like to proceed without authentication for testing?')) {
+                    localStorage.setItem('skip_auth', 'true');
+                    loadAdminPanel();
+                }
+                return;
+            }
+            
+            // Redirect to GitHub OAuth
+            const authUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(GITHUB_REDIRECT_URI)}&scope=read:user`;
+            window.location.href = authUrl;
+        }
+        
+        function logout() {
+            localStorage.removeItem('github_token');
+            localStorage.removeItem('skip_auth');
+            document.getElementById('adminPanel').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'flex';
+        }
+        
+        async function loadAdminPanel() {
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('adminPanel').style.display = 'block';
+            
+            // Set user info (demo data if no real auth)
+            document.getElementById('userName').textContent = 'Admin User';
+            document.getElementById('userAvatar').src = 'https://github.com/github.png';
+            
+            // Load database data
+            await loadDatabaseData();
+            
+            // Initialize views
+            updateStatistics();
+            loadPapersTable();
+            loadContentTable();
+            renderCharts();
+        }
+        
+        async function loadDatabaseData() {
+            try {
+                const response = await fetch('database.json');
+                if (!response.ok) {
+                    throw new Error('Failed to load database');
+                }
+                databaseData = await response.json();
+                filteredPapers = databaseData.papers || [];
+                filteredContent = databaseData.content || [];
+                
+                // Populate language filter
+                const languages = [...new Set(databaseData.papers.map(p => p.language).filter(l => l))];
+                const languageSelect = document.getElementById('filterLanguage');
+                languages.forEach(lang => {
+                    const option = document.createElement('option');
+                    option.value = lang;
+                    option.textContent = lang;
+                    languageSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading database:', error);
+                alert('Failed to load database. Make sure database.json exists in the admin directory.');
+            }
+        }
+        
+        function updateStatistics() {
+            if (!databaseData) return;
+            
+            const stats = databaseData.stats;
+            document.getElementById('statTotalPapers').textContent = stats.total_papers || 0;
+            document.getElementById('statTotalContent').textContent = stats.total_content || 0;
+            document.getElementById('statPublished').textContent = stats.content_by_status?.published || 0;
+            document.getElementById('statDrafted').textContent = stats.content_by_status?.drafted || 0;
+        }
+        
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.tab === tabName) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabName).classList.add('active');
+        }
+        
+        function applyFilters() {
+            const source = document.getElementById('filterSource').value;
+            const language = document.getElementById('filterLanguage').value;
+            const minStars = parseInt(document.getElementById('filterStars').value) || 0;
+            const searchText = document.getElementById('searchPapers').value.toLowerCase();
+            
+            filteredPapers = databaseData.papers.filter(paper => {
+                if (source && paper.source !== source) return false;
+                if (language && paper.language !== language) return false;
+                if (paper.stars < minStars) return false;
+                if (searchText) {
+                    const searchable = `${paper.title} ${paper.summary}`.toLowerCase();
+                    if (!searchable.includes(searchText)) return false;
+                }
+                return true;
+            });
+            
+            currentPage = 1;
+            loadPapersTable();
+        }
+        
+        function resetFilters() {
+            document.getElementById('filterSource').value = '';
+            document.getElementById('filterLanguage').value = '';
+            document.getElementById('filterStars').value = '';
+            document.getElementById('searchPapers').value = '';
+            filteredPapers = databaseData.papers;
+            currentPage = 1;
+            loadPapersTable();
+        }
+        
+        function loadPapersTable() {
+            const tbody = document.getElementById('papersTableBody');
+            document.getElementById('papersCount').textContent = filteredPapers.length;
+            
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pagePapers = filteredPapers.slice(start, end);
+            
+            tbody.innerHTML = '';
+            
+            if (pagePapers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #999;">No papers found</td></tr>';
+                return;
+            }
+            
+            pagePapers.forEach(paper => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="text-truncate">${escapeHtml(paper.title)}</td>
+                    <td><span class="badge badge-${paper.source}">${paper.source}</span></td>
+                    <td>${paper.language || '-'}</td>
+                    <td>${paper.stars || 0}</td>
+                    <td>${formatDate(paper.published)}</td>
+                    <td>
+                        <a href="${paper.url}" target="_blank" class="link">View</a>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            renderPagination('papersPagination', filteredPapers.length);
+        }
+        
+        function applyContentFilters() {
+            const contentType = document.getElementById('filterContentType').value;
+            const status = document.getElementById('filterStatus').value;
+            const paperSource = document.getElementById('filterPaperSource').value;
+            const searchText = document.getElementById('searchContent').value.toLowerCase();
+            
+            filteredContent = databaseData.content.filter(item => {
+                if (contentType && item.content_type !== contentType) return false;
+                if (status && item.status !== status) return false;
+                if (paperSource && item.paper_source !== paperSource) return false;
+                if (searchText) {
+                    const searchable = `${item.paper_title} ${item.content}`.toLowerCase();
+                    if (!searchable.includes(searchText)) return false;
+                }
+                return true;
+            });
+            
+            currentPage = 1;
+            loadContentTable();
+        }
+        
+        function resetContentFilters() {
+            document.getElementById('filterContentType').value = '';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterPaperSource').value = '';
+            document.getElementById('searchContent').value = '';
+            filteredContent = databaseData.content;
+            currentPage = 1;
+            loadContentTable();
+        }
+        
+        function loadContentTable() {
+            const tbody = document.getElementById('contentTableBody');
+            document.getElementById('contentCount').textContent = filteredContent.length;
+            
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const pageContent = filteredContent.slice(start, end);
+            
+            tbody.innerHTML = '';
+            
+            if (pageContent.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px; color: #999;">No content found</td></tr>';
+                return;
+            }
+            
+            pageContent.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="text-truncate">${escapeHtml(item.paper_title || 'N/A')}</td>
+                    <td><span class="badge badge-${item.content_type}">${item.content_type}</span></td>
+                    <td><span class="badge badge-${item.status}">${item.status}</span></td>
+                    <td><span class="badge badge-${item.paper_source}">${item.paper_source}</span></td>
+                    <td>${formatDate(item.created_at)}</td>
+                    <td>
+                        ${item.published_url ? `<a href="${item.published_url}" target="_blank" class="link">View</a>` : '-'}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            renderPagination('contentPagination', filteredContent.length);
+        }
+        
+        function renderPagination(containerId, totalItems) {
+            const container = document.getElementById(containerId);
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            let html = '';
+            html += `<button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="changePage(${currentPage - 1})">Previous</button>`;
+            
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                    html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+                } else if (i === currentPage - 3 || i === currentPage + 3) {
+                    html += '<span style="padding: 8px;">...</span>';
+                }
+            }
+            
+            html += `<button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="changePage(${currentPage + 1})">Next</button>`;
+            
+            container.innerHTML = html;
+        }
+        
+        function changePage(page) {
+            currentPage = page;
+            const activeTab = document.querySelector('.tab.active').dataset.tab;
+            if (activeTab === 'papers') {
+                loadPapersTable();
+            } else if (activeTab === 'content') {
+                loadContentTable();
+            }
+        }
+        
+        function loadPreset(presetName) {
+            const presets = {
+                'recent-papers': 'Show papers from the last 7 days',
+                'top-starred': 'Show GitHub repos with more than 500 stars, sorted by stars descending',
+                'drafted-content': 'Show all content with status = drafted',
+                'published-blogs': 'Show all published blog content'
+            };
+            
+            document.getElementById('queryInput').value = presets[presetName] || '';
+        }
+        
+        function executeQuery() {
+            const query = document.getElementById('queryInput').value.toLowerCase();
+            
+            if (!query) {
+                alert('Please enter a query description');
+                return;
+            }
+            
+            let results = [];
+            let headers = [];
+            
+            // Simple query parser using keyword matching
+            // NOTE: This is a basic implementation for demonstration. 
+            // For production use, consider implementing a more robust query parser,
+            // using a natural language processing library, or a visual query builder interface.
+            if (query.includes('paper') && query.includes('7 days')) {
+                const sevenDaysAgo = new Date();
+                sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                results = databaseData.papers.filter(p => new Date(p.created_at) >= sevenDaysAgo);
+                headers = ['Title', 'Source', 'Stars', 'Published'];
+            } else if (query.includes('github') && query.includes('stars')) {
+                const minStars = parseInt(query.match(/\d+/)?.[0]) || 500;
+                results = databaseData.papers
+                    .filter(p => p.source === 'github' && p.stars >= minStars)
+                    .sort((a, b) => b.stars - a.stars);
+                headers = ['Title', 'Stars', 'Forks', 'Language', 'URL'];
+            } else if (query.includes('drafted')) {
+                results = databaseData.content.filter(c => c.status === 'drafted');
+                headers = ['Paper Title', 'Type', 'Status', 'Created'];
+            } else if (query.includes('published') && query.includes('blog')) {
+                results = databaseData.content.filter(c => c.status === 'published' && c.content_type === 'blog');
+                headers = ['Paper Title', 'Type', 'Published URL', 'Published At'];
+            } else {
+                alert('Query not recognized. Try using one of the preset queries.');
+                return;
+            }
+            
+            displayQueryResults(results, headers);
+        }
+        
+        function displayQueryResults(results, headers) {
+            const resultsDiv = document.getElementById('queryResults');
+            const thead = document.getElementById('queryResultsHead');
+            const tbody = document.getElementById('queryResultsBody');
+            const count = document.getElementById('queryResultCount');
+            
+            count.textContent = results.length;
+            resultsDiv.style.display = 'block';
+            
+            // Render headers
+            thead.innerHTML = '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+            
+            // Render results
+            tbody.innerHTML = '';
+            if (results.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="' + headers.length + '" style="text-align: center; padding: 40px; color: #999;">No results found</td></tr>';
+                return;
+            }
+            
+            results.slice(0, 50).forEach(item => {
+                const row = document.createElement('tr');
+                const cells = [];
+                
+                // Map data to headers (simplified)
+                if (headers.includes('Title')) cells.push(escapeHtml(item.title || item.paper_title));
+                if (headers.includes('Source')) cells.push(item.source || item.paper_source);
+                if (headers.includes('Stars')) cells.push(item.stars || 0);
+                if (headers.includes('Forks')) cells.push(item.forks || 0);
+                if (headers.includes('Language')) cells.push(item.language || '-');
+                if (headers.includes('Published')) cells.push(formatDate(item.published));
+                if (headers.includes('URL')) cells.push(`<a href="${item.url}" target="_blank" class="link">View</a>`);
+                if (headers.includes('Paper Title')) cells.push(escapeHtml(item.paper_title));
+                if (headers.includes('Type')) cells.push(item.content_type);
+                if (headers.includes('Status')) cells.push(item.status);
+                if (headers.includes('Created')) cells.push(formatDate(item.created_at));
+                if (headers.includes('Published At')) cells.push(formatDate(item.published_at));
+                if (headers.includes('Published URL')) cells.push(item.published_url ? `<a href="${item.published_url}" target="_blank" class="link">View</a>` : '-');
+                
+                row.innerHTML = cells.map(c => `<td>${c}</td>`).join('');
+                tbody.appendChild(row);
+            });
+            
+            if (results.length > 50) {
+                tbody.innerHTML += `<tr><td colspan="${headers.length}" style="text-align: center; padding: 20px; color: #999;">Showing first 50 of ${results.length} results</td></tr>`;
+            }
+        }
+        
+        function clearQuery() {
+            document.getElementById('queryInput').value = '';
+            document.getElementById('queryResults').style.display = 'none';
+        }
+        
+        function exportData(type) {
+            const data = type === 'papers' ? filteredPapers : filteredContent;
+            const csv = convertToCSV(data);
+            downloadCSV(csv, `${type}_export_${Date.now()}.csv`);
+        }
+        
+        function exportQueryResults() {
+            const tbody = document.getElementById('queryResultsBody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            alert('Export functionality would convert current query results to CSV');
+        }
+        
+        function convertToCSV(data) {
+            if (data.length === 0) return '';
+            
+            const headers = Object.keys(data[0]);
+            const csvRows = [headers.join(',')];
+            
+            data.forEach(row => {
+                const values = headers.map(header => {
+                    const value = row[header];
+                    if (typeof value === 'object') return JSON.stringify(value);
+                    return `"${String(value || '').replace(/"/g, '""')}"`;
+                });
+                csvRows.push(values.join(','));
+            });
+            
+            return csvRows.join('\n');
+        }
+        
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+        
+        function renderCharts() {
+            if (!databaseData) return;
+            
+            // Note: This is a placeholder. In production, use a charting library like Chart.js
+            // For now, we'll just show the data in the console
+            console.log('Chart data:', {
+                sourceChart: databaseData.stats.papers_by_source,
+                languageChart: databaseData.stats.top_languages,
+                contentTypeChart: databaseData.stats.content_by_type,
+                contentStatusChart: databaseData.stats.content_by_status
+            });
+            
+            // Display simple text-based charts for demo
+            renderSimpleBarChart('sourceChart', databaseData.stats.papers_by_source);
+            renderSimpleBarChart('languageChart', databaseData.stats.top_languages);
+            renderSimpleBarChart('contentTypeChart', databaseData.stats.content_by_type);
+            renderSimpleBarChart('contentStatusChart', databaseData.stats.content_by_status);
+        }
+        
+        function renderSimpleBarChart(canvasId, data) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Simple bar chart rendering
+            const entries = Object.entries(data);
+            const maxValue = Math.max(...entries.map(([_, v]) => v));
+            const barHeight = 30;
+            const spacing = 10;
+            
+            canvas.width = 400;
+            canvas.height = entries.length * (barHeight + spacing) + 40;
+            
+            ctx.fillStyle = '#333';
+            ctx.font = '14px Arial';
+            
+            entries.forEach(([label, value], index) => {
+                const y = index * (barHeight + spacing) + 20;
+                const barWidth = (value / maxValue) * 300;
+                
+                // Draw label
+                ctx.fillText(label, 10, y + barHeight / 2 + 5);
+                
+                // Draw bar
+                ctx.fillStyle = '#667eea';
+                ctx.fillRect(120, y, barWidth, barHeight);
+                
+                // Draw value
+                ctx.fillStyle = '#333';
+                ctx.fillText(value, 120 + barWidth + 10, y + barHeight / 2 + 5);
+            });
+        }
+        
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

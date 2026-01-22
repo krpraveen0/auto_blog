@@ -2,15 +2,29 @@
 
 **A personal AI research editor that scans trusted sources, filters signal from noise, and converts updates into blog-ready articles and LinkedIn posts.**
 
-## 🆕 New: GitHub Trending + ELI5 Features
+## 🆕 New: Admin Panel + GitHub OAuth
 
-This system now includes **enhanced GitHub repository tracking** with comprehensive statistics and **ELI5 (Explain Like I'm 5) blog generation**:
+This system now includes a **web-based admin panel** to query and explore your SQLite database:
+
+- 🔐 **GitHub OAuth Authentication**: Secure access with GitHub SSO
+- 📊 **Interactive Dashboard**: Statistics and visualizations of your data
+- 🔍 **Advanced Filtering**: Search and filter papers and generated content
+- 🛠️ **Query Builder**: Natural language queries on your database
+- 📤 **CSV Export**: Export filtered data for analysis
+- 🌐 **GitHub Pages Hosted**: Static admin panel hosted alongside your blog
+
+[📖 Read the admin panel setup guide](./docs/admin/README.md)
+
+## 🎯 Features
+
+This system includes **enhanced GitHub repository tracking** with comprehensive statistics and **ELI5 (Explain Like I'm 5) blog generation**:
 
 - 📊 **Comprehensive GitHub Stats**: Stars, forks, watchers, contributors, trending metrics
 - 🎓 **ELI5 Blog Generation**: Makes complex technical projects accessible with simple language and analogies
 - 🌐 **GitHub Pages Integration**: Automatically generated searchable index of published blogs
 - 💾 **Enhanced Database**: SQLite storage with 19+ fields for repository statistics
 - 🔍 **Search & Filter**: Beautiful web interface to browse and search blogs
+- 🛠️ **Admin Panel**: Query and manage your database via web interface
 
 [📖 Read the full documentation](./GITHUB_ELI5_FEATURES.md)
 
@@ -165,6 +179,9 @@ python main.py review
 # View database statistics
 python main.py db-stats
 
+# Export database for admin panel
+python export_db_json.py
+
 # Generate GitHub Pages index (searchable website)
 python main.py generate-index
 
@@ -172,7 +189,41 @@ python main.py generate-index
 python main.py publish --platform medium --medium-status draft
 ```
 
-### 4. Enable GitHub Pages (NEW!)
+### 4. Setup Admin Panel (NEW!)
+
+After collecting some data, set up the admin panel to query and explore your database:
+
+```bash
+# Export database to JSON for admin panel
+python export_db_json.py
+
+# Commit and push the admin panel files
+git add docs/admin/
+git commit -m "Add admin panel with database export"
+git push
+
+# Then in your GitHub repository:
+# Settings > Pages > Source: Deploy from branch > Select branch and /docs folder
+# Your admin panel will be at: https://USERNAME.github.io/REPO-NAME/admin/
+```
+
+**Admin Panel Features:**
+- 📊 Interactive dashboard with statistics
+- 🔍 Filter and search papers by source, language, stars
+- 📝 Browse generated content by type and status
+- 🛠️ Query builder with natural language queries
+- 📤 Export data to CSV
+- 🔐 Optional GitHub OAuth authentication
+
+**Setup GitHub OAuth (Optional):**
+1. Go to GitHub Settings > Developer settings > OAuth Apps
+2. Create a new OAuth App with callback URL: `https://USERNAME.github.io/REPO-NAME/admin/`
+3. Copy the Client ID
+4. Edit `docs/admin/index.html` and replace `YOUR_GITHUB_CLIENT_ID` with your actual Client ID
+
+See [Admin Panel Setup Guide](./docs/admin/README.md) for detailed instructions.
+
+### 5. Enable GitHub Pages
 
 After generating some blogs, create a beautiful searchable website:
 
