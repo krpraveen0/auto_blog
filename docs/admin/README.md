@@ -40,7 +40,37 @@ This creates the following files in `docs/admin/`:
 - `stats.json` - Database statistics
 - `database.json` - Combined export with metadata
 
-### Step 2: Configure GitHub OAuth (Optional but Recommended)
+### Step 2: Deploy OAuth Handler (Required for Authentication)
+
+**Important**: The admin panel requires a backend OAuth handler service to securely handle GitHub authentication. This is necessary because the client secret cannot be exposed in the browser.
+
+#### Quick Start: Deploy OAuth Handler
+
+1. **Choose a deployment platform** (see `OAUTH_DEPLOYMENT.md` for detailed instructions):
+   - Railway (recommended - free tier available)
+   - Heroku
+   - Render
+   - PythonAnywhere
+   - DigitalOcean
+
+2. **Deploy the OAuth handler**:
+   ```bash
+   # The oauth_handler.py file is included in the repository
+   # Follow OAUTH_DEPLOYMENT.md for platform-specific instructions
+   ```
+
+3. **Configure environment variables** in your deployment:
+   ```
+   GITHUB_CLIENT_ID=your_github_oauth_client_id
+   GITHUB_CLIENT_SECRET=your_github_oauth_client_secret
+   ALLOWED_USERS=your_github_username (optional - restricts access)
+   ```
+
+4. **Note your OAuth handler URL** (e.g., `https://your-app.railway.app`)
+
+See the complete guide: [OAUTH_DEPLOYMENT.md](../../OAUTH_DEPLOYMENT.md)
+
+### Step 3: Configure GitHub OAuth App
 
 To enable authentication, create a GitHub OAuth App:
 
@@ -49,18 +79,30 @@ To enable authentication, create a GitHub OAuth App:
 3. Fill in the details:
    - **Application name**: Auto Blog Admin Panel
    - **Homepage URL**: `https://YOUR_USERNAME.github.io/YOUR_REPO/`
-   - **Authorization callback URL**: `https://YOUR_USERNAME.github.io/YOUR_REPO/admin/`
+   - **Authorization callback URL**: `https://YOUR-OAUTH-HANDLER.railway.app/auth/callback` (use your OAuth handler URL)
 4. Click "Register application"
-5. Copy the **Client ID**
-6. Edit `docs/admin/index.html` and replace:
+5. Copy the **Client ID** and generate a **Client Secret**
+6. Configure these in your OAuth handler deployment (see Step 2)
+
+### Step 4: Update Admin Panel Configuration
+
+Edit `docs/admin/index.html` to configure your OAuth settings:
+
+1. **Update the OAuth handler URL** (around line 730):
    ```javascript
-   const GITHUB_CLIENT_ID = 'YOUR_GITHUB_CLIENT_ID';
+   const OAUTH_HANDLER_URL = 'https://your-oauth-handler.railway.app';
    ```
-   with your actual Client ID
+   Replace with your actual OAuth handler deployment URL.
 
-**Note**: For full OAuth to work on a static site, you typically need a backend service to handle the token exchange. For a simpler setup, the admin panel includes a "skip authentication" option for testing.
+2. **Verify the GitHub Client ID** (around line 727):
+   ```javascript
+   const GITHUB_CLIENT_ID = 'Iv23liJ9FRJcuICjBURM';
+   ```
+   This should match the Client ID from your GitHub OAuth App.
 
-### Step 3: Enable GitHub Pages
+**Important**: Without a properly configured OAuth handler, users will not be able to access the admin panel. The authentication bypass has been removed for security.
+
+### Step 5: Enable GitHub Pages
 
 1. Push your changes to GitHub:
    ```bash
@@ -82,7 +124,7 @@ Your admin panel will be available at:
 https://YOUR_USERNAME.github.io/YOUR_REPO/admin/
 ```
 
-### Step 4: Automate Database Export
+### Step 6: Automate Database Export
 
 To keep the admin panel data up-to-date, add the export step to your GitHub Actions workflows:
 
@@ -130,36 +172,49 @@ To keep the admin panel data up-to-date, add the export step to your GitHub Acti
 
 ## Security Considerations
 
+### Authentication is Now Required
+
+As of this update, the admin panel **requires proper GitHub OAuth authentication**. The previous "skip authentication" bypass has been removed for security reasons.
+
 ### For Production Use:
 
-1. **Enable GitHub OAuth**: Don't skip authentication in production
-2. **Backend Token Exchange**: Implement a backend service to handle OAuth token exchange securely (GitHub OAuth requires a client secret that shouldn't be exposed)
-3. **Access Control**: Consider using GitHub Organizations and team-based access control
-4. **Data Sensitivity**: The exported JSON files are publicly accessible on GitHub Pages. If your data is sensitive, consider:
+1. **✅ OAuth Handler Deployed**: The OAuth handler service must be deployed and configured
+2. **✅ GitHub OAuth App**: Properly configured with correct callback URL
+3. **✅ Client Secret Secure**: Never exposed in client-side code - only in OAuth handler environment variables
+4. **✅ Access Control**: Use `ALLOWED_USERS` environment variable to restrict access to specific GitHub users
+5. **⚠️ Data Sensitivity**: The exported JSON files are publicly accessible on GitHub Pages. If your data is sensitive, consider:
    - Using a private repository with GitHub Pages (requires GitHub Pro)
    - Implementing additional authentication layers
    - Hosting on a private server instead of GitHub Pages
 
-### Recommended Production Architecture:
+### Authentication Flow:
 
 ```
-┌─────────────┐      ┌──────────────────┐      ┌─────────────┐
-│   Browser   │ ───> │  GitHub OAuth    │ ───> │   Backend   │
-│             │      │  (GitHub.com)    │      │   Service   │
-└─────────────┘      └──────────────────┘      └─────────────┘
+┌─────────────┐      ┌──────────────────┐      ┌─────────────────┐
+│   Browser   │ ───> │  GitHub OAuth    │ ───> │  OAuth Handler  │
+│  (Admin UI) │      │  (GitHub.com)    │      │   (Backend)     │
+└─────────────┘      └──────────────────┘      └─────────────────┘
        │                                                │
-       │  (Authenticated)                             │
-       ▼                                                ▼
+       │  ← Returns access_token ←────────────────────┘
+       │
+       ▼
 ┌─────────────┐                              ┌─────────────┐
-│   Admin     │ <────────────────────────────│  Database   │
-│   Panel     │        (Secure API)          │   (SQLite)  │
-└─────────────┘                              └─────────────┘
+│   GitHub    │                              │  Database   │
+│   API       │                              │   (JSON)    │
+│  (Verify)   │                              └─────────────┘
+└─────────────┘
 ```
 
-For the GitHub Pages static version (current implementation):
-- Authentication is simplified/optional
-- Data is pre-exported to JSON
-- Querying happens client-side in browser
+The OAuth handler securely manages:
+- Token exchange with GitHub (using client secret)
+- Token verification
+- User authorization (optional whitelist)
+
+The admin panel (static site):
+- Initiates OAuth flow
+- Receives and stores access token
+- Queries exported JSON data
+- Makes authenticated requests to GitHub API for verification
 
 ## Troubleshooting
 
@@ -168,10 +223,21 @@ For the GitHub Pages static version (current implementation):
 - Check that `docs/admin/database.json` exists
 - Check browser console for errors
 
+### "OAuth Handler Not Configured" error
+- Deploy the OAuth handler service (see OAUTH_DEPLOYMENT.md)
+- Update `OAUTH_HANDLER_URL` in `docs/admin/index.html`
+- Verify the URL is accessible from your browser
+
 ### GitHub OAuth not working
 - Verify your Client ID is correct in `index.html`
-- Check that the callback URL matches your GitHub Pages URL
-- For testing, you can use the "skip authentication" option
+- Check that the OAuth callback URL in GitHub OAuth App settings points to your OAuth handler (e.g., `https://your-handler.railway.app/auth/callback`)
+- Verify `GITHUB_CLIENT_SECRET` is set in your OAuth handler deployment
+- Check OAuth handler logs for errors
+
+### "User not authorized" error
+- Check the `ALLOWED_USERS` environment variable in your OAuth handler
+- Ensure your GitHub username is in the allowed list
+- If you want to allow all users, remove or leave empty the `ALLOWED_USERS` variable
 
 ### Charts not displaying
 - The current implementation uses simple canvas-based charts

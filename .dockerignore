@@ -1,0 +1,52 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Environment
+.env
+.env.local
+
+# Data
+data/
+docs/
+logs/
+*.log
+
+# Documentation
+*.md
+!README.md
+
+# Tests
+tests/
+.pytest_cache/
+.coverage
+
+# Other project files (not needed for OAuth handler)
+sources/
+filters/
+formatters/
+llm/
+publishers/
+utils/
+main.py
+migrate_db.py
+export_db_json.py
+generate_pages_index.py
+config.yaml
+requirements.txt
+setup.sh
