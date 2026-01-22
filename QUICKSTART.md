@@ -111,7 +111,7 @@ To enable:
 2. Enable GitHub Pages: Settings > Pages > Source: GitHub Actions
 3. Workflows run automatically
 
-Your site will be available at: `https://krpraveen0.github.io/auto_blog/`
+Your site will be available at: `https://YOUR_USERNAME.github.io/YOUR_REPO_NAME/` (e.g., `https://krpraveen0.github.io/auto_blog/`)
 
 ## 📖 Documentation
 
