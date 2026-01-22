@@ -720,6 +720,10 @@
     
     <script>
         // Configuration - Update with your GitHub OAuth App credentials
+        // SECURITY NOTE: This is a simplified OAuth implementation for static sites.
+        // For production use, implement a backend service to handle token exchange
+        // securely with the client secret. Never expose client secrets in client-side code.
+        // See docs/admin/README.md for security best practices.
         const GITHUB_CLIENT_ID = 'YOUR_GITHUB_CLIENT_ID'; // Replace with your GitHub OAuth App Client ID
         const GITHUB_REDIRECT_URI = window.location.origin + window.location.pathname;
         
@@ -1053,7 +1057,10 @@
             let results = [];
             let headers = [];
             
-            // Simple query parser (in production, use a proper query builder)
+            // Simple query parser using keyword matching
+            // NOTE: This is a basic implementation for demonstration. 
+            // For production use, consider implementing a more robust query parser,
+            // using a natural language processing library, or a visual query builder interface.
             if (query.includes('paper') && query.includes('7 days')) {
                 const sevenDaysAgo = new Date();
                 sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);

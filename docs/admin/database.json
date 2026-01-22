@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "exported_at": "2026-01-22T13:51:30.537302+00:00",
+  "exported_at": "2026-01-22T13:57:30.296626+00:00",
   "stats": {
     "total_papers": 55,
     "total_content": 5,
@@ -19,7 +19,7 @@
     "top_languages": {
       "Python": 1
     },
-    "last_updated": "2026-01-22T13:51:30.534235+00:00"
+    "last_updated": "2026-01-22T13:57:30.293676+00:00"
   },
   "papers": [
     {

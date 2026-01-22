@@ -147,12 +147,18 @@ def export_database_to_json(db_path: str = "data/research.db", output_dir: str =
 
 if __name__ == '__main__':
     import sys
+    import argparse
     
-    db_path = sys.argv[1] if len(sys.argv) > 1 else "data/research.db"
-    output_dir = sys.argv[2] if len(sys.argv) > 2 else "docs/admin"
+    parser = argparse.ArgumentParser(description='Export SQLite database to JSON for admin panel')
+    parser.add_argument('db_path', nargs='?', default='data/research.db',
+                        help='Path to SQLite database (default: data/research.db)')
+    parser.add_argument('output_dir', nargs='?', default='docs/admin',
+                        help='Output directory for JSON files (default: docs/admin)')
     
-    result = export_database_to_json(db_path, output_dir)
+    args = parser.parse_args()
+    
+    result = export_database_to_json(args.db_path, args.output_dir)
     print(f"\n✓ Database export completed!")
     print(f"  Papers: {result['papers_count']}")
     print(f"  Content: {result['content_count']}")
-    print(f"  Output directory: {output_dir}")
+    print(f"  Output directory: {args.output_dir}")
