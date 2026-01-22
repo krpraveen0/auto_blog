@@ -2,18 +2,21 @@
 
 **A personal AI research editor that scans trusted sources, filters signal from noise, and converts updates into blog-ready articles and LinkedIn posts.**
 
-## 🆕 New: Admin Panel + GitHub OAuth
+## 🆕 New: Secured Admin Panel with GitHub OAuth Authentication
 
-This system now includes a **web-based admin panel** to query and explore your SQLite database:
+This system now includes a **secure web-based admin panel** with proper GitHub OAuth authentication:
 
-- 🔐 **GitHub OAuth Authentication**: Secure access with GitHub SSO
+- 🔐 **GitHub OAuth Authentication**: Required authentication - no bypass allowed
+- 🛡️ **Secure Token Exchange**: Backend OAuth handler protects client secrets
+- 👥 **Access Control**: Restrict access to specific GitHub users
 - 📊 **Interactive Dashboard**: Statistics and visualizations of your data
 - 🔍 **Advanced Filtering**: Search and filter papers and generated content
 - 🛠️ **Query Builder**: Natural language queries on your database
 - 📤 **CSV Export**: Export filtered data for analysis
 - 🌐 **GitHub Pages Hosted**: Static admin panel hosted alongside your blog
 
-[📖 Read the admin panel setup guide](./docs/admin/README.md)
+**Quick Start**: [📖 OAuth Setup Guide](./OAUTH_SETUP_GUIDE.md) (10-minute setup)  
+**Detailed Docs**: [📖 Admin Panel Guide](./docs/admin/README.md) | [📖 OAuth Deployment](./OAUTH_DEPLOYMENT.md)
 
 ## 🎯 Features
 

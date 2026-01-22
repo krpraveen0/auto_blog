@@ -29,7 +29,8 @@ CORS(app, resources={
 
 GITHUB_CLIENT_ID = os.environ.get('GITHUB_CLIENT_ID')
 GITHUB_CLIENT_SECRET = os.environ.get('GITHUB_CLIENT_SECRET')
-ALLOWED_USERS = os.environ.get('ALLOWED_USERS', '').split(',') if os.environ.get('ALLOWED_USERS') else None
+ALLOWED_USERS_ENV = os.environ.get('ALLOWED_USERS', '')
+ALLOWED_USERS = ALLOWED_USERS_ENV.split(',') if ALLOWED_USERS_ENV else None
 
 
 @app.route('/auth/callback', methods=['GET'])
@@ -87,7 +88,11 @@ def oauth_callback():
         return jsonify({'error': f'User {username} is not authorized to access this admin panel'}), 403
     
     # Return token to frontend
-    # In production, consider using a more secure method like httpOnly cookies
+    # SECURITY NOTE: For production use, consider using httpOnly cookies instead of 
+    # returning tokens in JSON. The current implementation stores tokens in localStorage
+    # which is vulnerable to XSS attacks. However, for a static GitHub Pages site,
+    # httpOnly cookies require additional infrastructure (cookie domain configuration).
+    # Alternative: Use a more sophisticated architecture with session management.
     return jsonify({
         'access_token': access_token,
         'user': {

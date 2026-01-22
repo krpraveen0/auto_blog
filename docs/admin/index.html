@@ -722,6 +722,11 @@
         // Configuration - Update with your GitHub OAuth App credentials and backend service
         // SECURITY: OAuth token exchange happens server-side via the OAuth handler service
         // See OAUTH_DEPLOYMENT.md for deployment instructions
+        
+        // TODO: Replace this with your GitHub OAuth App Client ID
+        // This Client ID is specific to the OAuth App registered for this admin panel
+        // It is safe to commit (unlike the client secret which must remain on the server)
+        // To update: Register a new OAuth App at https://github.com/settings/developers
         const GITHUB_CLIENT_ID = 'Iv23liJ9FRJcuICjBURM'; // Your GitHub OAuth App Client ID
         const GITHUB_REDIRECT_URI = window.location.origin + window.location.pathname;
         

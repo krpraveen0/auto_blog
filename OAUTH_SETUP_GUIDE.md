@@ -188,8 +188,13 @@ To allow any GitHub user:
 
 ⚠️ **Be Aware:**
 - Exported JSON data is publicly accessible on GitHub Pages
-- Access tokens are stored in browser localStorage
-- For highly sensitive data, consider hosting admin panel on a private server
+- Access tokens are stored in browser localStorage (vulnerable to XSS if site is compromised)
+- For highly sensitive data, consider:
+  - Hosting admin panel on a private server with httpOnly cookies
+  - Implementing Content Security Policy (CSP) headers
+  - Using a more sophisticated session management system
+- This implementation prioritizes ease of deployment for GitHub Pages static sites
+- For production systems with sensitive data, consider a full backend solution
 
 ## Cost
 

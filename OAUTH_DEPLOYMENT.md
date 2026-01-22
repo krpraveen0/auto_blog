@@ -89,6 +89,50 @@ The admin panel is hosted on GitHub Pages (a static site), which cannot securely
 3. Configure environment variables
 4. Deploy and note the URL
 
+### Option 6: Docker (Self-hosted)
+
+For self-hosting on any platform with Docker support:
+
+1. **Build the Docker image**:
+   ```bash
+   docker build -t oauth-handler .
+   ```
+
+2. **Run the container**:
+   ```bash
+   docker run -d -p 5000:5000 \
+     -e GITHUB_CLIENT_ID=your_client_id \
+     -e GITHUB_CLIENT_SECRET=your_client_secret \
+     -e ALLOWED_USERS=your_github_username \
+     --name oauth-handler \
+     oauth-handler
+   ```
+
+3. **Or use Docker Compose**:
+   ```yaml
+   version: '3.8'
+   services:
+     oauth-handler:
+       build: .
+       ports:
+         - "5000:5000"
+       environment:
+         - GITHUB_CLIENT_ID=your_client_id
+         - GITHUB_CLIENT_SECRET=your_client_secret
+         - ALLOWED_USERS=your_github_username
+       restart: unless-stopped
+   ```
+   
+   Run with: `docker-compose up -d`
+
+4. Access at `http://your-server:5000`
+
+**Deploy to cloud with Docker:**
+- AWS ECS/Fargate
+- Google Cloud Run
+- Azure Container Instances
+- Fly.io (recommended for Docker deployments)
+
 ## Configuration
 
 ### GitHub OAuth App Setup
