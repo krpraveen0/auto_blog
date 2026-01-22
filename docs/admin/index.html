@@ -480,8 +480,8 @@
                 Sign in with GitHub
             </button>
             <p style="margin-top: 20px; font-size: 0.9em; color: #999;">
-                Note: GitHub OAuth needs to be configured for authentication to work.
-                <br>See <a href="https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app" target="_blank" style="color: #667eea;">GitHub OAuth Setup</a>
+                <strong>⚠️ Setup Required:</strong> OAuth backend needs to be deployed separately.
+                <br>See <a href="../../OAUTH_SETUP_GUIDE.md" target="_blank" style="color: #667eea;">OAUTH_SETUP_GUIDE.md</a> for 15-minute setup instructions.
             </p>
         </div>
     </div>
@@ -880,13 +880,18 @@
         function loginWithGitHub() {
             // Check if OAuth handler is configured
             if (OAUTH_HANDLER_URL.includes('your-oauth-handler')) {
-                alert('⚠️ OAuth Handler Not Configured\n\n' +
-                      'The OAuth handler service needs to be deployed first.\n\n' +
-                      'Steps to enable authentication:\n' +
-                      '1. Deploy the OAuth handler (see OAUTH_DEPLOYMENT.md)\n' +
-                      '2. Update OAUTH_HANDLER_URL in this file\n' +
-                      '3. Configure GITHUB_CLIENT_SECRET in your deployment\n\n' +
-                      'Without proper OAuth setup, the admin panel cannot be secured.');
+                alert('⚠️ OAuth Handler Backend Not Deployed\n\n' +
+                      'The admin panel requires a separate backend service to handle OAuth securely.\n\n' +
+                      'Your admin panel is on: GitHub Pages (static site)\n' +
+                      'You need to deploy: OAuth handler service (backend)\n\n' +
+                      'Quick Setup (15 minutes):\n' +
+                      '1. Go to https://railway.app (free tier available)\n' +
+                      '2. Deploy this repository to Railway\n' +
+                      '3. Set environment variables: GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET\n' +
+                      '4. Get the Railway URL (e.g., https://xxx.railway.app)\n' +
+                      '5. Update OAUTH_HANDLER_URL in this file to that URL\n' +
+                      '6. Commit and push the changes\n\n' +
+                      'See OAUTH_SETUP_GUIDE.md for detailed step-by-step instructions.');
                 return;
             }
             
