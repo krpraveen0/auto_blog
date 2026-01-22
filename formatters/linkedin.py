@@ -65,26 +65,29 @@ class LinkedInFormatter:
         import re
         
         # Remove agent-related phrases and meta-commentary
+        # Note: These patterns are designed to catch agent-specific phrases while preserving
+        # legitimate technical content. They target full sentence patterns, not isolated words.
         agent_patterns = [
-            # Agent conversation markers
+            # Agent conversation markers - full sentence patterns
             r'(?i)\b(as an ai|as a language model|i\'m an ai|i am an ai)\b[^.!?]*[.!?]',
             r'(?i)\b(i cannot|i can\'t|i don\'t have|i do not have)\b[^.!?]*[.!?]',
-            r'(?i)\b(let me|i\'ll|i will|i would|i should)\b[^.!?]*[.!?]',
-            r'(?i)\b(my (understanding|analysis|interpretation) is)\b[^.!?]*[.!?]',
-            r'(?i)\b(based on (my|the) (analysis|understanding|interpretation))\b[^.!?]*[.!?]',
-            # Meta-instructions that leak through
-            r'(?i)\b(here\'s|here is) (what|how|why|a|an|the)\b',
-            r'(?i)\bin (this post|this article|this summary)\b',
-            r'(?i)\b(this (post|article|piece|content) (discusses|covers|explores))\b',
-            # Conversational hedges
-            r'(?i)\bit seems (that|like)',
-            r'(?i)\bit appears (that|as if)',
-            r'(?i)\bone might (say|think|argue|consider)',
-            r'(?i)\bwe (might|could|should) (note|observe|consider)',
+            # Meta-instructions with context (avoid removing "Here's a new framework")
+            r'(?i)\bhere\'s what (you need to know|you should know|to understand)\b[^.!?]*[.!?]',
+            r'(?i)\bhere is (what|how) (you need|you should|to)\b[^.!?]*[.!?]',
+            r'(?i)\bin (this post|this article|this summary),?\s+(we|I)\b[^.!?]*[.!?]',
+            r'(?i)\b(this (post|article|piece|content) (discusses|covers|explores))\b[^.!?]*[.!?]',
+            # Conversational hedges that sound like AI explanations (full sentences)
+            r'(?i)\bit seems (that|like)[^.!?]*[.!?]',
+            r'(?i)\bit appears (that|as if)[^.!?]*[.!?]',
+            r'(?i)\bone might (say|think|argue|consider) that\b[^.!?]*[.!?]',
+            r'(?i)\bwe (might|could|should) (note|observe|consider) that\b[^.!?]*[.!?]',
             # LLM attribution phrases
-            r'(?i)\baccording to (my|the) (analysis|understanding)',
-            r'(?i)\b(generated|created|written) by',
-            r'(?i)\b(this was|content) (generated|created|produced)',
+            r'(?i)\baccording to (my|the) (analysis|understanding)\b[^.!?]*[.!?]',
+            r'(?i)\bbased on (my|the) (analysis|understanding|interpretation)\b[^.!?]*[.!?]',
+            r'(?i)\b(generated|created|written) by (an ai|ai|a language model)\b',
+            r'(?i)\b(this was|content) (generated|created|produced) (by|using)\b',
+            # Analysis/interpretation qualifiers that sound like AI
+            r'(?i)\bmy (understanding|analysis|interpretation) is\b[^.!?]*[.!?]',
         ]
         
         for pattern in agent_patterns:
@@ -130,6 +133,10 @@ class LinkedInFormatter:
         
         # Remove any remaining double spaces
         content = re.sub(r'\s{2,}', ' ', content)
+        
+        # Clean up leading/trailing punctuation artifacts
+        content = re.sub(r'\s*[,;]\s*\.', '.', content)  # Fix ", ." -> "."
+        content = re.sub(r'^\s*[,;]\s*', '', content, flags=re.MULTILINE)  # Remove leading commas
         
         return content
     
