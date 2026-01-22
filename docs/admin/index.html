@@ -719,13 +719,15 @@
     </div>
     
     <script>
-        // Configuration - Update with your GitHub OAuth App credentials
-        // SECURITY NOTE: This is a simplified OAuth implementation for static sites.
-        // For production use, implement a backend service to handle token exchange
-        // securely with the client secret. Never expose client secrets in client-side code.
-        // See docs/admin/README.md for security best practices.
-        const GITHUB_CLIENT_ID = 'Iv23liJ9FRJcuICjBURM'; // Replace with your GitHub OAuth App Client ID
+        // Configuration - Update with your GitHub OAuth App credentials and backend service
+        // SECURITY: OAuth token exchange happens server-side via the OAuth handler service
+        // See OAUTH_DEPLOYMENT.md for deployment instructions
+        const GITHUB_CLIENT_ID = 'Iv23liJ9FRJcuICjBURM'; // Your GitHub OAuth App Client ID
         const GITHUB_REDIRECT_URI = window.location.origin + window.location.pathname;
+        
+        // OAuth Handler Service URL - Update this after deploying the OAuth handler
+        // See OAUTH_DEPLOYMENT.md for deployment options (Railway, Heroku, Render, etc.)
+        const OAUTH_HANDLER_URL = 'https://your-oauth-handler.railway.app'; // TODO: Update with your deployed OAuth handler URL
         
         // State management
         let userData = null;
@@ -760,56 +762,160 @@
             const code = urlParams.get('code');
             
             if (code) {
-                // Exchange code for token (Note: In production, this should be done server-side)
-                // For GitHub Pages, we'll use a simplified approach
-                alert('GitHub OAuth received. In production, this would exchange the code for an access token via a backend service.');
-                // For demo purposes, let's just skip to loading data
-                loadAdminPanel();
+                // Exchange code for token via OAuth handler service
+                exchangeCodeForToken(code);
                 return;
             }
             
-            // Check for stored token (in a real app, use secure storage)
+            // Check for stored token and verify it's still valid
             const token = localStorage.getItem('github_token');
             if (token) {
-                loadAdminPanel();
+                verifyAndLoadPanel(token);
             } else {
-                // Check if user chose to skip auth (for demo/testing)
-                const skipAuth = localStorage.getItem('skip_auth');
-                if (skipAuth === 'true') {
-                    loadAdminPanel();
+                // No token, show login screen
+                showLoginScreen();
+            }
+        }
+        
+        async function exchangeCodeForToken(code) {
+            try {
+                // Show loading state
+                showLoadingMessage('Authenticating with GitHub...');
+                
+                // Call OAuth handler to exchange code for token
+                const response = await fetch(`${OAUTH_HANDLER_URL}/auth/callback?code=${code}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to authenticate');
+                }
+                
+                const data = await response.json();
+                
+                // Store token and user data
+                localStorage.setItem('github_token', data.access_token);
+                localStorage.setItem('github_user', JSON.stringify(data.user));
+                
+                // Clean up URL (remove code parameter)
+                window.history.replaceState({}, document.title, window.location.pathname);
+                
+                // Load admin panel with user data
+                loadAdminPanel(data.user);
+            } catch (error) {
+                console.error('OAuth error:', error);
+                alert(`Authentication failed: ${error.message}\n\nPlease make sure:\n1. The OAuth handler service is deployed and running\n2. GITHUB_CLIENT_SECRET is configured in the OAuth handler\n3. The OAuth callback URL in GitHub matches your setup\n\nSee OAUTH_DEPLOYMENT.md for setup instructions.`);
+                showLoginScreen();
+            }
+        }
+        
+        async function verifyAndLoadPanel(token) {
+            try {
+                // Show loading state
+                showLoadingMessage('Verifying authentication...');
+                
+                // Verify token with OAuth handler
+                const response = await fetch(`${OAUTH_HANDLER_URL}/auth/verify`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ access_token: token })
+                });
+                
+                if (!response.ok) {
+                    // Token is invalid or expired
+                    localStorage.removeItem('github_token');
+                    localStorage.removeItem('github_user');
+                    throw new Error('Token expired or invalid');
+                }
+                
+                const data = await response.json();
+                
+                // Update stored user data
+                localStorage.setItem('github_user', JSON.stringify(data.user));
+                
+                // Load admin panel with user data
+                loadAdminPanel(data.user);
+            } catch (error) {
+                console.error('Token verification error:', error);
+                // Token invalid, show login screen
+                showLoginScreen();
+            }
+        }
+        
+        function showLoginScreen() {
+            document.getElementById('loginScreen').style.display = 'flex';
+            document.getElementById('adminPanel').style.display = 'none';
+        }
+        
+        function showLoadingMessage(message) {
+            const loginScreen = document.getElementById('loginScreen');
+            loginScreen.style.display = 'flex';
+            const loginBox = loginScreen.querySelector('.login-box');
+            if (loginBox) {
+                const existingMessage = loginBox.querySelector('.loading-message');
+                if (existingMessage) {
+                    existingMessage.textContent = message;
+                } else {
+                    const loadingDiv = document.createElement('div');
+                    loadingDiv.className = 'loading-message';
+                    loadingDiv.style.cssText = 'margin-top: 20px; color: #666; font-style: italic;';
+                    loadingDiv.textContent = message;
+                    loginBox.appendChild(loadingDiv);
                 }
             }
         }
         
         function loginWithGitHub() {
-            if (GITHUB_CLIENT_ID === 'YOUR_GITHUB_CLIENT_ID') {
-                // For demo purposes without OAuth configured
-                if (confirm('GitHub OAuth is not configured. Would you like to proceed without authentication for testing?')) {
-                    localStorage.setItem('skip_auth', 'true');
-                    loadAdminPanel();
-                }
+            // Check if OAuth handler is configured
+            if (OAUTH_HANDLER_URL.includes('your-oauth-handler')) {
+                alert('⚠️ OAuth Handler Not Configured\n\n' +
+                      'The OAuth handler service needs to be deployed first.\n\n' +
+                      'Steps to enable authentication:\n' +
+                      '1. Deploy the OAuth handler (see OAUTH_DEPLOYMENT.md)\n' +
+                      '2. Update OAUTH_HANDLER_URL in this file\n' +
+                      '3. Configure GITHUB_CLIENT_SECRET in your deployment\n\n' +
+                      'Without proper OAuth setup, the admin panel cannot be secured.');
                 return;
             }
             
             // Redirect to GitHub OAuth
-            const authUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(GITHUB_REDIRECT_URI)}&scope=read:user`;
+            const state = Math.random().toString(36).substring(7); // CSRF protection
+            localStorage.setItem('oauth_state', state);
+            const authUrl = `https://github.com/login/oauth/authorize?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(GITHUB_REDIRECT_URI)}&scope=read:user&state=${state}`;
             window.location.href = authUrl;
         }
         
         function logout() {
+            // Clear all auth data
             localStorage.removeItem('github_token');
-            localStorage.removeItem('skip_auth');
+            localStorage.removeItem('github_user');
+            localStorage.removeItem('oauth_state');
+            
+            // Reset UI
             document.getElementById('adminPanel').style.display = 'none';
             document.getElementById('loginScreen').style.display = 'flex';
+            
+            // Clear user data
+            userData = null;
         }
         
-        async function loadAdminPanel() {
+        async function loadAdminPanel(user) {
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('adminPanel').style.display = 'block';
             
-            // Set user info (demo data if no real auth)
-            document.getElementById('userName').textContent = 'Admin User';
-            document.getElementById('userAvatar').src = 'https://github.com/github.png';
+            // Store user data
+            userData = user;
+            
+            // Set user info with real data
+            document.getElementById('userName').textContent = user.name || user.login;
+            document.getElementById('userAvatar').src = user.avatar_url || 'https://github.com/github.png';
             
             // Load database data
             await loadDatabaseData();
