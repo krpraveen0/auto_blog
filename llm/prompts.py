@@ -133,6 +133,9 @@ Rules:
 - Remove any markdown formatting (*italic* or **bold**).
 - Do not add filler words like "like", "interesting", "exciting" at the end.
 - End with one thoughtful takeaway.
+- Do NOT include meta-commentary like "Here's what", "In this post", "This discusses"
+- Do NOT use agent phrases like "As an AI", "Let me explain", "I'll show you"
+- Do NOT include conversational hedges like "It seems", "It appears", "One might say"
 
 Structure:
 - Opening statement (what happened)
@@ -140,6 +143,7 @@ Structure:
 - One practical takeaway
 
 IMPORTANT: Do NOT add hashtags to the content. Hashtags will be added separately.
+Write ONLY the post content itself. No preamble or introduction about what the post is.
 
 Title: {title}
 URL: {url}
@@ -251,6 +255,13 @@ STYLE GUIDELINES:
 - Add filler words ("interesting", "exciting")
 - Hype or exaggerate claims
 - Use emojis excessively
+- Include meta-commentary like "Here's what", "In this post", "This article discusses"
+- Use agent phrases like "As an AI", "Let me explain", "I'll show you"
+- Include conversational hedges like "It seems", "It appears", "One might say"
+- Reference the generation process or analysis
+
+CRITICAL: Write ONLY the post content itself. No meta-commentary, no explanations, no preamble.
+Start directly with the hook. Do not introduce what the post is about - just write it.
 
 LENGTH: 100-150 words (optimal for LinkedIn algorithm)
 

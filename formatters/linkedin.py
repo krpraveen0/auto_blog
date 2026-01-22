@@ -64,6 +64,32 @@ class LinkedInFormatter:
         """Clean LinkedIn content by removing problematic elements"""
         import re
         
+        # Remove agent-related phrases and meta-commentary
+        agent_patterns = [
+            # Agent conversation markers
+            r'(?i)\b(as an ai|as a language model|i\'m an ai|i am an ai)\b[^.!?]*[.!?]',
+            r'(?i)\b(i cannot|i can\'t|i don\'t have|i do not have)\b[^.!?]*[.!?]',
+            r'(?i)\b(let me|i\'ll|i will|i would|i should)\b[^.!?]*[.!?]',
+            r'(?i)\b(my (understanding|analysis|interpretation) is)\b[^.!?]*[.!?]',
+            r'(?i)\b(based on (my|the) (analysis|understanding|interpretation))\b[^.!?]*[.!?]',
+            # Meta-instructions that leak through
+            r'(?i)\b(here\'s|here is) (what|how|why|a|an|the)\b',
+            r'(?i)\bin (this post|this article|this summary)\b',
+            r'(?i)\b(this (post|article|piece|content) (discusses|covers|explores))\b',
+            # Conversational hedges
+            r'(?i)\bit seems (that|like)',
+            r'(?i)\bit appears (that|as if)',
+            r'(?i)\bone might (say|think|argue|consider)',
+            r'(?i)\bwe (might|could|should) (note|observe|consider)',
+            # LLM attribution phrases
+            r'(?i)\baccording to (my|the) (analysis|understanding)',
+            r'(?i)\b(generated|created|written) by',
+            r'(?i)\b(this was|content) (generated|created|produced)',
+        ]
+        
+        for pattern in agent_patterns:
+            content = re.sub(pattern, '', content)
+        
         # Remove citation markers like [1], [2], [3], etc.
         content = re.sub(r'\[\d+\]', '', content)
         
@@ -93,10 +119,17 @@ class LinkedInFormatter:
             pattern = rf'\b{word}\s*\.?\s*$'
             content = re.sub(pattern, '.', content, flags=re.IGNORECASE)
         
-        # Clean up extra whitespace while preserving line breaks
+        # Remove empty lines and fix multiple consecutive spaces
         lines = content.split('\n')
-        cleaned = [' '.join(line.split()) for line in lines]
+        cleaned = []
+        for line in lines:
+            line = ' '.join(line.split())  # Normalize whitespace
+            if line.strip():  # Only keep non-empty lines
+                cleaned.append(line)
         content = '\n'.join(cleaned).strip()
+        
+        # Remove any remaining double spaces
+        content = re.sub(r'\s{2,}', ' ', content)
         
         return content
     
