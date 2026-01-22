@@ -1,0 +1,70 @@
+name: Update Admin Panel Data
+
+on:
+  # Run after any workflow that modifies the database
+  workflow_run:
+    workflows: ["Daily Scan", "Weekly Digest", "Generate Topic On Demand"]
+    types:
+      - completed
+  
+  # Manual trigger
+  workflow_dispatch:
+  
+  # Run after push to main (if database is modified)
+  push:
+    branches:
+      - main
+    paths:
+      - 'data/research.db'
+
+jobs:
+  export-database:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml python-dotenv
+      
+      - name: Export database to JSON
+        run: |
+          python export_db_json.py data/research.db docs/admin
+      
+      - name: Check if data changed
+        id: check_changes
+        run: |
+          if git diff --quiet docs/admin/*.json; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Commit and push updated data
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add docs/admin/*.json
+          git commit -m "Update admin panel data [skip ci]"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Summary
+        run: |
+          if [ "${{ steps.check_changes.outputs.changed }}" == "true" ]; then
+            echo "✅ Admin panel data updated and committed"
+          else
+            echo "ℹ️ No changes in admin panel data"
+          fi
