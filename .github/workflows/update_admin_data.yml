@@ -21,6 +21,9 @@ jobs:
   export-database:
     runs-on: ubuntu-latest
     
+    permissions:
+      contents: write  # Required to commit and push changes
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
