@@ -104,10 +104,14 @@ GitHub Actions runs daily automatically:
 - Fetches new content
 - Generates drafts
 - Saves as artifacts
+- Deploys to GitHub Pages (when docs/ folder is updated)
 
 To enable:
 1. Add repository secret: `PERPLEXITY_API_KEY`
-2. Workflows run automatically
+2. Enable GitHub Pages: Settings > Pages > Source: GitHub Actions
+3. Workflows run automatically
+
+Your site will be available at: `https://YOUR_USERNAME.github.io/YOUR_REPO_NAME/` (e.g., `https://krpraveen0.github.io/auto_blog/`)
 
 ## 📖 Documentation
 

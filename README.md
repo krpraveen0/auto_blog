@@ -235,11 +235,19 @@ python main.py generate-index
 git add docs/
 git commit -m "Add GitHub Pages site"
 git push
-
-# Then in your GitHub repository:
-# Settings > Pages > Source: Deploy from branch > Select branch and /docs folder
-# Your site will be at: https://USERNAME.github.io/REPO-NAME/
 ```
+
+**GitHub Pages Setup:**
+
+1. Go to your GitHub repository: `https://github.com/YOUR_USERNAME/YOUR_REPO_NAME`
+   - For example: `https://github.com/krpraveen0/auto_blog`
+2. Navigate to **Settings** > **Pages**
+3. Under **Source**, select **GitHub Actions**
+4. The deployment will happen automatically via the workflow in `.github/workflows/deploy_pages.yml`
+5. Your site will be available at: `https://YOUR_USERNAME.github.io/YOUR_REPO_NAME/`
+   - For example: `https://krpraveen0.github.io/auto_blog/`
+
+The workflow automatically deploys whenever you push changes to the `docs/` folder, or you can trigger it manually from the Actions tab.
 
 ## 🧪 Development Phases
 
