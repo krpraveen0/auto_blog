@@ -11,6 +11,18 @@ on:
         options:
           - 'false'
           - 'true'
+      source:
+        description: 'Content source to use (when generating new content)'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - 'all'
+          - 'arxiv'
+          - 'blogs'
+          - 'hackernews'
+          - 'github'
+          - 'trends'
 
 jobs:
   publish_single_post:
@@ -56,7 +68,9 @@ jobs:
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
         run: |
           echo "🔄 Generating new LinkedIn content..."
-          python main.py fetch --source all
+          SOURCE="${{ github.event.inputs.source || 'all' }}"
+          echo "  - Source: $SOURCE"
+          python main.py fetch --source $SOURCE
           python main.py generate --count 1 --format linkedin
           echo "✅ New content generated"
       

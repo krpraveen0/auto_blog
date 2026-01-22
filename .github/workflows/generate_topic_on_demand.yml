@@ -28,7 +28,7 @@ on:
           - 'linkedin'
           - 'both'
       sources:
-        description: 'Content sources'
+        description: 'Content sources to use'
         required: false
         default: 'all'
         type: choice
@@ -38,6 +38,7 @@ on:
           - 'blogs'
           - 'hackernews'
           - 'github'
+          - 'trends'
 
 jobs:
   generate_topic_content:

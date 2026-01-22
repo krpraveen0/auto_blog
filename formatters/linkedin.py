@@ -64,6 +64,35 @@ class LinkedInFormatter:
         """Clean LinkedIn content by removing problematic elements"""
         import re
         
+        # Remove agent-related phrases and meta-commentary
+        # Note: These patterns are designed to catch agent-specific phrases while preserving
+        # legitimate technical content. They target full sentence patterns, not isolated words.
+        agent_patterns = [
+            # Agent conversation markers - full sentence patterns
+            r'(?i)\b(as an ai|as a language model|i\'m an ai|i am an ai)\b[^.!?]*[.!?]',
+            r'(?i)\b(i cannot|i can\'t|i don\'t have|i do not have)\b[^.!?]*[.!?]',
+            # Meta-instructions with context (avoid removing "Here's a new framework")
+            r'(?i)\bhere\'s what (you need to know|you should know|to understand)\b[^.!?]*[.!?]',
+            r'(?i)\bhere is (what|how) (you need|you should|to)\b[^.!?]*[.!?]',
+            r'(?i)\bin (this post|this article|this summary),?\s+(we|I)\b[^.!?]*[.!?]',
+            r'(?i)\b(this (post|article|piece|content) (discusses|covers|explores))\b[^.!?]*[.!?]',
+            # Conversational hedges that sound like AI explanations (full sentences)
+            r'(?i)\bit seems (that|like)[^.!?]*[.!?]',
+            r'(?i)\bit appears (that|as if)[^.!?]*[.!?]',
+            r'(?i)\bone might (say|think|argue|consider) that\b[^.!?]*[.!?]',
+            r'(?i)\bwe (might|could|should) (note|observe|consider) that\b[^.!?]*[.!?]',
+            # LLM attribution phrases
+            r'(?i)\baccording to (my|the) (analysis|understanding)\b[^.!?]*[.!?]',
+            r'(?i)\bbased on (my|the) (analysis|understanding|interpretation)\b[^.!?]*[.!?]',
+            r'(?i)\b(generated|created|written) by (an ai|ai|a language model)\b',
+            r'(?i)\b(this was|content) (generated|created|produced) (by|using)\b',
+            # Analysis/interpretation qualifiers that sound like AI
+            r'(?i)\bmy (understanding|analysis|interpretation) is\b[^.!?]*[.!?]',
+        ]
+        
+        for pattern in agent_patterns:
+            content = re.sub(pattern, '', content)
+        
         # Remove citation markers like [1], [2], [3], etc.
         content = re.sub(r'\[\d+\]', '', content)
         
@@ -93,10 +122,21 @@ class LinkedInFormatter:
             pattern = rf'\b{word}\s*\.?\s*$'
             content = re.sub(pattern, '.', content, flags=re.IGNORECASE)
         
-        # Clean up extra whitespace while preserving line breaks
+        # Remove empty lines and fix multiple consecutive spaces
         lines = content.split('\n')
-        cleaned = [' '.join(line.split()) for line in lines]
+        cleaned = []
+        for line in lines:
+            line = ' '.join(line.split())  # Normalize whitespace
+            if line.strip():  # Only keep non-empty lines
+                cleaned.append(line)
         content = '\n'.join(cleaned).strip()
+        
+        # Remove any remaining double spaces
+        content = re.sub(r'\s{2,}', ' ', content)
+        
+        # Clean up leading/trailing punctuation artifacts
+        content = re.sub(r'\s*[,;]\s*\.', '.', content)  # Fix ", ." -> "."
+        content = re.sub(r'^\s*[,;]\s*', '', content, flags=re.MULTILINE)  # Remove leading commas
         
         return content
     
