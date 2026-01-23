@@ -39,7 +39,19 @@ def test_only_201_is_success():
             result = publisher._post_to_linkedin("Test content")
             assert result['success'] is True, "201 response should be success"
             assert 'post_id' in result, "Should return post_id"
+            
+            # Verify correct endpoint is used (v2/ugcPosts)
+            call_args = mock_post.call_args
+            assert '/v2/ugcPosts' in call_args[0][0], "Should use /v2/ugcPosts endpoint"
+            
+            # Verify correct payload structure
+            payload = call_args[1]['json']
+            assert 'specificContent' in payload, "Payload should have specificContent"
+            assert 'com.linkedin.ugc.ShareContent' in payload['specificContent'], "Should use ShareContent"
+            assert 'shareCommentary' in payload['specificContent']['com.linkedin.ugc.ShareContent'], "Should have shareCommentary"
+            
             print("✅ Test passed: 201 status code is treated as success")
+            print("✅ Test passed: Correct v2 API endpoint and structure used")
         
         # Test 200 response - should be failure (not success)
         with patch('requests.post') as mock_post:
