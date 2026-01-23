@@ -264,6 +264,37 @@
             background: #d0d0d0;
         }
         
+        .btn-linkedin {
+            padding: 6px 12px;
+            background: #0077b5;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        
+        .btn-linkedin:hover {
+            background: #006399;
+        }
+        
+        .btn-linkedin:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 11px;
+        }
+        
+        .action-cell {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
         .data-table {
             width: 100%;
             background: white;
@@ -727,6 +758,14 @@
         const GITHUB_CLIENT_ID = 'Iv23liJ9FRJcuICjBURM'; // Replace with your GitHub OAuth App Client ID
         const GITHUB_REDIRECT_URI = window.location.origin + window.location.pathname;
         
+        // API Server Configuration
+        // Update this URL to match where your API server is running
+        // For local development: 'http://localhost:5000'
+        // For production: Set to your deployed API server URL
+        const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+            ? 'http://localhost:5000' 
+            : (window.location.protocol + '//' + window.location.hostname + ':5000');
+        
         // State management
         let userData = null;
         let databaseData = null;
@@ -984,6 +1023,21 @@
             
             pageContent.forEach(item => {
                 const row = document.createElement('tr');
+                
+                // Determine actions based on content type and status
+                let actionsHtml = '';
+                if (item.published_url) {
+                    actionsHtml = `<a href="${item.published_url}" target="_blank" class="link">View</a>`;
+                } else if (item.content_type === 'linkedin' && item.status === 'drafted') {
+                    actionsHtml = `
+                        <button class="btn-linkedin btn-small" onclick="postToLinkedIn(${item.id}, '${escapeHtml(item.paper_title || 'N/A')}')">
+                            Post to LinkedIn
+                        </button>
+                    `;
+                } else {
+                    actionsHtml = '-';
+                }
+                
                 row.innerHTML = `
                     <td class="text-truncate">${escapeHtml(item.paper_title || 'N/A')}</td>
                     <td><span class="badge badge-${item.content_type}">${item.content_type}</span></td>
@@ -991,7 +1045,7 @@
                     <td><span class="badge badge-${item.paper_source}">${item.paper_source}</span></td>
                     <td>${formatDate(item.created_at)}</td>
                     <td>
-                        ${item.published_url ? `<a href="${item.published_url}" target="_blank" class="link">View</a>` : '-'}
+                        ${actionsHtml}
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -1240,6 +1294,52 @@
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+        
+        // LinkedIn Publishing Function
+        async function postToLinkedIn(contentId, paperTitle) {
+            // Confirm with user
+            if (!confirm(`Are you sure you want to post "${paperTitle}" to LinkedIn?`)) {
+                return;
+            }
+            
+            // Disable the button to prevent double-clicks
+            const button = event.target;
+            button.disabled = true;
+            button.textContent = 'Posting...';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/publish/linkedin/${contentId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert(`✅ Successfully posted to LinkedIn!\n\nPost URL: ${result.post_url || 'Check your LinkedIn profile'}`);
+                    
+                    // Reload the data to update the table
+                    await loadData();
+                    
+                    // Switch to content tab if not already there
+                    const activeTab = document.querySelector('.tab.active').dataset.tab;
+                    if (activeTab === 'content') {
+                        loadContentTable();
+                    }
+                } else {
+                    alert(`❌ Failed to post to LinkedIn:\n\n${result.error}`);
+                    button.disabled = false;
+                    button.textContent = 'Post to LinkedIn';
+                }
+            } catch (error) {
+                console.error('Error posting to LinkedIn:', error);
+                alert(`❌ Error posting to LinkedIn:\n\n${error.message}\n\nMake sure the API server is running on ${API_BASE_URL}`);
+                button.disabled = false;
+                button.textContent = 'Post to LinkedIn';
+            }
         }
     </script>
 </body>

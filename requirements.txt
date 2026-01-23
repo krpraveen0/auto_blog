@@ -34,6 +34,10 @@ click>=8.1.7  # CLI framework
 colorama>=0.4.6  # Colored terminal output
 tqdm>=4.66.0  # Progress bars
 
+# API Server
+flask>=3.0.0
+flask-cors>=4.0.0
+
 # Scheduling (for local dev)
 schedule>=1.2.0
 apscheduler>=3.10.4
