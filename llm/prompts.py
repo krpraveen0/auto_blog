@@ -3,6 +3,13 @@ Credibility-focused prompts for content analysis
 All prompts designed to minimize hype and maximize accuracy
 """
 
+
+class SafeDict(dict):
+    """Dictionary subclass that returns a placeholder for missing keys instead of raising KeyError"""
+    def __missing__(self, key):
+        return f"{{missing:{key}}}"
+
+
 # Global system prompt used for ALL LLM interactions
 SYSTEM_PROMPT = """You are an experienced AI researcher and engineer.
 Your role is to analyze AI, ML, LLM, and Generative AI content with accuracy and restraint.
@@ -765,12 +772,8 @@ def get_prompt(stage: str, **kwargs) -> str:
     if not template:
         raise ValueError(f"Unknown prompt stage: {stage}")
     
-    # Use format_map with a custom dict that returns a placeholder for missing keys
+    # Use format_map with SafeDict that returns a placeholder for missing keys
     # This prevents KeyError and makes debugging easier
-    class SafeDict(dict):
-        def __missing__(self, key):
-            return f"{{missing:{key}}}"
-    
     try:
         return template.format(**kwargs)
     except KeyError as e:

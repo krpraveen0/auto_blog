@@ -124,9 +124,16 @@ class Database:
                     raise
         
         if 'published_url' not in existing_content_columns:
-            cursor.execute('ALTER TABLE generated_content ADD COLUMN published_url TEXT')
-            content_migrations.append('published_url')
-            logger.info("✓ Added published_url column to generated_content table")
+            try:
+                cursor.execute('ALTER TABLE generated_content ADD COLUMN published_url TEXT')
+                content_migrations.append('published_url')
+                logger.info("✓ Added published_url column to generated_content table")
+            except Exception as e:
+                # Column might already exist if migration ran partially
+                if 'duplicate column name' in str(e).lower():
+                    logger.debug(f"Column published_url already exists, skipping")
+                else:
+                    raise
         
         all_migrations = papers_migrations + content_migrations
         if all_migrations:
