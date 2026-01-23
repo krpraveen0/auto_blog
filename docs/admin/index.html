@@ -761,7 +761,9 @@
         // API Server Configuration
         // Update this URL to match where your API server is running
         // For local development: 'http://localhost:5000'
-        // For production: Set to your deployed API server URL
+        // For production: Set this to your deployed API server URL
+        // Note: You can also set this via a configuration file or environment variable
+        //       For static GitHub Pages deployment, consider using a separate config.js file
         const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
             ? 'http://localhost:5000' 
             : (window.location.protocol + '//' + window.location.hostname + ':5000');
@@ -1027,10 +1029,12 @@
                 // Determine actions based on content type and status
                 let actionsHtml = '';
                 if (item.published_url) {
-                    actionsHtml = `<a href="${item.published_url}" target="_blank" class="link">View</a>`;
+                    actionsHtml = `<a href="${escapeHtml(item.published_url)}" target="_blank" class="link">View</a>`;
                 } else if (item.content_type === 'linkedin' && item.status === 'drafted') {
                     actionsHtml = `
-                        <button class="btn-linkedin btn-small" onclick="postToLinkedIn(${item.id}, '${escapeHtml(item.paper_title || 'N/A')}')">
+                        <button class="btn-linkedin btn-small post-linkedin-btn" 
+                                data-content-id="${item.id}" 
+                                data-paper-title="${escapeHtml(item.paper_title || 'N/A')}">
                             Post to LinkedIn
                         </button>
                     `;
@@ -1049,6 +1053,15 @@
                     </td>
                 `;
                 tbody.appendChild(row);
+            });
+            
+            // Add event listeners to LinkedIn buttons
+            document.querySelectorAll('.post-linkedin-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const contentId = parseInt(this.dataset.contentId);
+                    const paperTitle = this.dataset.paperTitle;
+                    postToLinkedIn(contentId, paperTitle, this);
+                });
             });
             
             renderPagination('contentPagination', filteredContent.length);
@@ -1297,16 +1310,15 @@
         }
         
         // LinkedIn Publishing Function
-        async function postToLinkedIn(contentId, paperTitle) {
+        async function postToLinkedIn(contentId, paperTitle, buttonElement) {
             // Confirm with user
             if (!confirm(`Are you sure you want to post "${paperTitle}" to LinkedIn?`)) {
                 return;
             }
             
             // Disable the button to prevent double-clicks
-            const button = event.target;
-            button.disabled = true;
-            button.textContent = 'Posting...';
+            buttonElement.disabled = true;
+            buttonElement.textContent = 'Posting...';
             
             try {
                 const response = await fetch(`${API_BASE_URL}/api/publish/linkedin/${contentId}`, {
@@ -1331,14 +1343,14 @@
                     }
                 } else {
                     alert(`❌ Failed to post to LinkedIn:\n\n${result.error}`);
-                    button.disabled = false;
-                    button.textContent = 'Post to LinkedIn';
+                    buttonElement.disabled = false;
+                    buttonElement.textContent = 'Post to LinkedIn';
                 }
             } catch (error) {
                 console.error('Error posting to LinkedIn:', error);
                 alert(`❌ Error posting to LinkedIn:\n\n${error.message}\n\nMake sure the API server is running on ${API_BASE_URL}`);
-                button.disabled = false;
-                button.textContent = 'Post to LinkedIn';
+                buttonElement.disabled = false;
+                buttonElement.textContent = 'Post to LinkedIn';
             }
         }
     </script>

@@ -6,6 +6,7 @@ Provides endpoints for posting content to LinkedIn from the admin panel
 
 import os
 import sys
+import sqlite3
 from pathlib import Path
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -53,7 +54,6 @@ def health_check():
 def get_content(content_id):
     """Get content details by ID"""
     try:
-        import sqlite3
         conn = sqlite3.connect(db.db_path)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
@@ -107,7 +107,6 @@ def publish_to_linkedin(content_id):
             }), 400
         
         # Get content from database
-        import sqlite3
         conn = sqlite3.connect(db.db_path)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
@@ -152,9 +151,19 @@ def publish_to_linkedin(content_id):
         # Get the content text
         post_content = content_data['content']
         
-        # Post to LinkedIn
-        logger.info(f"Publishing content {content_id} to LinkedIn...")
-        result = linkedin_publisher._post_to_linkedin(post_content)
+        # Post to LinkedIn using the public publish method
+        # Create a temporary file to match the expected interface
+        from tempfile import NamedTemporaryFile
+        with NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as tmp_file:
+            tmp_file.write(post_content)
+            tmp_file_path = tmp_file.name
+        
+        try:
+            logger.info(f"Publishing content {content_id} to LinkedIn...")
+            result = linkedin_publisher.publish(Path(tmp_file_path))
+        finally:
+            # Clean up temporary file
+            Path(tmp_file_path).unlink(missing_ok=True)
         
         if result.get('success'):
             # Update database status
@@ -193,7 +202,6 @@ def list_content():
         content_type = request.args.get('type')
         status = request.args.get('status')
         
-        import sqlite3
         conn = sqlite3.connect(db.db_path)
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()

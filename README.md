@@ -12,8 +12,11 @@ This system now includes a **web-based admin panel** to query and explore your S
 - 🛠️ **Query Builder**: Natural language queries on your database
 - 📤 **CSV Export**: Export filtered data for analysis
 - 🌐 **GitHub Pages Hosted**: Static admin panel hosted alongside your blog
+- 🔵 **LinkedIn Posting**: One-click button to post drafted content to LinkedIn
 
 [📖 Read the admin panel setup guide](./docs/admin/README.md)
+
+[📖 Read the LinkedIn posting guide](./ADMIN_LINKEDIN_POSTING.md)
 
 ## 🆕 New: Enhanced LinkedIn Integration
 
