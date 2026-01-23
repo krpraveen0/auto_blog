@@ -14,8 +14,16 @@ logger = setup_logger(__name__)
 class MediumFormatter:
     """Format content for Medium with comprehensive paper analysis and diagrams"""
     
-    def __init__(self, config: Dict):
+    def __init__(self, config: Dict, llm_config: Dict = None):
+        """
+        Initialize Medium formatter
+        
+        Args:
+            config: Formatting configuration
+            llm_config: LLM configuration (if needed for future enhancements)
+        """
         self.config = config
+        self.llm_config = llm_config
         self.target_words = config.get('target_words', 2000)  # Longer for comprehensive analysis
         self.include_diagrams = config.get('include_diagrams', True)
         self.include_references = config.get('include_references', True)

@@ -12,8 +12,16 @@ logger = setup_logger(__name__)
 class BlogFormatter:
     """Format content analysis as blog articles"""
     
-    def __init__(self, config: Dict):
+    def __init__(self, config: Dict, llm_config: Dict = None):
+        """
+        Initialize blog formatter
+        
+        Args:
+            config: Formatting configuration
+            llm_config: LLM configuration (required for ContentAnalyzer)
+        """
         self.config = config
+        self.llm_config = llm_config
         self.target_words = config.get('target_words', 900)
         self.tone = config.get('tone', 'analytical')
         self.include_references = config.get('include_references', True)
@@ -38,12 +46,16 @@ class BlogFormatter:
         if is_github and has_eli5_analysis:
             logger.info("Using ELI5 format for GitHub repository")
             from llm.analyzer import ContentAnalyzer
-            analyzer = ContentAnalyzer(self.config)
+            # Use LLM config if provided, otherwise fallback to formatter config
+            analyzer_config = self.llm_config if self.llm_config else self.config
+            analyzer = ContentAnalyzer(analyzer_config)
             blog_content = analyzer.generate_github_eli5_blog(item, analysis)
         else:
             # Generate blog content from analysis using standard approach
             from llm.analyzer import ContentAnalyzer
-            analyzer = ContentAnalyzer(self.config)
+            # Use LLM config if provided, otherwise fallback to formatter config
+            analyzer_config = self.llm_config if self.llm_config else self.config
+            analyzer = ContentAnalyzer(analyzer_config)
             blog_content = analyzer.generate_blog(analysis)
         
         # Build markdown post with frontmatter
