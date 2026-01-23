@@ -132,25 +132,33 @@ LINKEDIN_POST_PROMPT = """Write a LinkedIn post summarizing this work.
 
 Rules:
 - Maximum 120 words.
-- Start with a factual hook, not a sensational claim.
-- Use bullet points for clarity.
-- Avoid emojis and buzzwords.
-- Do NOT include hashtags in the post (they will be added separately).
-- Do NOT include citation markers like [1], [2], [3].
-- Remove any markdown formatting (*italic* or **bold**).
-- Do not add filler words like "like", "interesting", "exciting" at the end.
-- End with one thoughtful takeaway.
-- Do NOT include meta-commentary like "Here's what", "In this post", "This discusses"
-- Do NOT use agent phrases like "As an AI", "Let me explain", "I'll show you"
-- Do NOT include conversational hedges like "It seems", "It appears", "One might say"
+- Start with the key finding or insight, not a meta-announcement.
+- Write as if you're a practitioner sharing something you discovered.
+- Use bullet points sparingly for clarity (1-2 max).
+- NO emojis, NO buzzwords, NO marketing language.
+- NO hashtags in the post (they will be added separately).
+- NO citation markers like [1], [2], [3].
+- NO markdown formatting (*italic* or **bold**).
+- NO filler words like "like", "interesting", "exciting" at the end.
+- End with one thoughtful, grounded takeaway.
+- NO meta-commentary: avoid "Here's what", "In this post", "Let me share", "Check out"
+- NO agent phrases: "As an AI", "Based on my analysis", "It seems", "It appears"
+- NO conversational hedges that sound artificial
+
+Writing style:
+- Direct and factual, like internal knowledge sharing
+- Lead with findings, not announcements
+- Make it feel like genuine expert insight
+- Would pass as human-written by a domain expert
 
 Structure:
-- Opening statement (what happened)
-- 3 key points
+- Opening statement (the finding/insight)
+- 2-3 key points (can be paragraphs or brief bullets)
 - One practical takeaway
 
 IMPORTANT: Do NOT add hashtags to the content. Hashtags will be added separately.
 Write ONLY the post content itself. No preamble or introduction about what the post is.
+Start immediately with substance - the finding, the data, the insight.
 
 Title: {title}
 URL: {url}
@@ -223,56 +231,81 @@ LINKEDIN_ENGAGING_POST_PROMPT = """Write a highly engaging LinkedIn post about t
 
 AUDIENCE: AI/ML engineers, tech leaders, data scientists seeking cutting-edge insights
 
+STUDY TOP COMPANIES' APPROACH:
+Learn from how industry leaders like Google AI, Microsoft Research, Meta AI, and OpenAI share their content:
+- They start with impact, not methodology
+- They use concrete numbers and metrics
+- They connect research to real-world problems
+- They write conversationally but precisely
+- They never sound promotional or artificial
+- They let the work speak for itself
+
 ENGAGEMENT FRAMEWORK:
-1. Hook (First line) - Create immediate interest:
-   - Ask a provocative question
-   - Share a surprising stat
-   - Make a bold (but accurate) statement
-   - Highlight a common problem
+1. Hook (First 1-2 lines) - Create immediate interest:
+   - Lead with a compelling insight or surprising finding
+   - Use specific numbers/metrics when available
+   - Connect to a problem engineers face
+   - Make it feel like a genuine discovery sharing moment
+   - Example patterns that work:
+     * "X just achieved Y% improvement on Z - here's what makes it interesting"
+     * "Most teams struggle with X. New research shows Y approach..."
+     * "Analyzed 10,000+ examples. The pattern that emerged..."
 
-2. Value Delivery (Middle) - Core insights:
-   - 2-3 bullet points with concrete details
-   - Use numbers/metrics where available
-   - Keep bullets scannable (short, punchy)
-   - Focus on practical implications
+2. Value Delivery (2-3 short paragraphs) - Core insights:
+   - Focus on the "so what?" - practical implications
+   - Use bullet points sparingly (1-2 max, if needed)
+   - Keep paragraphs to 1-2 sentences each
+   - Include concrete details (metrics, comparisons, specifics)
+   - Show why this matters for practitioners
+   - Make each sentence deliver value
 
-3. Takeaway (End) - Clear action/insight:
-   - One memorable lesson
-   - Practical application
-   - Future implication
-   - End with engagement prompt (optional)
+3. Takeaway (Final line) - Clear conclusion:
+   - One actionable insight or future implication
+   - Make it thought-provoking but grounded
+   - Can optionally end with a relevant question to spark discussion
+   - Keep it natural - like ending a conversation with a colleague
 
-STYLE GUIDELINES:
+STYLE GUIDELINES - WRITE LIKE A HUMAN EXPERT:
 ✅ DO:
-- Start strong with a compelling hook
-- Use specific numbers and data
-- Write in active voice
-- Break into short paragraphs (1-2 sentences)
-- Focus on "so what?" - why it matters
-- Use accessible language
-- Include real-world applications
-- End with a clear takeaway
+- Write as if you're sharing a discovery with a colleague
+- Use first-person sparingly and naturally ("Noticed this pattern..." not "I'm excited to share...")
+- Lead with the finding, not the fact that you're sharing
+- Use specific numbers and data points
+- Write in active voice with strong verbs
+- Keep sentences short and punchy
+- Use natural transitions between ideas
+- Make it feel like insider knowledge being shared
+- Be precise but not overly technical
+- Show genuine insights, not summaries
 
 ❌ DON'T:
-- Use jargon without explanation
-- Write long blocks of text
-- Include hashtags (added separately)
-- Use citation markers [1], [2]
-- Use markdown formatting
-- Add filler words ("interesting", "exciting")
-- Hype or exaggerate claims
-- Use emojis excessively
-- Include meta-commentary like "Here's what", "In this post", "This article discusses"
-- Use agent phrases like "As an AI", "Let me explain", "I'll show you"
-- Include conversational hedges like "It seems", "It appears", "One might say"
-- Reference the generation process or analysis
+- NEVER start with "Here's", "In this post", "I want to share", "Check out"
+- NEVER use phrases like "Let me explain", "I'll show you", "Here's what you need to know"
+- NEVER mention that you're writing/sharing/posting something
+- NEVER use agent phrases: "As an AI", "Based on my analysis", "It seems", "It appears"
+- NEVER use marketing speak: "exciting", "amazing", "game-changing", "revolutionary"
+- NEVER use excessive buzzwords: "leverage", "synergy", "paradigm shift"
+- NEVER include hashtags in the body (added separately)
+- NEVER use citation markers [1], [2], [3]
+- NEVER use markdown formatting (*bold*, **italic**)
+- NEVER write meta-commentary about the post itself
+- NEVER use filler conclusions like "Thoughts?" or "What do you think?" alone
+- NEVER make it obvious content was generated vs naturally written
+- NEVER oversell or hype - let the facts impress
 
-CRITICAL: Write ONLY the post content itself. No meta-commentary, no explanations, no preamble.
-Start directly with the hook. Do not introduce what the post is about - just write it.
+AUTHENTICITY CHECKS:
+Ask yourself: Would a senior engineer at Google/Meta write it this way?
+- Does it sound like genuine knowledge sharing?
+- Would someone read it and think "interesting insight" not "promotional post"?
+- Is every sentence delivering value, not filler?
+- Could this pass as something a human expert wrote without AI assistance?
 
-LENGTH: 100-150 words (optimal for LinkedIn algorithm)
+CRITICAL: Write ONLY the post content itself. Start directly with the hook - the finding, insight, or problem.
+Do not introduce, explain, or announce what you're doing. Jump straight into the substance.
 
-TONE: Professional yet conversational, authoritative but accessible
+LENGTH: 100-150 words (optimal for LinkedIn algorithm and attention span)
+
+TONE: Authentic expert sharing valuable insights - professional, direct, insightful
 
 Title: {title}
 URL: {url}
@@ -280,7 +313,7 @@ URL: {url}
 Analysis:
 {analyzed_content}
 
-Write the post following this engagement framework:"""
+Write the post now - start with the hook, deliver value, end with insight:"""
 
 
 # Content Safety & Quality Guardrails
@@ -309,15 +342,26 @@ VALIDATION CHECKLIST:
    - Violates intellectual property
    - Contains sensitive company information
 
-3. LINKEDIN PLATFORM COMPLIANCE:
+3. AI-GENERATED CONTENT DETECTION:
+   ❌ Flag if post sounds artificially generated:
+   - Uses meta-commentary like "Here's what", "In this post", "Let me share"
+   - Contains agent phrases: "As an AI", "Based on my analysis", "It seems", "It appears"
+   - Includes hedging language: "one might say", "it could be argued"
+   - Starts with announcements instead of substance
+   - Uses marketing buzzwords excessively: "game-changing", "revolutionary", "exciting"
+   - Has unnatural phrasing that doesn't match human expert writing
+   - Feels like a summary rather than genuine insight sharing
+   - Contains overly formal or robotic language patterns
+
+4. LINKEDIN PLATFORM COMPLIANCE:
    ❌ Flag if:
    - Exceeds recommended length (>300 words)
    - Contains broken/suspicious links
    - Uses banned keywords or practices
    - Violates LinkedIn community guidelines
-   - Contains excessive hashtags in text
+   - Contains hashtags embedded in text body
 
-4. QUALITY STANDARDS:
+5. QUALITY STANDARDS:
    ❌ Flag if:
    - Poor grammar or spelling errors
    - Unclear or confusing message
@@ -325,22 +369,36 @@ VALIDATION CHECKLIST:
    - Too technical without explanation
    - Missing key context
    - Contradicts itself
+   - Sounds generic or template-like
 
-5. REPUTATION RISK:
+6. AUTHENTICITY & CREDIBILITY:
+   ❌ Flag if:
+   - Doesn't sound like a real expert wrote it
+   - Over-promises or uses hype
+   - Lacks specific details or examples
+   - Uses filler words excessively
+   - Could obviously be detected as AI-generated
+   - Doesn't provide genuine insights
+   - Reads more like advertising than knowledge sharing
+
+7. REPUTATION RISK:
    ❌ Flag if:
    - Could damage professional reputation
    - Makes promises that can't be kept
    - Oversimplifies complex topics dangerously
    - Could be misinterpreted negatively
    - Lacks necessary disclaimers
+   - Might expose author as using AI without human oversight
 
 OUTPUT FORMAT:
 {{
   "is_valid": true/false,
   "validation_score": 0-100,
+  "ai_detection_risk": "low/medium/high" (likelihood of being detected as AI-generated),
+  "authenticity_score": 0-100 (how human/expert-like it sounds),
   "issues": [
     {{
-      "category": "safety/professional/compliance/quality/reputation",
+      "category": "safety/professional/ai-detection/compliance/quality/authenticity/reputation",
       "severity": "critical/high/medium/low",
       "issue": "description of the issue",
       "suggestion": "how to fix it"
@@ -352,10 +410,13 @@ OUTPUT FORMAT:
 
 GUIDELINES:
 - Critical issues = immediate rejection
+- High AI-detection risk = not approved (protect user reputation)
 - High severity = requires fixes
 - Medium/Low = warnings only
 - Score below 70 = not approved
-- Be strict but fair - prioritize user reputation"""
+- Authenticity score below 75 = likely AI-generated, needs revision
+- Be strict on AI detection - err on the side of protecting user's professional image
+- Prioritize authenticity - better to be conservative than risk exposure"""
 
 
 # Trend Detection and Topic Discovery

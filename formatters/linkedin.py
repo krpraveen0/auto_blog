@@ -75,18 +75,23 @@ class LinkedInFormatter:
         import re
         
         # Remove agent-related phrases and meta-commentary
-        # Note: These patterns are designed to catch agent-specific phrases while preserving
-        # legitimate technical content. They target full sentence patterns, not isolated words.
+        # Enhanced patterns to catch AI-generated content markers
         agent_patterns = [
             # Agent conversation markers - full sentence patterns
             r'(?i)\b(as an ai|as a language model|i\'m an ai|i am an ai)\b[^.!?]*[.!?]',
             r'(?i)\b(i cannot|i can\'t|i don\'t have|i do not have)\b[^.!?]*[.!?]',
-            # Meta-instructions with context (avoid removing "Here's a new framework")
-            r'(?i)\bhere\'s what (you need to know|you should know|to understand)\b[^.!?]*[.!?]',
-            r'(?i)\bhere is (what|how) (you need|you should|to)\b[^.!?]*[.!?]',
-            r'(?i)\bin (this post|this article|this summary),?\s+(we|I)\b[^.!?]*[.!?]',
-            r'(?i)\b(this (post|article|piece|content) (discusses|covers|explores))\b[^.!?]*[.!?]',
-            # Conversational hedges that sound like AI explanations (full sentences)
+            # Meta-announcements (most common AI pattern)
+            r'(?i)^here\'s\s+(what|how|why|a|an)\s+',
+            r'(?i)^here is\s+(what|how|why|a|an)\s+',
+            r'(?i)^let me (share|tell|show|explain)\s+',
+            r'(?i)^i want to (share|tell|show|explain)\s+',
+            r'(?i)^i\'m (excited|thrilled|pleased) to (share|announce)\s+',
+            r'(?i)^check out\s+',
+            r'(?i)^today,?\s+i\'m sharing\s+',
+            # Post self-reference
+            r'(?i)\bin (this post|this article|this summary|today\'s post),?\s+(we|I)\b[^.!?]*[.!?]',
+            r'(?i)\b(this (post|article|piece|content) (discusses|covers|explores|examines))\b[^.!?]*[.!?]',
+            # Conversational hedges that sound like AI explanations
             r'(?i)\bit seems (that|like)[^.!?]*[.!?]',
             r'(?i)\bit appears (that|as if)[^.!?]*[.!?]',
             r'(?i)\bone might (say|think|argue|consider) that\b[^.!?]*[.!?]',
@@ -96,8 +101,16 @@ class LinkedInFormatter:
             r'(?i)\bbased on (my|the) (analysis|understanding|interpretation)\b[^.!?]*[.!?]',
             r'(?i)\b(generated|created|written) by (an ai|ai|a language model)\b',
             r'(?i)\b(this was|content) (generated|created|produced) (by|using)\b',
-            # Analysis/interpretation qualifiers that sound like AI
+            # Analysis/interpretation qualifiers
             r'(?i)\bmy (understanding|analysis|interpretation) is\b[^.!?]*[.!?]',
+            r'(?i)\bin my (view|opinion|experience|analysis)\b[^.!?]*[.!?]',
+            # Hype and buzzwords that sound promotional/AI-generated
+            r'(?i)\b(game-changing|revolutionary|groundbreaking|paradigm-shifting)\b',
+            r'(?i)\b(exciting|amazing|incredible|fantastic) (news|discovery|breakthrough)\b',
+            # Common AI filler patterns
+            r'(?i)\binterestingly enough,?\s+',
+            r'(?i)\bit\'s worth (noting|mentioning) that\s+',
+            r'(?i)\bone of the (most|key) (interesting|important) (things|aspects|points) is\s+',
         ]
         
         for pattern in agent_patterns:
@@ -126,10 +139,14 @@ class LinkedInFormatter:
             cleaned_lines.append(line)
         content = '\n'.join(cleaned_lines)
         
-        # Remove trailing filler words
-        trailing_words = ['like', 'interesting', 'exciting', 'amazing', 'fantastic', 'great']
-        for word in trailing_words:
-            pattern = rf'\b{word}\s*\.?\s*$'
+        # Remove trailing filler words and phrases
+        trailing_patterns = [
+            r'\b(like|interesting|exciting|amazing|fantastic|great)\s*\.?\s*$',
+            r'\bthoughts\?\s*$',
+            r'\bwhat do you think\?\s*$',
+            r'\bagree\?\s*$',
+        ]
+        for pattern in trailing_patterns:
             content = re.sub(pattern, '.', content, flags=re.IGNORECASE)
         
         # Remove empty lines and fix multiple consecutive spaces
@@ -147,6 +164,15 @@ class LinkedInFormatter:
         # Clean up leading/trailing punctuation artifacts
         content = re.sub(r'\s*[,;]\s*\.', '.', content)  # Fix ", ." -> "."
         content = re.sub(r'^\s*[,;]\s*', '', content, flags=re.MULTILINE)  # Remove leading commas
+        
+        # Fix sentences that start with lowercase after cleaning
+        lines = content.split('\n')
+        fixed_lines = []
+        for line in lines:
+            if line and line[0].islower():
+                line = line[0].upper() + line[1:]
+            fixed_lines.append(line)
+        content = '\n'.join(fixed_lines)
         
         return content
     
