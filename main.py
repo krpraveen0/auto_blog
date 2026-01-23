@@ -43,6 +43,50 @@ def load_config():
         return yaml.safe_load(f)
 
 
+def validate_required_env_vars(operation: str = 'general'):
+    """
+    Validate required environment variables based on operation
+    
+    Args:
+        operation: Type of operation ('general', 'generate', 'publish_linkedin', 'publish_github', 'publish_medium')
+        
+    Returns:
+        Tuple of (is_valid, error_message)
+    """
+    import os
+    
+    errors = []
+    
+    # Always required for content generation
+    if operation in ['general', 'generate', 'publish_linkedin', 'publish_github', 'publish_medium']:
+        if not os.getenv('PERPLEXITY_API_KEY'):
+            errors.append("PERPLEXITY_API_KEY is required for content generation")
+    
+    # LinkedIn-specific
+    if operation == 'publish_linkedin':
+        if not os.getenv('LINKEDIN_ACCESS_TOKEN'):
+            errors.append("LINKEDIN_ACCESS_TOKEN is required for LinkedIn publishing")
+        if not os.getenv('LINKEDIN_USER_ID'):
+            errors.append("LINKEDIN_USER_ID is required for LinkedIn publishing")
+    
+    # GitHub Pages-specific
+    if operation == 'publish_github':
+        if not os.getenv('GH_PAGES_TOKEN'):
+            errors.append("GH_PAGES_TOKEN is required for GitHub Pages publishing")
+        if not os.getenv('GITHUB_REPO'):
+            errors.append("GITHUB_REPO is required for GitHub Pages publishing")
+    
+    # Medium-specific
+    if operation == 'publish_medium':
+        if not os.getenv('MEDIUM_INTEGRATION_TOKEN'):
+            errors.append("MEDIUM_INTEGRATION_TOKEN is required for Medium publishing")
+    
+    if errors:
+        return False, "\n".join(errors)
+    
+    return True, None
+
+
 @click.group()
 def cli():
     """AI Research Publisher - Automated content generation from AI/ML sources"""
@@ -136,6 +180,13 @@ def generate(count, format):
     """
     logger.info(f"Generating content for top {count} items...")
     
+    # Validate environment variables for content generation
+    is_valid, error_msg = validate_required_env_vars('generate')
+    if not is_valid:
+        click.echo(f"❌ Configuration Error:\n{error_msg}", err=True)
+        click.echo("\nPlease add the required environment variables to your .env file")
+        return
+    
     config = load_config()
     
     # Check if latest.json exists
@@ -157,10 +208,10 @@ def generate(count, format):
     # Initialize LLM analyzer
     analyzer = ContentAnalyzer(config['llm'])
     
-    # Initialize formatters
-    blog_formatter = BlogFormatter(config['formatting']['blog'])
-    linkedin_formatter = LinkedInFormatter(config['formatting']['linkedin'])
-    medium_formatter = MediumFormatter(config['formatting']['medium'])
+    # Initialize formatters with LLM config
+    blog_formatter = BlogFormatter(config['formatting']['blog'], llm_config=config['llm'])
+    linkedin_formatter = LinkedInFormatter(config['formatting']['linkedin'], llm_config=config['llm'])
+    medium_formatter = MediumFormatter(config['formatting']['medium'], llm_config=config['llm'])
     
     # Initialize database
     db = Database()
@@ -801,7 +852,7 @@ def discover_trends(max_trends, generate_content):
         from formatters.linkedin import LinkedInFormatter
         
         analyzer = ContentAnalyzer(config['llm'])
-        linkedin_formatter = LinkedInFormatter(config['formatting']['linkedin'])
+        linkedin_formatter = LinkedInFormatter(config['formatting']['linkedin'], llm_config=config['llm'])
         
         try:
             # Analyze trend

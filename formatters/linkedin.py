@@ -11,8 +11,16 @@ logger = setup_logger(__name__)
 class LinkedInFormatter:
     """Format content analysis as LinkedIn posts"""
     
-    def __init__(self, config: Dict):
+    def __init__(self, config: Dict, llm_config: Dict = None):
+        """
+        Initialize LinkedIn formatter
+        
+        Args:
+            config: Formatting configuration
+            llm_config: LLM configuration (required for ContentAnalyzer)
+        """
         self.config = config
+        self.llm_config = llm_config
         self.max_words = config.get('max_words', 120)
         self.bullet_points = config.get('bullet_points', 3)
         self.hashtag_count = config.get('hashtag_count', 4)
@@ -35,7 +43,9 @@ class LinkedInFormatter:
         # Use provided analyzer or create new one
         if analyzer is None:
             from llm.analyzer import ContentAnalyzer
-            analyzer = ContentAnalyzer(self.config)
+            # Use LLM config if provided, otherwise fallback to formatter config
+            analyzer_config = self.llm_config if self.llm_config else self.config
+            analyzer = ContentAnalyzer(analyzer_config)
         
         # Use engaging format by default (can be configured)
         use_engaging = self.config.get('use_engaging_format', True)

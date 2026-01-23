@@ -82,8 +82,16 @@ class GitHubPagesPublisher:
                     branch=self.branch
                 )
                 logger.info(f"Updated existing post: {file_path}")
-            except:
-                # Create new file
+            except Exception as e:
+                # Create new file (file doesn't exist or other error)
+                # Only catch specific GitHub exceptions, but log all errors
+                if "Not Found" in str(e) or "404" in str(e):
+                    # File doesn't exist, create it
+                    logger.debug(f"File not found, creating new: {file_path}")
+                else:
+                    # Some other error, log it but still try to create
+                    logger.warning(f"Error checking existing file: {e}")
+                
                 self.repo.create_file(
                     file_path,
                     f"Add post: {filename}",

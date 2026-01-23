@@ -95,9 +95,16 @@ class Database:
         
         for col_name, col_type in github_columns.items():
             if col_name not in existing_papers_columns:
-                cursor.execute(f'ALTER TABLE papers ADD COLUMN {col_name} {col_type}')
-                papers_migrations.append(col_name)
-                logger.info(f"✓ Added {col_name} column to papers table")
+                try:
+                    cursor.execute(f'ALTER TABLE papers ADD COLUMN {col_name} {col_type}')
+                    papers_migrations.append(col_name)
+                    logger.info(f"✓ Added {col_name} column to papers table")
+                except Exception as e:
+                    # Column might already exist if migration ran partially
+                    if 'duplicate column name' in str(e).lower():
+                        logger.debug(f"Column {col_name} already exists, skipping")
+                    else:
+                        raise
         
         # Check for missing columns in generated_content table
         cursor.execute('PRAGMA table_info(generated_content)')
@@ -105,9 +112,16 @@ class Database:
         
         content_migrations = []
         if 'file_path' not in existing_content_columns:
-            cursor.execute('ALTER TABLE generated_content ADD COLUMN file_path TEXT')
-            content_migrations.append('file_path')
-            logger.info("✓ Added file_path column to generated_content table")
+            try:
+                cursor.execute('ALTER TABLE generated_content ADD COLUMN file_path TEXT')
+                content_migrations.append('file_path')
+                logger.info("✓ Added file_path column to generated_content table")
+            except Exception as e:
+                # Column might already exist if migration ran partially
+                if 'duplicate column name' in str(e).lower():
+                    logger.debug(f"Column file_path already exists, skipping")
+                else:
+                    raise
         
         if 'published_url' not in existing_content_columns:
             cursor.execute('ALTER TABLE generated_content ADD COLUMN published_url TEXT')
