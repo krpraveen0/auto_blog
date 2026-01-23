@@ -37,7 +37,7 @@ def test_only_201_is_success():
             mock_post.return_value = mock_response
             
             result = publisher._post_to_linkedin("Test content")
-            assert result['success'] == True, "201 response should be success"
+            assert result['success'] is True, "201 response should be success"
             assert 'post_id' in result, "Should return post_id"
             print("✅ Test passed: 201 status code is treated as success")
         
@@ -50,7 +50,7 @@ def test_only_201_is_success():
             mock_post.return_value = mock_response
             
             result = publisher._post_to_linkedin("Test content")
-            assert result['success'] == False, "200 response should NOT be success"
+            assert result['success'] is False, "200 response should NOT be success"
             assert 'error' in result, "Should return error message"
             assert '200' in result['error'], "Error should mention status code"
             print("✅ Test passed: 200 status code is treated as failure")
@@ -64,7 +64,7 @@ def test_only_201_is_success():
             mock_post.return_value = mock_response
             
             result = publisher._post_to_linkedin("Test content")
-            assert result['success'] == False, "202 response should NOT be success"
+            assert result['success'] is False, "202 response should NOT be success"
             assert 'error' in result, "Should return error message"
             print("✅ Test passed: 202 status code is treated as failure")
         
@@ -77,7 +77,7 @@ def test_only_201_is_success():
             mock_post.return_value = mock_response
             
             result = publisher._post_to_linkedin("Test content")
-            assert result['success'] == False, "400 response should be failure"
+            assert result['success'] is False, "400 response should be failure"
             assert 'error' in result, "Should return error message"
             print("✅ Test passed: 400 status code is treated as failure")
         
@@ -90,7 +90,7 @@ def test_only_201_is_success():
             mock_post.return_value = mock_response
             
             result = publisher._post_to_linkedin("Test content")
-            assert result['success'] == False, "401 response should be failure"
+            assert result['success'] is False, "401 response should be failure"
             assert 'error' in result, "Should return error message"
             print("✅ Test passed: 401 status code is treated as failure")
 
