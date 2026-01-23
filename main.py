@@ -440,10 +440,16 @@ def publish(platform, approve, batch_delay, limit, medium_status):
                         click.echo(f"  ⚠️  Database update failed: {db_error}")
                         click.echo(f"      Post was published successfully")
                     
-                    # Move to published
-                    published_path = Path(f"data/published/blog/{draft.name}")
-                    published_path.parent.mkdir(parents=True, exist_ok=True)
-                    draft.rename(published_path)
+                    # Move to published directory
+                    try:
+                        published_path = Path(f"data/published/blog/{draft.name}")
+                        published_path.parent.mkdir(parents=True, exist_ok=True)
+                        draft.rename(published_path)
+                        click.echo(f"  📁 Moved to published folder")
+                    except Exception as move_error:
+                        logger.error(f"Failed to move file: {move_error}")
+                        click.echo(f"  ⚠️  Failed to move draft to published folder: {move_error}")
+                        click.echo(f"      Post was published successfully, but file remains in drafts")
                     
                     published_count += 1
                 else:
@@ -511,10 +517,16 @@ def publish(platform, approve, batch_delay, limit, medium_status):
                         click.echo(f"  ⚠️  Database update failed: {db_error}")
                         click.echo(f"      Post was published successfully")
                     
-                    # Move to published
-                    published_path = Path(f"data/published/linkedin/{draft.name}")
-                    published_path.parent.mkdir(parents=True, exist_ok=True)
-                    draft.rename(published_path)
+                    # Move to published directory
+                    try:
+                        published_path = Path(f"data/published/linkedin/{draft.name}")
+                        published_path.parent.mkdir(parents=True, exist_ok=True)
+                        draft.rename(published_path)
+                        click.echo(f"  📁 Moved to published folder")
+                    except Exception as move_error:
+                        logger.error(f"Failed to move file: {move_error}")
+                        click.echo(f"  ⚠️  Failed to move draft to published folder: {move_error}")
+                        click.echo(f"      Post was published successfully, but file remains in drafts")
                     
                     published_count += 1
                     
@@ -593,10 +605,16 @@ def publish(platform, approve, batch_delay, limit, medium_status):
                         click.echo(f"  ⚠️  Database update failed: {db_error}")
                         click.echo(f"      Post was published successfully")
                     
-                    # Move to published
-                    published_path = Path(f"data/published/medium/{draft.name}")
-                    published_path.parent.mkdir(parents=True, exist_ok=True)
-                    draft.rename(published_path)
+                    # Move to published directory
+                    try:
+                        published_path = Path(f"data/published/medium/{draft.name}")
+                        published_path.parent.mkdir(parents=True, exist_ok=True)
+                        draft.rename(published_path)
+                        click.echo(f"  📁 Moved to published folder")
+                    except Exception as move_error:
+                        logger.error(f"Failed to move file: {move_error}")
+                        click.echo(f"  ⚠️  Failed to move draft to published folder: {move_error}")
+                        click.echo(f"      Post was published successfully, but file remains in drafts")
                     
                     published_count += 1
                     
