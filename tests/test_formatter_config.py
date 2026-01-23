@@ -2,7 +2,6 @@
 Test formatter configuration fixes
 """
 
-import pytest
 from formatters.blog import BlogFormatter
 from formatters.linkedin import LinkedInFormatter
 from formatters.medium import MediumFormatter
