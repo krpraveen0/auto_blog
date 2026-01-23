@@ -121,7 +121,7 @@ class LinkedInPublisher:
         headers = {
             'Authorization': f'Bearer {self.access_token}',
             'Content-Type': 'application/json',
-            'LinkedIn-Version': '202401',
+            'LinkedIn-Version': '202401',  # API version as of January 2024 per Microsoft documentation
             'X-Restli-Protocol-Version': '2.0.0'
         }
         
@@ -191,7 +191,10 @@ class LinkedInPublisher:
             return {'success': False, 'error': error_msg}
     
     def get_profile(self) -> Dict:
-        """Get LinkedIn profile information (for testing)"""
+        """
+        Get LinkedIn profile information (for testing)
+        Note: Uses v2 API as userinfo endpoint hasn't migrated to REST API yet
+        """
         if not self.access_token:
             return {}
         
