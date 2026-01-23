@@ -48,8 +48,9 @@ def test_direct_linkedin_posting_endpoint():
         post_content = data['content']
         assert post_content == 'Test post content', "Content should match"
         
-        # Simulate LinkedIn publishing
-        result = mock_publisher.publish('/tmp/test.txt')
+        # Simulate LinkedIn publishing with mock Path object
+        from unittest.mock import ANY
+        result = mock_publisher.publish(ANY)  # Publisher is called with a Path, but we don't care about exact value in unit test
         
         assert result['success'] is True, "Should return success"
         assert 'post_url' in result, "Should return post URL"

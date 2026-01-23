@@ -234,17 +234,26 @@ def publish_to_linkedin_direct():
         
         # Post to LinkedIn using the public publish method
         # Create a temporary file to match the expected interface
+        # We use delete=False because we need to pass the path to publisher.publish()
+        # which reads the file, then we manually clean up in finally block
         from tempfile import NamedTemporaryFile
-        with NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as tmp_file:
-            tmp_file.write(post_content)
-            tmp_file_path = tmp_file.name
+        import os
         
+        tmp_file_path = None
         try:
+            with NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as tmp_file:
+                tmp_file.write(post_content)
+                tmp_file_path = tmp_file.name
+            
             logger.info(f"Publishing content directly to LinkedIn (no DB)...")
             result = linkedin_publisher.publish(Path(tmp_file_path))
         finally:
-            # Clean up temporary file
-            Path(tmp_file_path).unlink(missing_ok=True)
+            # Clean up temporary file - ensure it's deleted even if publish fails
+            if tmp_file_path and os.path.exists(tmp_file_path):
+                try:
+                    os.unlink(tmp_file_path)
+                except OSError as e:
+                    logger.warning(f"Failed to delete temp file {tmp_file_path}: {e}")
         
         if result.get('success'):
             logger.info(f"Successfully published content directly to LinkedIn")
