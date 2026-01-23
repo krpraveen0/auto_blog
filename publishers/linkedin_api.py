@@ -165,20 +165,16 @@ class LinkedInPublisher:
                 # Construct post URL
                 post_url = ''
                 if post_id:
-                    # Extract activity ID from URN format: urn:li:activity:1234567890
+                    # Use post_id directly in URL (already in URN format)
                     if 'activity:' in post_id:
-                        activity_id = post_id.split('activity:')[-1]
                         post_url = f"https://www.linkedin.com/feed/update/{post_id}/"
                     else:
                         post_url = f"https://www.linkedin.com/feed/update/urn:li:activity:{post_id}/"
                 
                 return {'success': True, 'post_url': post_url, 'post_id': post_id}
-            elif response.ok:
-                # Handle other 2xx responses
-                logger.warning(f"LinkedIn API returned {response.status_code}, expected 201")
-                logger.info("Post may have been successful")
-                return {'success': True, 'post_url': ''}
             else:
+                # LinkedIn UGC API returns 201 for successful post creation
+                # Any other status code (including other 2xx codes) means the post was not created
                 error_msg = f"LinkedIn API error: {response.status_code} - {response.text}"
                 logger.error(error_msg)
                 return {'success': False, 'error': error_msg}
