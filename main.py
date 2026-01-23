@@ -58,7 +58,7 @@ def validate_required_env_vars(operation: str = 'general'):
     errors = []
     
     # Always required for content generation
-    if operation in ['general', 'generate', 'publish_linkedin', 'publish_github', 'publish_medium']:
+    if operation in ['general', 'generate']:
         if not os.getenv('PERPLEXITY_API_KEY'):
             errors.append("PERPLEXITY_API_KEY is required for content generation")
     
