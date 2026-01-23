@@ -195,6 +195,80 @@ def publish_to_linkedin(content_id):
         }), 500
 
 
+@app.route('/api/publish/linkedin/direct', methods=['POST'])
+def publish_to_linkedin_direct():
+    """
+    Publish content directly to LinkedIn without database operations
+    
+    Request body should contain:
+        {
+            "content": "Text content to post"
+        }
+        
+    Returns:
+        JSON response with success status and post URL
+    """
+    try:
+        # Validate LinkedIn credentials
+        if not linkedin_publisher.access_token or not linkedin_publisher.user_id:
+            return jsonify({
+                'success': False,
+                'error': 'LinkedIn credentials not configured. Please set LINKEDIN_ACCESS_TOKEN and LINKEDIN_USER_ID in .env'
+            }), 400
+        
+        # Get content from request body
+        data = request.get_json()
+        if not data or 'content' not in data:
+            return jsonify({
+                'success': False,
+                'error': 'Missing "content" in request body'
+            }), 400
+        
+        post_content = data['content']
+        
+        if not post_content or not post_content.strip():
+            return jsonify({
+                'success': False,
+                'error': 'Content cannot be empty'
+            }), 400
+        
+        # Post to LinkedIn using the public publish method
+        # Create a temporary file to match the expected interface
+        from tempfile import NamedTemporaryFile
+        with NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as tmp_file:
+            tmp_file.write(post_content)
+            tmp_file_path = tmp_file.name
+        
+        try:
+            logger.info(f"Publishing content directly to LinkedIn (no DB)...")
+            result = linkedin_publisher.publish(Path(tmp_file_path))
+        finally:
+            # Clean up temporary file
+            Path(tmp_file_path).unlink(missing_ok=True)
+        
+        if result.get('success'):
+            logger.info(f"Successfully published content directly to LinkedIn")
+            return jsonify({
+                'success': True,
+                'message': 'Successfully published to LinkedIn',
+                'post_url': result.get('post_url'),
+                'post_id': result.get('post_id')
+            })
+        else:
+            logger.error(f"Failed to publish to LinkedIn: {result.get('error')}")
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Unknown error')
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"Error publishing to LinkedIn: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
 @app.route('/api/content', methods=['GET'])
 def list_content():
     """List all content with optional filtering"""
