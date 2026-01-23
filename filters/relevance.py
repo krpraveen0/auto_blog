@@ -18,6 +18,7 @@ class RelevanceFilter:
         self.high_priority_keywords = [kw.lower() for kw in config.get('keywords', {}).get('high_priority', [])]
         self.medium_priority_keywords = [kw.lower() for kw in config.get('keywords', {}).get('medium_priority', [])]
         self.exclude_keywords = [kw.lower() for kw in config.get('exclude_keywords', [])]
+        self.min_engagement_threshold = config.get('min_engagement_threshold', 100)
     
     def filter(self, items: List[Dict]) -> List[Dict]:
         """
@@ -110,6 +111,15 @@ class RelevanceFilter:
         for keyword in self.medium_priority_keywords:
             if keyword in text:
                 return True
+        
+        # Accept high-engagement items even without keyword match
+        # This helps with HackerNews stories that have high points but limited text
+        engagement_keys = ['engagement_score', 'points', 'stars']
+        engagement_score = next((item.get(key, 0) for key in engagement_keys if item.get(key, 0) > 0), 0)
+        
+        if engagement_score >= self.min_engagement_threshold:
+            logger.debug(f"Accepted high-engagement item: {item.get('title', '')} (score: {engagement_score})")
+            return True
         
         return False
     
