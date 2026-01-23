@@ -15,6 +15,18 @@ This system now includes a **web-based admin panel** to query and explore your S
 
 [📖 Read the admin panel setup guide](./docs/admin/README.md)
 
+## 🆕 New: Enhanced LinkedIn Integration
+
+LinkedIn posting has been significantly improved with **reliable API** and **human-like content generation**:
+
+- ✅ **Working API**: Migrated to proven v2 UGC Posts API (`/v2/ugcPosts`)
+- 🎯 **Engagement-Focused**: Content patterns based on top companies (Google AI, Meta, Microsoft)
+- 🛡️ **AI Detection Prevention**: Advanced guardrails to ensure posts sound authentically human
+- 🔒 **Safety Validation**: 7-category comprehensive validation system
+- 📝 **Smart Content Cleaning**: Removes AI-generated patterns and meta-commentary
+
+[📖 Read the LinkedIn API migration guide](./docs/LINKEDIN_API_V2_MIGRATION.md)
+
 ## 🎯 Features
 
 This system includes **enhanced GitHub repository tracking** with comprehensive statistics and **ELI5 (Explain Like I'm 5) blog generation**:

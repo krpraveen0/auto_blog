@@ -114,29 +114,31 @@ class LinkedInPublisher:
             return {'success': False, 'error': str(e)}
     
     def _post_to_linkedin(self, content: str) -> Dict:
-        """Post content to LinkedIn REST API"""
+        """Post content to LinkedIn v2 UGC API"""
         
-        url = f"{self.API_BASE}/rest/posts"
+        url = f"{self.API_BASE}/v2/ugcPosts"
         
         headers = {
             'Authorization': f'Bearer {self.access_token}',
             'Content-Type': 'application/json',
-            'LinkedIn-Version': '202401',  # API version as of January 2024 per Microsoft documentation
             'X-Restli-Protocol-Version': '2.0.0'
         }
         
-        # Build REST API post payload
+        # Build v2 UGC API post payload
         payload = {
-            "author": self.user_urn,  # Use normalized URN
-            "commentary": content,
-            "visibility": "PUBLIC",
-            "distribution": {
-                "feedDistribution": "MAIN_FEED",
-                "targetEntities": [],
-                "thirdPartyDistributionChannels": []
-            },
+            "author": self.user_urn,
             "lifecycleState": "PUBLISHED",
-            "isReshareDisabledByAuthor": False
+            "specificContent": {
+                "com.linkedin.ugc.ShareContent": {
+                    "shareCommentary": {
+                        "text": content
+                    },
+                    "shareMediaCategory": "NONE"
+                }
+            },
+            "visibility": {
+                "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
+            }
         }
         
         # Log sanitized payload for debugging (without auth token)
