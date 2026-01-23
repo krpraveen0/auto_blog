@@ -4,8 +4,6 @@
 
 The admin panel now includes a **"Post to LinkedIn"** button that allows you to publish drafted LinkedIn posts with a single click.
 
-**Recent Update**: Manual LinkedIn posting now works **without database operations**. When you click "Post to LinkedIn" in the admin panel, the content is posted directly to LinkedIn without updating the database status. This provides a cleaner separation between content generation/storage and manual publishing.
-
 ## Prerequisites
 
 1. **LinkedIn API Credentials**: You need to have the following environment variables set in your `.env` file:
@@ -81,31 +79,10 @@ The API server provides the following endpoints:
 - **Method**: `GET`
 - **Description**: Check if the API server is running
 
-### Publish to LinkedIn (Direct - No DB)
-- **URL**: `/api/publish/linkedin/direct`
-- **Method**: `POST`
-- **Description**: Publish content directly to LinkedIn without database operations
-- **Request Body**:
-  ```json
-  {
-    "content": "Your LinkedIn post content here..."
-  }
-  ```
-- **Response**: 
-  ```json
-  {
-    "success": true,
-    "message": "Successfully published to LinkedIn",
-    "post_url": "https://www.linkedin.com/feed/update/...",
-    "post_id": "..."
-  }
-  ```
-- **Note**: This endpoint does NOT save or update any database records. It posts directly to LinkedIn.
-
-### Publish to LinkedIn (Legacy - With DB)
+### Publish to LinkedIn
 - **URL**: `/api/publish/linkedin/<content_id>`
 - **Method**: `POST`
-- **Description**: Publish a drafted LinkedIn post (reads from DB and updates status)
+- **Description**: Publish a drafted LinkedIn post
 - **Response**: 
   ```json
   {
@@ -115,7 +92,6 @@ The API server provides the following endpoints:
     "post_id": "..."
   }
   ```
-- **Note**: This endpoint reads content from database and updates its status after posting.
 
 ### Get Content
 - **URL**: `/api/content/<content_id>`

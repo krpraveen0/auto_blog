@@ -1321,28 +1321,11 @@
             buttonElement.textContent = 'Posting...';
             
             try {
-                // First, get the content details to retrieve the actual post content
-                const contentResponse = await fetch(`${API_BASE_URL}/api/content/${contentId}`);
-                const contentResult = await contentResponse.json();
-                
-                if (!contentResult.success) {
-                    alert(`❌ Failed to fetch content:\n\n${contentResult.error}`);
-                    buttonElement.disabled = false;
-                    buttonElement.textContent = 'Post to LinkedIn';
-                    return;
-                }
-                
-                const postContent = contentResult.content.content;
-                
-                // Post directly to LinkedIn without database operations
-                const response = await fetch(`${API_BASE_URL}/api/publish/linkedin/direct`, {
+                const response = await fetch(`${API_BASE_URL}/api/publish/linkedin/${contentId}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        content: postContent
-                    })
+                    }
                 });
                 
                 const result = await response.json();
