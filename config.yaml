@@ -57,6 +57,7 @@ sources:
 # Filtering and ranking
 filters:
   max_age_days: 7  # Only content from last 7 days
+  min_engagement_threshold: 100  # Minimum engagement score to bypass keyword filter (points/stars/etc)
   
   keywords:
     high_priority:

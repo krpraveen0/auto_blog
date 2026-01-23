@@ -14,15 +14,14 @@ on:
       source:
         description: 'Content source to use (when generating new content)'
         required: false
-        default: 'all'
+        default: 'hackernews'
         type: choice
         options:
-          - 'all'
+          - 'hackernews'
           - 'arxiv'
           - 'blogs'
-          - 'hackernews'
           - 'github'
-          - 'trends'
+          - 'all'
 
 jobs:
   publish_single_post:
