@@ -165,9 +165,8 @@ class LinkedInPublisher:
                 # Construct post URL
                 post_url = ''
                 if post_id:
-                    # Extract activity ID from URN format: urn:li:activity:1234567890
+                    # Use post_id directly in URL (already in URN format)
                     if 'activity:' in post_id:
-                        activity_id = post_id.split('activity:')[-1]
                         post_url = f"https://www.linkedin.com/feed/update/{post_id}/"
                     else:
                         post_url = f"https://www.linkedin.com/feed/update/urn:li:activity:{post_id}/"
