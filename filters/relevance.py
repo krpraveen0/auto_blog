@@ -111,6 +111,13 @@ class RelevanceFilter:
             if keyword in text:
                 return True
         
+        # Accept high-engagement items even without keyword match
+        # This helps with HackerNews stories that have high points but limited text
+        engagement_score = item.get('engagement_score', 0) or item.get('points', 0) or item.get('stars', 0)
+        if engagement_score >= 100:
+            logger.debug(f"Accepted high-engagement item: {item.get('title', '')} (score: {engagement_score})")
+            return True
+        
         return False
     
     def _calculate_keyword_score(self, item: Dict) -> float:

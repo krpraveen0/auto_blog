@@ -62,13 +62,31 @@ jobs:
           fi
           echo "✅ LinkedIn credentials validated"
       
+      - name: Check for existing drafts
+        id: check_existing
+        run: |
+          set +e
+          DRAFT_COUNT=$(find data/drafts/linkedin -name "*.txt" -type f 2>/dev/null | wc -l)
+          echo "draft_count=$DRAFT_COUNT" >> $GITHUB_OUTPUT
+          
+          if [ "$DRAFT_COUNT" -gt 0 ]; then
+            echo "✅ Found $DRAFT_COUNT existing drafted post(s)"
+          else
+            echo "⚠️  No existing drafted posts found"
+          fi
+      
       - name: Generate new content if needed
-        if: github.event.inputs.skip_drafted == 'true'
+        if: github.event.inputs.skip_drafted == 'true' || steps.check_existing.outputs.draft_count == '0'
         env:
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
         run: |
-          echo "🔄 Generating new LinkedIn content..."
-          SOURCE="${{ github.event.inputs.source || 'all' }}"
+          if [ "${{ github.event.inputs.skip_drafted }}" == "true" ]; then
+            echo "🔄 Generating new LinkedIn content (skip_drafted=true)..."
+          else
+            echo "🔄 Generating new LinkedIn content (no existing drafts found)..."
+          fi
+          
+          SOURCE="${{ github.event.inputs.source || 'hackernews' }}"
           echo "  - Source: $SOURCE"
           python main.py fetch --source $SOURCE
           python main.py generate --count 1 --format linkedin
@@ -83,14 +101,14 @@ jobs:
           
           if [ "$DRAFT_COUNT" -eq 0 ]; then
             echo "❌ No LinkedIn posts available to publish"
-            echo "   Run 'Daily AI Research Scan' to generate content first"
+            echo "   Content generation may have failed - check logs above"
             exit 1
           fi
           
           # Get the first draft file for reference
           FIRST_DRAFT=$(find data/drafts/linkedin -name "*.txt" -type f | head -1)
           echo "first_draft=$FIRST_DRAFT" >> $GITHUB_OUTPUT
-          echo "✅ Found $DRAFT_COUNT drafted post(s)"
+          echo "✅ Found $DRAFT_COUNT drafted post(s) ready to publish"
       
       - name: Publish single post
         if: steps.check_content.outputs.draft_count > 0
