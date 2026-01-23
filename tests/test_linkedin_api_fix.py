@@ -42,7 +42,7 @@ def test_only_201_is_success():
             
             # Verify correct endpoint is used (v2/ugcPosts)
             call_args = mock_post.call_args
-            assert '/v2/ugcPosts' in call_args[0][0], "Should use /v2/ugcPosts endpoint"
+            assert call_args[0][0].endswith('/v2/ugcPosts'), "Should use exact /v2/ugcPosts endpoint"
             
             # Verify correct payload structure
             payload = call_args[1]['json']

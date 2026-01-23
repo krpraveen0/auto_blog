@@ -169,8 +169,9 @@ class LinkedInFormatter:
         lines = content.split('\n')
         fixed_lines = []
         for line in lines:
-            if line and line[0].islower():
-                line = line[0].upper() + line[1:]
+            stripped = line.strip()
+            if stripped and stripped[0].islower():
+                line = stripped[0].upper() + stripped[1:]
             fixed_lines.append(line)
         content = '\n'.join(fixed_lines)
         

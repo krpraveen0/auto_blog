@@ -279,19 +279,23 @@ STYLE GUIDELINES - WRITE LIKE A HUMAN EXPERT:
 - Show genuine insights, not summaries
 
 ❌ DON'T:
-- NEVER start with "Here's", "In this post", "I want to share", "Check out"
-- NEVER use phrases like "Let me explain", "I'll show you", "Here's what you need to know"
-- NEVER mention that you're writing/sharing/posting something
-- NEVER use agent phrases: "As an AI", "Based on my analysis", "It seems", "It appears"
-- NEVER use marketing speak: "exciting", "amazing", "game-changing", "revolutionary"
-- NEVER use excessive buzzwords: "leverage", "synergy", "paradigm shift"
-- NEVER include hashtags in the body (added separately)
-- NEVER use citation markers [1], [2], [3]
-- NEVER use markdown formatting (*bold*, **italic**)
-- NEVER write meta-commentary about the post itself
-- NEVER use filler conclusions like "Thoughts?" or "What do you think?" alone
-- NEVER make it obvious content was generated vs naturally written
-- NEVER oversell or hype - let the facts impress
+- **NEVER include meta-commentary**: 
+  - Avoid "Here's", "In this post", "I want to share", "Check out", "Let me explain"
+  - Don't mention that you're writing/sharing/posting something
+- **NEVER use agent language**:
+  - No "As an AI", "Based on my analysis", "It seems", "It appears"
+  - No conversational hedges that sound artificial
+- **NEVER use marketing hype**:
+  - Avoid "exciting", "amazing", "game-changing", "revolutionary"
+  - No excessive buzzwords: "leverage", "synergy", "paradigm shift"
+- **NEVER include formatting artifacts**:
+  - No hashtags in the body (added separately)
+  - No citation markers [1], [2], [3]
+  - No markdown formatting (*bold*, **italic**)
+- **NEVER make it obvious AI generated**:
+  - Don't use filler conclusions like "Thoughts?" or "What do you think?" alone
+  - Avoid patterns that betray automation
+  - Write like a human expert would naturally share insights
 
 AUTHENTICITY CHECKS:
 Ask yourself: Would a senior engineer at Google/Meta write it this way?
