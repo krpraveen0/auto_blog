@@ -1,5 +1,5 @@
 """
-LinkedIn publisher using UGC API
+LinkedIn publisher using REST API
 """
 
 import os
@@ -16,9 +16,9 @@ MAX_CONTENT_LENGTH = 3000  # LinkedIn's typical character limit for text posts
 
 
 class LinkedInPublisher:
-    """Publish posts to LinkedIn via UGC API"""
+    """Publish posts to LinkedIn via REST API"""
     
-    API_BASE = "https://api.linkedin.com/v2"
+    API_BASE = "https://api.linkedin.com"
     
     def __init__(self, config: Dict):
         self.config = config
@@ -101,7 +101,7 @@ class LinkedInPublisher:
                 logger.error(f"Content validation failed: {error_msg}")
                 return {'success': False, 'error': error_msg}
             
-            # Publish via UGC API
+            # Publish via REST API
             result = self._post_to_linkedin(content)
             
             if result.get('success'):
@@ -114,31 +114,29 @@ class LinkedInPublisher:
             return {'success': False, 'error': str(e)}
     
     def _post_to_linkedin(self, content: str) -> Dict:
-        """Post content to LinkedIn UGC API"""
+        """Post content to LinkedIn REST API"""
         
-        url = f"{self.API_BASE}/ugcPosts"
+        url = f"{self.API_BASE}/rest/posts"
         
         headers = {
             'Authorization': f'Bearer {self.access_token}',
             'Content-Type': 'application/json',
+            'LinkedIn-Version': '202401',  # API version as of January 2024 per Microsoft documentation
             'X-Restli-Protocol-Version': '2.0.0'
         }
         
-        # Build UGC post payload
+        # Build REST API post payload
         payload = {
             "author": self.user_urn,  # Use normalized URN
-            "lifecycleState": "PUBLISHED",
-            "specificContent": {
-                "com.linkedin.ugc.ShareContent": {
-                    "shareCommentary": {
-                        "text": content
-                    },
-                    "shareMediaCategory": "NONE"
-                }
+            "commentary": content,
+            "visibility": "PUBLIC",
+            "distribution": {
+                "feedDistribution": "MAIN_FEED",
+                "targetEntities": [],
+                "thirdPartyDistributionChannels": []
             },
-            "visibility": {
-                "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
-            }
+            "lifecycleState": "PUBLISHED",
+            "isReshareDisabledByAuthor": False
         }
         
         # Log sanitized payload for debugging (without auth token)
@@ -173,7 +171,7 @@ class LinkedInPublisher:
                 
                 return {'success': True, 'post_url': post_url, 'post_id': post_id}
             else:
-                # LinkedIn UGC API returns 201 for successful post creation
+                # LinkedIn REST API returns 201 for successful post creation
                 # Any other status code (including other 2xx codes) means the post was not created
                 error_msg = f"LinkedIn API error: {response.status_code} - {response.text}"
                 logger.error(error_msg)
@@ -193,11 +191,14 @@ class LinkedInPublisher:
             return {'success': False, 'error': error_msg}
     
     def get_profile(self) -> Dict:
-        """Get LinkedIn profile information (for testing)"""
+        """
+        Get LinkedIn profile information (for testing)
+        Note: Uses v2 API as userinfo endpoint hasn't migrated to REST API yet
+        """
         if not self.access_token:
             return {}
         
-        url = f"{self.API_BASE}/me"
+        url = f"{self.API_BASE}/v2/userinfo"
         headers = {
             'Authorization': f'Bearer {self.access_token}'
         }
