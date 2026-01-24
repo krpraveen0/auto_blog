@@ -162,14 +162,21 @@ class LinkedInPublisher:
                 elif 'x-restli-id' in response.headers:
                     post_id = response.headers['x-restli-id']
                 
-                # Construct post URL
+                # Construct post URL using the returned URN type
                 post_url = ''
                 if post_id:
-                    # Use post_id directly in URL (already in URN format)
-                    if 'activity:' in post_id:
+                    # Examples:
+                    # urn:li:activity:123 -> https://www.linkedin.com/feed/update/urn:li:activity:123/
+                    # urn:li:share:123    -> https://www.linkedin.com/feed/update/urn:li:share:123/
+                    # activity:123         -> https://www.linkedin.com/feed/update/activity:123/
+                    # share:123            -> https://www.linkedin.com/feed/update/share:123/
+                    if post_id.startswith('urn:li:activity:') or post_id.startswith('urn:li:share:'):
+                        post_url = f"https://www.linkedin.com/feed/update/{post_id}/"
+                    elif post_id.startswith('activity:') or post_id.startswith('share:'):
                         post_url = f"https://www.linkedin.com/feed/update/{post_id}/"
                     else:
-                        post_url = f"https://www.linkedin.com/feed/update/urn:li:activity:{post_id}/"
+                        # Fallback: assume share URN when shape is unknown
+                        post_url = f"https://www.linkedin.com/feed/update/urn:li:share:{post_id}/"
                 
                 return {'success': True, 'post_url': post_url, 'post_id': post_id}
             else:

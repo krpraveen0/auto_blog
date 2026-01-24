@@ -36,6 +36,8 @@ class PerplexityClient:
         api_key = os.getenv('PERPLEXITY_API_KEY')
         if not api_key:
             raise ValueError("PERPLEXITY_API_KEY environment variable not set")
+        if not api_key.startswith("pplx-"):
+            raise ValueError("PERPLEXITY_API_KEY must start with 'pplx-' (check the secret value)")
         
         self.client = OpenAI(
             api_key=api_key,
@@ -88,7 +90,7 @@ class PerplexityClient:
                 return content
                 
             except Exception as e:
-                logger.error(f"API error (attempt {attempt + 1}): {e}")
+                self._log_api_error(e, attempt)
                 
                 if attempt < self.max_retries - 1:
                     wait_time = 2 ** attempt  # Exponential backoff
@@ -135,3 +137,18 @@ class PerplexityClient:
             responses.append(response)
         
         return responses
+
+    def _log_api_error(self, error: Exception, attempt: int) -> None:
+        """Provide clearer context on API failures."""
+        err_text = str(error)
+        logger.error(f"API error (attempt {attempt + 1}): {err_text}")
+
+        # Detect common auth failures that return HTML 401 pages
+        lowered = err_text.lower()
+        if "401" in lowered or "authorization required" in lowered or "<html>" in lowered:
+            logger.error(
+                "Perplexity authentication failed. Verify PERPLEXITY_API_KEY is valid, starts with 'pplx-', "
+                "and is correctly configured in GitHub Actions secrets."
+            )
+        elif "timeout" in lowered:
+            logger.error("Perplexity request timed out; consider increasing api_timeout or retries.")

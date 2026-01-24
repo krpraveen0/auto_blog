@@ -71,7 +71,13 @@ jobs:
             echo "Add to: Settings > Secrets and variables > Actions > PERPLEXITY_API_KEY"
             exit 1
           fi
-          echo "✅ LLM API credentials validated"
+          KEY_PREFIX="${{ secrets.PERPLEXITY_API_KEY }}"
+          echo "✅ PERPLEXITY_API_KEY is set"
+          echo "   Length: ${#KEY_PREFIX}"
+          echo "   Prefix: ${KEY_PREFIX:0:5}"
+          if [ "${KEY_PREFIX:0:5}" != "pplx-" ]; then
+            echo "⚠️  Warning: Key does not start with 'pplx-' (verify the value in GitHub Secrets)"
+          fi
       
       - name: Fetch content for topic
         env:
