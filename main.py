@@ -423,23 +423,6 @@ def publish(platform, approve, batch_delay, limit, medium_status):
                 if success:
                     click.echo(f"  ✅ Published: {draft.name}")
                     
-                    # Update database status
-                    try:
-                        content_record = db.get_content_by_file_path(str(draft))
-                        if content_record:
-                            db.update_content_status(
-                                content_record['id'], 
-                                'published',
-                                published_url=github_publisher.get_post_url(draft)
-                            )
-                            click.echo(f"  📊 Database updated: ID {content_record['id']}")
-                        else:
-                            click.echo(f"  ⚠️  Draft not in database (created before tracking)")
-                    except Exception as db_error:
-                        logger.error(f"Database update failed: {db_error}")
-                        click.echo(f"  ⚠️  Database update failed: {db_error}")
-                        click.echo(f"      Post was published successfully")
-                    
                     # Move to published directory
                     try:
                         published_path = Path(f"data/published/blog/{draft.name}")
@@ -499,23 +482,6 @@ def publish(platform, approve, batch_delay, limit, medium_status):
                     click.echo(f"  ✅ Published: {draft.name}")
                     if post_url:
                         click.echo(f"  🔗 URL: {post_url}")
-                    
-                    # Update database status
-                    try:
-                        content_record = db.get_content_by_file_path(str(draft))
-                        if content_record:
-                            db.update_content_status(
-                                content_record['id'], 
-                                'published',
-                                published_url=post_url
-                            )
-                            click.echo(f"  📊 Database updated: ID {content_record['id']} → 'published'")
-                        else:
-                            click.echo(f"  ⚠️  Draft not in database (created before tracking)")
-                    except Exception as db_error:
-                        logger.error(f"Database update failed: {db_error}")
-                        click.echo(f"  ⚠️  Database update failed: {db_error}")
-                        click.echo(f"      Post was published successfully")
                     
                     # Move to published directory
                     try:
@@ -587,23 +553,6 @@ def publish(platform, approve, batch_delay, limit, medium_status):
                     if post_url:
                         click.echo(f"  🔗 URL: {post_url}")
                     click.echo(f"  📌 Status: {medium_status}")
-                    
-                    # Update database status
-                    try:
-                        content_record = db.get_content_by_file_path(str(draft))
-                        if content_record:
-                            db.update_content_status(
-                                content_record['id'], 
-                                'published',
-                                published_url=post_url
-                            )
-                            click.echo(f"  📊 Database updated: ID {content_record['id']}")
-                        else:
-                            click.echo(f"  ⚠️  Draft not in database (created before tracking)")
-                    except Exception as db_error:
-                        logger.error(f"Database update failed: {db_error}")
-                        click.echo(f"  ⚠️  Database update failed: {db_error}")
-                        click.echo(f"      Post was published successfully")
                     
                     # Move to published directory
                     try:
