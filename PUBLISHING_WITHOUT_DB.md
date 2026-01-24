@@ -42,11 +42,24 @@ if result.get('success'):
 - **Medium publishing**: Removed database update after Medium posting
 
 ## Benefits
-1. **Simplified workflow**: Publishing now only involves posting and moving files
-2. **No DB dependencies**: GitHub Actions workflows work without database operations
-3. **Faster publishing**: No database lookups or updates during posting
-4. **Cleaner separation**: Content generation/storage is separate from publishing
+1. **Simplified workflow**: For GitHub Actions publishing, the workflow now only involves posting and moving files.
+2. **Reduced DB dependencies in workflows**: GitHub Actions publishing workflows do not perform database operations during the publish step, which makes them easier to run in environments without DB access.
+3. **Faster publishing**: No database lookups or updates occur during posting in these workflows.
+4. **Clearer separation in the publish step**: The act of publishing via GitHub Actions is file-based, while database-backed features (admin UI, metrics, etc.) are handled separately. Note that this can cause the DB to fall out of sync with what has actually been published unless additional sync logic is used.
 
+## Limitations and Trade-offs
+Removing database updates from the publishing workflow has important consequences that you must account for:
+
+- **GitHub Pages index generation**: If your GitHub Pages export logic (for example, `export_blogs_for_pages`) filters by `status='published'` in the database, then posts published only via these file-based workflows will not appear in the index unless the DB is updated by some other process.
+- **Statistics and metrics**: Any statistics or metrics that depend on database state will be incomplete or stale, because the DB will no longer automatically reflect new publishes.
+- **Admin panel consistency**: The admin panel (or any other UI that reads from the DB) may not correctly show which items are published, since status is no longer updated as part of the publish step.
+
+To mitigate these limitations, you can adopt one of the following patterns:
+
+- **Separate sync process**: Introduce a scheduled or manual job that scans the `data/published/**` directories and updates the corresponding DB records (e.g., setting `status='published'` and storing platform URLs).
+- **File-based status tracking**: Move status tracking entirely into the file layer (front matter, sidecar metadata files, etc.), and update any GitHub Pages, stats, or admin tooling to read from files instead of DB `status`.
+- **Hybrid approach**: Keep DB updates for flows where admin, metrics, or GitHub Pages need real-time accuracy, while still allowing purely file-based publishing for workflows that truly do not require DB-backed features.
+- **Re-evaluate DB removal**: If losing DB-backed features is unacceptable, consider reintroducing a minimal DB update step (either directly in the workflow or via a queued/sync mechanism) so that published content remains accurately reflected across the system.
 ## What Still Uses Database
 - Content generation (saving drafts)
 - Content retrieval for display/admin (e.g., listing content, basic views)
