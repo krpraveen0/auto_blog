@@ -315,6 +315,11 @@ def generate(count, format):
     
     click.echo(f"\n✨ Generated content for {generated_count}/{count} items")
     click.echo(f"📁 Drafts saved in: data/drafts/")
+    
+    # Exit with error if no content was generated
+    if generated_count == 0:
+        click.echo("\n❌ Failed to generate any content. Please check the errors above.", err=True)
+        sys.exit(1)
 
 
 @cli.command()
