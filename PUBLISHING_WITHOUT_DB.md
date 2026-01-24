@@ -77,3 +77,23 @@ Published content is still tracked by moving draft files to published directorie
 - `data/drafts/linkedin/*.txt` → `data/published/linkedin/*.txt`
 - `data/drafts/blog/*.md` → `data/published/blog/*.md`
 - `data/drafts/medium/*.md` → `data/published/medium/*.md`
+
+> Important: Moving files between `drafts` and `published` directories **does not** update the
+> corresponding database records. File location and database `status` (e.g. `drafted`/`published`)
+> are two separate tracking mechanisms that must be kept in sync if you rely on DB‑based features.
+
+The following features still query the database by status and therefore depend on accurate
+`status` values in the DB, regardless of where the files live on disk:
+
+- `generate_index` (in `main.py`), which uses `export_blogs_for_pages` and filters by `status='published'`
+- The `db_stats` command (in `main.py`), which reports `content_by_status`
+- The admin panel (`docs/admin/`), which filters and displays content by status
+- The draft summary (in `main.py`), which uses `db.get_drafted_content()`
+
+When using the publishing workflows described above (which skip DB updates):
+
+- These DB‑dependent features may show stale or incomplete information, because the database
+  may still think content is in `drafted` status even after files are moved to a `published` directory.
+- If you need these features to be accurate, you must ensure database status is updated by some
+  other process (for example, an explicit admin/maintenance step that sets DB status based on
+  file location). That synchronization step is outside the scope of this document.
