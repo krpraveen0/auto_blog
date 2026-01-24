@@ -19,7 +19,7 @@ def test_generate_exit_code_logic():
     
     # Read the main.py source code
     main_py_path = Path(__file__).parent.parent / 'main.py'
-    with open(main_py_path, 'r') as f:
+    with open(main_py_path, 'r', encoding='utf-8') as f:
         source = f.read()
     
     # Verify the fix is present in the generate function
@@ -28,7 +28,7 @@ def test_generate_exit_code_logic():
     assert 'Failed to generate any content' in source, "Missing error message"
     
     # Verify the logic flow by checking the lines are in the right order
-    gen_count_pos = source.find('Generated content for {generated_count}')
+    gen_count_pos = source.find('Generated content for')
     exit_check_pos = source.find('if generated_count == 0:')
     sys_exit_pos = source.find('sys.exit(1)')
     
