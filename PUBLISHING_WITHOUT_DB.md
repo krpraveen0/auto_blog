@@ -49,9 +49,10 @@ if result.get('success'):
 
 ## What Still Uses Database
 - Content generation (saving drafts)
-- Content retrieval for display/admin
-- Statistics and metrics
+- Content retrieval for display/admin (e.g., listing content, basic views)
+- Statistics and metrics (excluding accurate published/drafted status tracking)
 
+> **Note:** Because publishing no longer updates the database `status` field, any admin features or statistics that rely on that field (such as filtering by drafted/published or content-by-status counts/exports) will no longer reflect the true published state of content.
 ## GitHub Actions Workflows
 These workflows now work cleanly without DB operations:
 - `.github/workflows/publish_linkedin_manual.yml`
