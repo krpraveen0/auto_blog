@@ -25,6 +25,8 @@ sources:
     
   blogs:
     enabled: true
+    # NOTE: BlogFetcher now randomly selects ONE feed per run to reduce API requests
+    # This improves efficiency and avoids wasting requests on multiple sources
     feeds:
       - name: "OpenAI"
         url: "https://openai.com/blog/rss.xml"
