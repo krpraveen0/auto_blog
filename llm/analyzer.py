@@ -31,6 +31,7 @@ class ContentAnalyzer:
     def analyze(self, item: Dict) -> Dict:
         """
         Run full analysis pipeline on a content item
+        Enhanced with better error recovery for autonomous operation
         
         Args:
             item: Content item dictionary
@@ -38,7 +39,7 @@ class ContentAnalyzer:
         Returns:
             Analysis results dictionary
         """
-        logger.info(f"Analyzing: {item.get('title', 'Unknown')}")
+        logger.info(f"🔬 Starting analysis: {item.get('title', 'Unknown')}")
         
         # Prepare content for analysis
         content = self._prepare_content(item)
@@ -47,21 +48,38 @@ class ContentAnalyzer:
             'item_id': item.get('id'),
             'title': item.get('title'),
             'url': item.get('url'),
-            'source': item.get('source')
+            'source': item.get('source'),
+            'success': True,  # Track overall success
+            'completed_stages': [],
+            'failed_stages': []
         }
         
-        # Run each stage sequentially
-        for stage in self.stages:
+        # Run each stage sequentially with enhanced error handling
+        for i, stage in enumerate(self.stages, 1):
             try:
-                logger.info(f"Running stage: {stage}")
+                logger.info(f"  📍 Stage {i}/{len(self.stages)}: {stage}")
                 result = self._run_stage(stage, content, analysis)
                 analysis[stage] = result
+                analysis['completed_stages'].append(stage)
+                logger.info(f"  ✅ Stage {stage} completed successfully")
                 
             except Exception as e:
-                logger.error(f"Failed at stage {stage}: {e}")
-                analysis[stage] = f"Error: {str(e)}"
+                error_msg = f"Error: {str(e)}"
+                logger.error(f"  ❌ Stage {stage} failed: {e}")
+                analysis[stage] = error_msg
+                analysis['failed_stages'].append(stage)
+                
+                # Autonomous decision: continue with remaining stages even if one fails
+                # This improves resilience and allows partial results
+                logger.info(f"  ⚡ Continuing with remaining stages despite failure")
         
-        logger.info(f"Analysis complete for: {item.get('title')}")
+        # Update success status
+        if analysis['failed_stages']:
+            analysis['success'] = False
+            logger.warning(f"⚠️  Analysis completed with {len(analysis['failed_stages'])} failed stages")
+        else:
+            logger.info(f"✨ Analysis complete: All {len(self.stages)} stages successful")
+        
         return analysis
     
     def _prepare_content(self, item: Dict) -> str:
@@ -94,7 +112,17 @@ class ContentAnalyzer:
         return '\n'.join(parts)
     
     def _run_stage(self, stage: str, content: str, previous_analysis: Dict) -> str:
-        """Run a single analysis stage"""
+        """
+        Run a single analysis stage with enhanced logging
+        
+        Args:
+            stage: Stage name to run
+            content: Raw content to analyze
+            previous_analysis: Results from previous stages
+            
+        Returns:
+            Stage result as string
+        """
         
         # Get stage-specific prompt
         if stage in ['blog_synthesis', 'linkedin_formatting']:
@@ -110,13 +138,23 @@ class ContentAnalyzer:
             # Early stages work with raw content
             prompt = get_prompt(stage, content=content)
         
-        # Generate response
-        response = self.client.generate(
-            system_prompt=self.system_prompt,
-            user_prompt=prompt
-        )
+        logger.debug(f"    🤖 Generating response for stage: {stage}")
         
-        return response.strip()
+        # Generate response with error handling
+        try:
+            response = self.client.generate(
+                system_prompt=self.system_prompt,
+                user_prompt=prompt
+            )
+            
+            result = response.strip()
+            logger.debug(f"    📝 Generated {len(result)} characters for {stage}")
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"    ❌ LLM generation failed for {stage}: {e}")
+            raise  # Re-raise to be caught by caller
     
     def _format_analysis(self, analysis: Dict) -> str:
         """Format analysis results for downstream stages"""

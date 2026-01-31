@@ -31,7 +31,8 @@ from publishers.github_pages import GitHubPagesPublisher
 from publishers.linkedin_api import LinkedInPublisher
 from publishers.medium_api import MediumPublisher
 from utils.cache import Cache
-from utils.database import Database
+# Database operations removed - storing in files only
+# from utils.database import Database
 import yaml
 
 logger = setup_logger(__name__)
@@ -152,10 +153,8 @@ def fetch(source, cache):
     
     logger.info(f"Saved {len(ranked_content)} items to {output_path}")
     
-    # Save to database
-    db = Database()
-    db_saved = db.save_papers(ranked_content)
-    logger.info(f"Saved {db_saved} items to database")
+    # Database operations removed - using file-based storage only
+    # This improves autonomy and reduces dependencies
     
     # Display top 10
     click.echo("\n📊 Top 10 Items:")
@@ -213,8 +212,8 @@ def generate(count, format):
     linkedin_formatter = LinkedInFormatter(config['formatting']['linkedin'], llm_config=config['llm'])
     medium_formatter = MediumFormatter(config['formatting']['medium'], llm_config=config['llm'])
     
-    # Initialize database
-    db = Database()
+    # Database operations removed - using file-based storage only
+    # db = Database()
     
     generated_count = 0
     
@@ -246,16 +245,10 @@ def generate(count, format):
                 with open(blog_path, 'w') as f:
                     f.write(blog_article)
                 
-                # Save to database with status='drafted'
-                content_id = db.save_generated_content(
-                    paper_id=item['id'],
-                    content_type='blog',
-                    content=blog_article,
-                    analysis=analysis,
-                    file_path=str(blog_path)
-                )
+                # Database operations removed - file-based storage only
+                # content_id = db.save_generated_content(...)
                 
-                click.echo(f"  ✅ Blog article: {blog_path} (DB ID: {content_id})")
+                click.echo(f"  ✅ Blog article: {blog_path}")
             
             # Generate LinkedIn post
             if format in ['linkedin', 'both', 'all']:
@@ -274,16 +267,10 @@ def generate(count, format):
                     with open(linkedin_path, 'w') as f:
                         f.write(linkedin_post)
                     
-                    # Save to database with status='drafted'
-                    content_id = db.save_generated_content(
-                        paper_id=item['id'],
-                        content_type='linkedin',
-                        content=linkedin_post,
-                        analysis=analysis,
-                        file_path=str(linkedin_path)
-                    )
+                    # Database operations removed - file-based storage only
+                    # content_id = db.save_generated_content(...)
                     
-                    click.echo(f"  ✅ LinkedIn post: {linkedin_path} (DB ID: {content_id})")
+                    click.echo(f"  ✅ LinkedIn post: {linkedin_path}")
             
             # Generate Medium article (comprehensive with diagrams)
             if format in ['medium', 'all']:
@@ -296,16 +283,10 @@ def generate(count, format):
                 with open(medium_path, 'w', encoding='utf-8') as f:
                     f.write(medium_article)
                 
-                # Save to database with status='drafted'
-                content_id = db.save_generated_content(
-                    paper_id=item['id'],
-                    content_type='medium',
-                    content=medium_article,
-                    analysis=analysis,
-                    file_path=str(medium_path)
-                )
+                # Database operations removed - file-based storage only
+                # content_id = db.save_generated_content(...)
                 
-                click.echo(f"  ✅ Medium article: {medium_path} (DB ID: {content_id})")
+                click.echo(f"  ✅ Medium article: {medium_path}")
             
             generated_count += 1
             
@@ -380,8 +361,8 @@ def publish(platform, approve, batch_delay, limit, medium_status):
     if platform in ['medium', 'all']:
         medium_publisher = MediumPublisher(config['publishing']['medium'])
     
-    # Initialize database
-    db = Database()
+    # Database operations removed - using file-based storage only
+    # db = Database()
     
     published_count = 0
     
@@ -587,9 +568,12 @@ def publish(platform, approve, batch_delay, limit, medium_status):
     
     click.echo(f"\n✨ Published {published_count} items")
     
-    # Show database summary
-    drafted = db.get_drafted_content()
-    click.echo(f"📊 Database Status: {len(drafted)} drafts remaining")
+    # Database operations removed - check file system for drafts
+    blog_drafts_remaining = list(Path('data/drafts/blog').glob('*.md'))
+    linkedin_drafts_remaining = list(Path('data/drafts/linkedin').glob('*.txt'))
+    medium_drafts_remaining = list(Path('data/drafts/medium').glob('*.md'))
+    total_drafts = len(blog_drafts_remaining) + len(linkedin_drafts_remaining) + len(medium_drafts_remaining)
+    click.echo(f"📊 Drafts Status: {total_drafts} drafts remaining in filesystem")
 
 
 @cli.command()
@@ -698,32 +682,31 @@ def generate_index():
 
 @cli.command()
 def db_stats():
-    """Show database statistics"""
-    logger.info("Fetching database statistics...")
+    """Show content statistics from filesystem (database operations removed)"""
+    logger.info("Fetching content statistics from filesystem...")
     
-    db = Database()
-    stats = db.get_blog_statistics()
+    # Database operations removed - check filesystem instead
+    blog_drafts = list(Path('data/drafts/blog').glob('*.md'))
+    linkedin_drafts = list(Path('data/drafts/linkedin').glob('*.txt'))
+    medium_drafts = list(Path('data/drafts/medium').glob('*.md'))
     
-    click.echo("\n📊 Database Statistics:")
-    click.echo(f"\n📄 Papers:")
-    click.echo(f"   Total Papers: {stats.get('total_papers', 0)}")
-    click.echo(f"   GitHub Repos: {stats.get('github_repos', 0)}")
+    click.echo("\n📊 Content Statistics (Filesystem):")
+    click.echo(f"\n📝 Drafts:")
+    click.echo(f"   Blog Articles: {len(blog_drafts)}")
+    click.echo(f"   LinkedIn Posts: {len(linkedin_drafts)}")
+    click.echo(f"   Medium Articles: {len(medium_drafts)}")
+    click.echo(f"   Total Drafts: {len(blog_drafts) + len(linkedin_drafts) + len(medium_drafts)}")
     
-    click.echo(f"\n📝 Content:")
-    content_by_type = stats.get('content_by_type', {})
-    for content_type, count in content_by_type.items():
-        click.echo(f"   {content_type.title()}: {count}")
+    # Check fetched content
+    fetched_path = Path('data/fetched/latest.json')
+    if fetched_path.exists():
+        import json
+        with open(fetched_path, 'r') as f:
+            fetched_items = json.load(f)
+        click.echo(f"\n📄 Fetched Content:")
+        click.echo(f"   Latest fetch: {len(fetched_items)} items")
     
-    click.echo(f"\n📌 Status:")
-    content_by_status = stats.get('content_by_status', {})
-    for status, count in content_by_status.items():
-        click.echo(f"   {status.title()}: {count}")
-    
-    click.echo(f"\n💻 Top Languages:")
-    top_languages = stats.get('top_languages', {})
-    for language, count in list(top_languages.items())[:5]:
-        click.echo(f"   {language}: {count}")
-
+    click.echo("\n💡 Note: Database operations have been removed. Using file-based storage.")
 
 
 @cli.command()
