@@ -216,13 +216,30 @@ def generate(count, format):
     # db = Database()
     
     generated_count = 0
+    skipped_count = 0
     
     for i, item in enumerate(items, 1):
         click.echo(f"\n🔄 Processing {i}/{count}: {item['title']}")
         
         try:
+            # Special handling for arXiv papers - use enhanced analysis
+            if item.get('source') == 'arxiv':
+                click.echo(f"  🎓 Running arXiv-enhanced analysis with relevancy check...")
+                analysis = analyzer.analyze_arxiv(item)
+                
+                # If analysis is None, paper was deemed not relevant - skip it
+                if analysis is None:
+                    click.echo(f"  ⏭️  Skipping: Paper not relevant enough for posting")
+                    skipped_count += 1
+                    continue
+                    
+                # Paper passed relevancy check - show details
+                enhancement = analysis.get('arxiv_enhancement', {})
+                click.echo(f"  ✅ Relevancy: {enhancement.get('relevancy_score', 0):.1f}/10")
+                click.echo(f"  💡 Verdict: {enhancement.get('verdict', 'N/A')}")
+                
             # Determine which analysis to use based on source and format
-            if format in ['medium', 'all']:
+            elif format in ['medium', 'all']:
                 # Use comprehensive analysis for Medium
                 click.echo(f"  📊 Running comprehensive analysis with diagrams...")
                 analysis = analyzer.analyze_for_medium(item)

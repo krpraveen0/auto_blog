@@ -10,6 +10,8 @@ sources:
       - "cs.CL"      # Computation and Language
       - "cs.CV"      # Computer Vision
     max_results: 20
+    # Enhanced arXiv posting with summarization and relevancy checking
+    use_enhanced_posting: true  # Enable engaging summaries and verdicts
   
   # NEW: Trend Discovery Engine
   trends:
@@ -114,6 +116,9 @@ llm:
     temperature: 0.3  # Low temp for factual content
     max_tokens: 2000
     top_p: 0.9
+  
+  # ArXiv enhancement settings
+  arxiv_relevancy_threshold: 6.0  # Papers below this score (0-10) are skipped
   
   # Content safety - minimal profanity list (extend as needed)
   profanity_list:

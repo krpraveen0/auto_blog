@@ -2,7 +2,7 @@
 Content analyzer using 7-stage prompt pipeline with Perplexity
 """
 
-from typing import Dict
+from typing import Dict, Optional
 from llm.client import PerplexityClient
 from llm.prompts import get_system_prompt, get_prompt
 from utils.logger import setup_logger
@@ -26,7 +26,18 @@ class ContentAnalyzer:
             'application_mapping'
         ])
         
+        # Initialize ArxivEnhancer lazily (only when needed)
+        self._arxiv_enhancer = None
+        
         logger.info(f"Initialized ContentAnalyzer with {len(self.stages)} stages")
+    
+    @property
+    def arxiv_enhancer(self):
+        """Lazy initialization of ArxivEnhancer"""
+        if self._arxiv_enhancer is None:
+            from llm.arxiv_enhancer import ArxivEnhancer
+            self._arxiv_enhancer = ArxivEnhancer(self.config)
+        return self._arxiv_enhancer
     
     def analyze(self, item: Dict) -> Dict:
         """
@@ -80,6 +91,40 @@ class ContentAnalyzer:
         else:
             logger.info(f"✨ Analysis complete: All {len(self.stages)} stages successful")
         
+        return analysis
+    
+    def analyze_arxiv(self, item: Dict) -> Optional[Dict]:
+        """
+        Analyze arXiv paper with enhanced summarization and relevancy checking
+        
+        Args:
+            item: arXiv paper dictionary
+            
+        Returns:
+            Analysis results dictionary if paper is relevant, None if not relevant
+        """
+        logger.info(f"🔬 Starting arXiv-enhanced analysis: {item.get('title', 'Unknown')}")
+        
+        # First, enhance the arXiv paper
+        is_relevant, enhancement = self.arxiv_enhancer.enhance_arxiv_paper(item)
+        
+        # If not relevant, return None to skip this paper
+        if not is_relevant:
+            logger.warning(f"⏭️  Skipping irrelevant paper: {enhancement.get('relevancy_reason', 'Unknown reason')}")
+            return None
+        
+        # Paper is relevant - run standard analysis
+        analysis = self.analyze(item)
+        
+        # Add arxiv enhancement data to analysis
+        analysis['arxiv_enhancement'] = enhancement
+        
+        # Override summary with enhanced version for better output
+        if enhancement.get('enhanced_summary'):
+            analysis['enhanced_summary'] = enhancement['enhanced_summary']
+            analysis['verdict'] = enhancement['verdict']
+        
+        logger.info(f"✨ arXiv-enhanced analysis complete")
         return analysis
     
     def _prepare_content(self, item: Dict) -> str:
