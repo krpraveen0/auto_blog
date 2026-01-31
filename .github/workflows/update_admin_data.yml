@@ -1,5 +1,9 @@
 name: Update Admin Panel Data
 
+# NOTE: While the main workflow no longer uses database operations (removed for simplification),
+# this workflow maintains database export functionality for the admin panel if needed.
+# The database is optional and not used by fetch/generate commands anymore.
+
 on:
   # Run after any workflow that modifies the database
   workflow_run:
