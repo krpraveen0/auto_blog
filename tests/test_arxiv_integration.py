@@ -20,7 +20,7 @@ def test_arxiv_enhancement_integration():
         'pdf_url': 'https://arxiv.org/pdf/2410.08003.pdf',
         'summary': 'We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely.',
         'authors': ['Ashish Vaswani', 'Noam Shazeer', 'Niki Parmar'],
-        'published': '2023-10-01T00:00:00',
+        'published': '2024-10-01T00:00:00',
         'category': 'cs.LG',
         'categories': ['cs.LG', 'cs.AI'],
         'primary_category': 'cs.LG',
@@ -110,7 +110,7 @@ def test_arxiv_enhancement_skip_irrelevant():
         'url': 'https://arxiv.org/abs/2410.99999',
         'summary': 'Highly abstract mathematical proofs with no practical applications.',
         'authors': ['Theoretical Researcher'],
-        'published': '2023-10-01T00:00:00',
+        'published': '2024-10-01T00:00:00',
         'category': 'math.AG',
         'source': 'arxiv'
     }
