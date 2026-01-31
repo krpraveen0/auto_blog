@@ -27,8 +27,9 @@ def test_arxiv_enhancement_integration():
         'source': 'arxiv'
     }
     
-    # Mock Perplexity client
-    with patch('llm.client.PerplexityClient') as mock_client_class:
+    # Mock Perplexity client at the right level
+    with patch('llm.arxiv_enhancer.PerplexityClient') as mock_enhancer_client, \
+         patch('llm.analyzer.PerplexityClient') as mock_analyzer_client:
         mock_client = Mock()
         
         # Mock responses for different stages
@@ -45,7 +46,8 @@ def test_arxiv_enhancement_integration():
             "Impact: Major breakthrough in sequence modeling...",
             "Applications: Machine translation, text generation...",
         ]
-        mock_client_class.return_value = mock_client
+        mock_enhancer_client.return_value = mock_client
+        mock_analyzer_client.return_value = mock_client
         
         # Import after mocking
         from llm.analyzer import ContentAnalyzer
@@ -113,8 +115,9 @@ def test_arxiv_enhancement_skip_irrelevant():
         'source': 'arxiv'
     }
     
-    # Mock Perplexity client
-    with patch('llm.client.PerplexityClient') as mock_client_class:
+    # Mock Perplexity client at the right level
+    with patch('llm.arxiv_enhancer.PerplexityClient') as mock_enhancer_client, \
+         patch('llm.analyzer.PerplexityClient') as mock_analyzer_client:
         mock_client = Mock()
         
         # Mock responses indicating low relevancy
@@ -126,7 +129,8 @@ def test_arxiv_enhancement_skip_irrelevant():
             # Relevancy check - LOW SCORE
             "Score: 2.0\nReason: Too theoretical, not applicable to ML practitioners.",
         ]
-        mock_client_class.return_value = mock_client
+        mock_enhancer_client.return_value = mock_client
+        mock_analyzer_client.return_value = mock_client
         
         # Import after mocking
         from llm.analyzer import ContentAnalyzer
@@ -173,7 +177,8 @@ def test_linkedin_formatting_with_enhancement():
     }
     
     # Mock everything
-    with patch('llm.client.PerplexityClient'):
+    with patch('llm.arxiv_enhancer.PerplexityClient'), \
+         patch('llm.analyzer.PerplexityClient'):
         from formatters.linkedin import LinkedInFormatter
         
         config = {

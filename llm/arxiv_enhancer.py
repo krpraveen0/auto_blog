@@ -72,11 +72,11 @@ class ArxivEnhancer:
             
         except Exception as e:
             logger.error(f"Failed to enhance paper: {e}")
-            # Return minimal data on failure
+            # Return minimal data on failure with fallback score of 5.0
             return False, {
                 'enhanced_summary': paper.get('summary', '')[:500],
                 'verdict': 'Could not determine usefulness due to analysis error',
-                'relevancy_score': 0,
+                'relevancy_score': 5.0,  # Neutral fallback score
                 'relevancy_reason': f'Enhancement failed: {str(e)}',
                 'is_relevant': False
             }
