@@ -47,9 +47,19 @@ class LinkedInFormatter:
             analyzer_config = self.llm_config if self.llm_config else self.config
             analyzer = ContentAnalyzer(analyzer_config)
         
-        # Use engaging format by default (can be configured)
-        use_engaging = self.config.get('use_engaging_format', True)
-        linkedin_content = analyzer.generate_linkedin(analysis, use_engaging_format=use_engaging)
+        # For arXiv papers with enhancement, use enhanced content directly
+        if item.get('source') == 'arxiv' and analysis.get('arxiv_enhancement'):
+            enhancement = analysis['arxiv_enhancement']
+            # Create content from enhanced summary and verdict
+            linkedin_content = self._format_arxiv_enhanced(
+                item, 
+                enhancement.get('enhanced_summary', ''),
+                enhancement.get('verdict', '')
+            )
+        else:
+            # Use engaging format by default (can be configured)
+            use_engaging = self.config.get('use_engaging_format', True)
+            linkedin_content = analyzer.generate_linkedin(analysis, use_engaging_format=use_engaging)
         
         # Run safety validation
         validation_result = analyzer.validate_linkedin_safety(linkedin_content)
@@ -175,6 +185,39 @@ class LinkedInFormatter:
             fixed_lines.append(line)
         content = '\n'.join(fixed_lines)
         
+        return content
+    
+    def _format_arxiv_enhanced(self, item: Dict, summary: str, verdict: str) -> str:
+        """
+        Format arXiv paper with enhanced summary and verdict
+        
+        Args:
+            item: arXiv paper dictionary
+            summary: Enhanced engaging summary
+            verdict: Verdict on usefulness
+            
+        Returns:
+            Formatted LinkedIn content
+        """
+        # Build engaging post from enhanced content
+        parts = []
+        
+        # Add title context
+        title = item.get('title', '')
+        if title:
+            parts.append(f"📄 New Research: {title}")
+            parts.append("")
+        
+        # Add enhanced summary
+        if summary:
+            parts.append(summary)
+            parts.append("")
+        
+        # Add verdict with emoji
+        if verdict:
+            parts.append(f"💡 {verdict}")
+        
+        content = '\n'.join(parts)
         return content
     
     def _build_post(self, item: Dict, content: str) -> str:
